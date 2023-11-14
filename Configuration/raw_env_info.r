@@ -41,6 +41,17 @@ for (f in folders){
     rr$file<-fil
     all[[length(all)+1]]<-rr
   }
+  nc_close(nc)
 }
 all<-rbindlist(all)
-fwrite(all, "../Data/meta_table.csv")
+
+year_labels<-fread("../Data/name_year.csv", header=T)
+year_labels$V3<-NULL
+year_labels$V4<-NULL
+colnames(year_labels)<-c("label", "age")
+year_labels<-year_labels[label!=""]
+year_labels$age<-as.numeric(gsub("k", "", year_labels$age))
+all$label<-gsub("../Data/3600Ma_simulations/", "", all$folder)
+all_age<-merge(all, year_labels, by="label")
+fwrite(all_age, "../Data/meta_table.csv")
+saveRDS(all_age, "../Data/meta_table.rda")
