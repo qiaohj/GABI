@@ -31,7 +31,7 @@ for (i in c(1:nrow(ages))){
     r_sub<-nc_r[[grep(v, names(nc_r))]]
     rm("r_final")
     if (v=="precipmon_av"){
-      r_final<-sum(r_sub)*365
+      r_final<-sum(r_sub)*30
     }
     if (v=="tempmonmax_abs"){
       r_final<-max(r_sub)
@@ -76,6 +76,8 @@ for (i in c(1:nrow(ages))){
 layers_index2<-rbindlist(layers_index2)
 layers_index<-rbindlist(list(layers_index, layers_index2))
 mask<-rast(nrows=180, ncols=360, xmin=-180, xmax=180, ymin=-90, ymax=90)
+layers_index[, .(min(age), max(age)),
+             by=list(type)]
 for (v in vars){
   print(v)
   item_index<-layers_index[var==v]
@@ -84,7 +86,16 @@ for (v in vars){
   names(raster)<-paste("y", item_index$age, sep="")
   writeRaster(raster, sprintf("../Data/Raster/Rough.3.75x2.5/%s.tif", v), overwrite=T)
   raster2<-resample(raster, mask, method="bilinear")
-  writeRaster(raster2, sprintf("../Data/Raster/Fine.1x1/%s.tif", v), overwrite=T)
+  if (v=="precipmon_av"){
+    v_name<-"pr"
+  }
+  if (v=="tempmonmax_abs"){
+    v_name<-"tasmax"
+  }
+  if (v=="tempmonmin_abs"){
+    v_name<-"tasmin"
+  }
+  writeRaster(raster2, sprintf("../Data/Raster/Fine.1x1/%s.tif", v_name), overwrite=T)
 }
 
 if (F){

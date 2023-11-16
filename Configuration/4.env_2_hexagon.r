@@ -57,6 +57,8 @@ hexagon$lat<-coords[,2]
 write_sf(hexagon, "../Data/Shape/isea3h8/N_S_America.shp")
 
 if (F){
+  xx<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
+  table(xx$continent)
   base_db<-"../Data/Temp/env_Hadley3D.sqlite"
   envdb <- dbConnect(RSQLite::SQLite(), base_db)
   
@@ -67,6 +69,7 @@ if (F){
 }
 
 vars<-c("pr", "tasmax", "tasmin")
+hexagon<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
 for (v in vars){
   print(v)
@@ -155,7 +158,7 @@ dbDisconnect(conn)
 pr_item<-pr[year==3100]
 hexagon_pr<-merge(hexagon, pr_item, by.x="seqnum", by.y="global_id")
 ggplot(hexagon_pr)+
-  geom_sf(aes(fill=v))
+  geom_sf(aes(fill=v/100))
 #after 3.1My 
 pr_item<-pr[year==0]
 hexagon_pr<-merge(hexagon, pr_item, by.x="seqnum", by.y="global_id")
