@@ -34,27 +34,81 @@ if (F){
 }
 shpfname = "../Data/Shape/isea3h8/isea3h8_sf.shp"
 hexagon<-read_sf(shpfname)
-coods<-st_centroid(hexagon)
+hexa_coords<-st_centroid(hexagon)
 
 continents<-read_sf("../Data/Shape/continents/continent.shp")
 america<-continents[which(continents$id %in% c(2, 5)),]
 st_crs(america)<-st_crs(hexagon)
 america_items<-st_cast(america, "POLYGON")
 america_items$area<-as.numeric(st_area(america_items))
+coords<-st_coordinates(st_centroid(america_items))
+america_items$lon_centroid<-coords[,1]
+america_items$lat_centroid<-coords[,2]
 quantile(america_items$area, 0.99)
-america_items<-america_items[which(america_items$area>5e12),]
-n_index<-st_contains(america_items, coods)
-hexagon$continent<-"World"
-hexagon[n_index[[2]], ]$continent<-"South America"
-hexagon[c(n_index[[1]], 35236), ]$continent<-"North America"
-hexagon[c(8912,8994,9075,35152,35234,35235,35236,35316),]$continent<-"Bridge"
-hexagon<-hexagon[which(hexagon$continent!="World"),]
-hexagon<-hexagon[which(!hexagon$seqnum %in% c(6200, 6668, 6669)),]
-#plot(hexagon$geometry)
+america_items<-america_items[which(america_items$area>5e12 |
+                                     between(america_items$lat_centroid, -30, 30)),]
+plot(america_items$geometry)
+n_index<-st_intersects(america_items, hexagon)
+
+hexagon_ns<-hexagon
+hexagon_ns$continent<-"World"
+#hexagon_ns[which(hexagon_ns$seqnum %in% 
+#                   c(7865,7864,8520,7782,8932,9581,9582,9583,7211,33535)), 
+#]$continent<-"Bridge"
+for (i in c(1:length(n_index))){
+  print(paste(i, length(n_index)))
+  index<-n_index[[i]]
+  if (length(index)==0){
+    next()
+  }
+  america_item<-america_items[i,]
+  hexagon_ns[index, ]$continent<-america_item$CONTINENT
+}
+hexagon_ns_raw<-hexagon_ns
+hexagon_ns_raw<-hexagon_ns_raw[which(hexagon_ns_raw$continent!="World"),]
+hexagon_ns_raw[which(hexagon_ns_raw$seqnum %in% c(9004, 9086, 9168)), ]$continent<-"South America"
+
+bridges<-read_sf("../Data/Shape/bridges/bridges.shp")
+bridge_index<-st_intersects(bridges, hexagon_ns_raw)
+for (i in c(1:length(bridge_index))){
+  bridge_item<-bridges[i,]
+  hexagon_ns_raw[bridge_index[[i]],]$continent<-bridge_item$bridge_nam
+}
+hexagon_ns_raw[which(hexagon_ns_raw$seqnum %in% c(34100, 34747)), ]$continent<-"remove"
+hexagon_ns_raw<-hexagon_ns_raw[which(hexagon_ns_raw$continent!="remove"),]
+hexagon_ns_raw[which(hexagon_ns_raw$seqnum %in% c(9004, 9086, 9168, 9416)), ]$continent<-"South America"
+if (F){
+  ggplot(hexagon_ns_raw)+geom_sf(aes(fill=continent))
+  
+  write_sf(hexagon_ns_raw, "../Data/Shape/isea3h8/N_S_America.shp")
+}
+
+#plot(hexagon_ns$geometry)
+coords<-st_coordinates(st_centroid(hexagon_ns_raw))
+hexagon_ns_raw$lon<-coords[,1]
+hexagon_ns_raw$lat<-coords[,2]
+write_sf(hexagon_ns_raw, "../Data/Shape/isea3h8/N_S_America.shp")
+table(hexagon_ns_raw$continent)
+
+hexagon_ns_raw<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
+hexagon_ns_raw<-hexagon_ns_raw[which(!hexagon_ns_raw$seqnum %in% 
+                                       c(7292, 7946,8027,8026,8108,7942,33048,33292,33373,33454,33045,33126,33289,33452,33534)),]
+write_sf(hexagon_ns_raw, "../Data/Shape/isea3h8/N_S_America.shp")
+
+hexagon<-read_sf(shpfname)
+continents<-read_sf("../Data/Shape/continents/continent.shp")
+st_crs(continents)<-st_crs(hexagon)
+n_index<-st_intersects(continents, hexagon)
+hexagon$continent<-0
+for (i in c(1:length(n_index))){
+  hexagon[n_index[[i]], ]$continent<-i
+}
+hexagon<-hexagon[which(hexagon$continent!=0),]
+ggplot(hexagon)+geom_sf(aes(color=factor(continent)))
 coords<-st_coordinates(st_centroid(hexagon))
 hexagon$lon<-coords[,1]
 hexagon$lat<-coords[,2]
-write_sf(hexagon, "../Data/Shape/isea3h8/N_S_America.shp")
+write_sf(hexagon, "../Data/Shape/isea3h8/Continent.shp")
 
 if (F){
   xx<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
@@ -69,35 +123,56 @@ if (F){
 }
 
 vars<-c("pr", "tasmax", "tasmin")
-hexagon<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
-conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
+n_s_america<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
+continent<-read_sf("../Data/Shape/isea3h8/Continent.shp")
+conn_ns_america<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
+conn_continent<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration_continent.sqlite")
 for (v in vars){
   print(v)
   tif<-rast(sprintf("../Data/Raster/Fine.1x1/%s.tif", v))
-  values<-extract(tif, data.frame(lon=hexagon$lon, lat=hexagon$lat))
-  template<-data.frame(global_id=as.integer(hexagon$seqnum), v=-9999, year=-9999)
+  values<-extract(tif, data.frame(lon=n_s_america$lon, lat=n_s_america$lat))
+  template<-data.frame(global_id=as.integer(n_s_america$seqnum), v=-9999, year=-9999)
   full_df<-list()
   for (y in names(values)){
     if (y=="ID"){
       next()
     }
     item<-template
-    item$v<-as.integer(round(values[, y]*100))
+    item$v<-values[, y]
     cyear<-as.integer(gsub("y", "", y))
     item$year<-cyear
     if (cyear>=3100){
       item<-item[which(item$global_id %in% 
-                         hexagon[which(hexagon$continent %in% c("North America", "South America")),]$seqnum
+                         n_s_america[which(n_s_america$continent %in% c("North America", "South America")),]$seqnum
                        ),]
     }
     full_df[[length(full_df)+1]]<-item
   }
   full_df<-rbindlist(full_df)
-  dbWriteTable(conn, v, full_df, overwrite=T)
+  dbWriteTable(conn_ns_america, v, full_df, overwrite=T)
+  
+  values<-extract(tif, data.frame(lon=continent$lon, lat=continent$lat))
+  template<-data.frame(global_id=as.integer(continent$seqnum), v=-9999, year=-9999)
+  full_df<-list()
+  for (y in names(values)){
+    if (y=="ID"){
+      next()
+    }
+    item<-template
+    item$v<-values[, y]
+    cyear<-as.integer(gsub("y", "", y))
+    item$year<-cyear
+    
+    full_df[[length(full_df)+1]]<-item
+  }
+  full_df<-rbindlist(full_df)
+  dbWriteTable(conn_continent, v, full_df, overwrite=T)
 }
-dbDisconnect(conn)
+dbDisconnect(conn_continent)
+dbDisconnect(conn_ns_america)
 
-centroids<-st_centroid(hexagon)
+hexagon_ns<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
+centroids<-st_centroid(hexagon_ns)
 plot(centroids$geometry)
 dist<-st_distance(centroids)
 colnames(dist)<-centroids$seqnum
@@ -128,8 +203,8 @@ for (id in unique(c(dist_df$i, dist_df$j))){
   all_dist[[length(all_dist)+1]]<-dist_item
   if (F){
     neighbors<-dist_item
-    neighbors_po<-merge(hexagon, neighbors, by.x="seqnum", by.y="j")
-    ggplot(hexagon_pr)+geom_sf()+
+    neighbors_po<-merge(hexagon_ns, neighbors, by.x="seqnum", by.y="j")
+    ggplot(hexagon_ns_pr)+geom_sf()+
       geom_sf(data=neighbors_po, aes(fill=factor(dist)))
     
     ggplot()+
@@ -155,10 +230,10 @@ dist<-data.table(dbReadTable(conn, "distances"))
 dbDisconnect(conn)
 
 #before 3.1My 
-pr_item<-pr[year==3100]
+pr_item<-pr[year==3600]
 hexagon_pr<-merge(hexagon, pr_item, by.x="seqnum", by.y="global_id")
 ggplot(hexagon_pr)+
-  geom_sf(aes(fill=v/100))
+  geom_sf(aes(fill=v))
 #after 3.1My 
 pr_item<-pr[year==0]
 hexagon_pr<-merge(hexagon, pr_item, by.x="seqnum", by.y="global_id")
@@ -171,7 +246,7 @@ tasmin$var<-"tasmin"
 #check the overall pattern
 all_v<-rbindlist(list(pr, tasmax, tasmin))
 all_v_se<-all_v[,.(v=mean(v)), by=list(year, var)]
-ggplot(all_v_se)+geom_line(aes(x=year * -1, y=v/100))+
+ggplot(all_v_se)+geom_line(aes(x=year * -1, y=v))+
   facet_wrap(~var, nrow=3, scale="free")
 #check neighber
 dist[i>5000]
@@ -184,3 +259,4 @@ ggplot(hexagon_pr)+geom_sf()+
 
 ggplot()+
   geom_sf(data=neighbors_po, aes(fill=factor(dist)))
+
