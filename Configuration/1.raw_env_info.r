@@ -1,7 +1,7 @@
 library(terra)
 library(ncdf4)
 library(data.table)
-setwd("/media/huijieqiao/WD22T_11/continental_movement/Script")
+setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 source<-"../Data/3600Ma_simulations"
 folders<-list.dirs(source)
 folders<-folders[-1]

@@ -1,6 +1,6 @@
 library(data.table)
 library(ggplot2)
-setwd("/media/huijieqiao/WD22T_11/continental_movement/Script")
+setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 all_v_df<-readRDS("../Data/env_fullstat.rda")
 #precipmon_av, precipmonmax_abs, precipmonmin_abs, tempmon_av, 
 #tempmonmax_abs, tempmonmin_abs, cmm, drymon, wetmon, wmm, mixLyrDpth_ym_uo, 

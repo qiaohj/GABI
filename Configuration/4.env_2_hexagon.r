@@ -8,7 +8,7 @@ library(reshape2)
 library(data.table)
 library(ggplot2)
 
-setwd("/media/huijieqiao/WD22T_11/continental_movement/Script")
+setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 find_connected_hexagon <- function(hexagons){
   
   neighbors_list <- tibble(index=1:nrow(hexagons)) %>% 

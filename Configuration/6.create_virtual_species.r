@@ -2,8 +2,8 @@ library(data.table)
 library(sf)
 library(RSQLite)
 library(DBI)
-
-setwd("/media/huijieqiao/WD22T_11/continental_movement/Script")
+library(ggplot2)
+setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
 pr<-data.table(dbReadTable(conn, "pr"))
 tasmax<-data.table(dbReadTable(conn, "tasmax"))
@@ -175,6 +175,26 @@ dbWriteTable(mydb, "simulations", simulations_sort, overwrite=T)
 dbWriteTable(mydb, "timeline", timeline, overwrite=T)
 dbDisconnect(mydb)
 
+base_db<-"../Configuration/conf.sqlite"
+mydb <- dbConnect(RSQLite::SQLite(), base_db)
+simulations_sort<-dbReadTable(mydb, "simulations")
+dbDisconnect(mydb)
+
+i=1
+global_ids<-unique(simulations_sort$global_id)
+for (i in c(1:length(global_ids))){
+  print(paste(i, length(global_ids)))
+  item<-global_ids[i]
+  dir.create(sprintf("../Results/%d", item))
+}
+if (F){
+  shpfname = "../Data/Shape/isea3h8/N_S_America.shp"
+  hexagon<-read_sf(shpfname)
+  simulations_sort<-data.table(simulations_sort)
+  seeds<-simulations_sort[continent_id<=1000]
+  seeds<-unique(seeds$global_id)
+  ggplot(hexagon)+geom_sf()+ geom_sf(data=hexagon[which(hexagon$seqnum %in% seeds),], aes(fill=continent))
+}
 environments<-data.table(names=c("tasmin", "tasmax", "pr"), begin_year=1800, end_year=0, step=-1)
 for (i in c(1:ncol(environments))){
   class_col<-class(environments[[i]])
@@ -214,6 +234,6 @@ dbWriteTable(mydb, "tasmax", tasmax, overwrite=T)
 
 dbDisconnect(mydb)
 
-./ees_3d /media/huijieqiao/WD22T_11/continental_movement/Configuration/configuration.sqlite /media/huijieqiao/WD22T_11/continental_movement/Configuration/conf.sqlite /media/huijieqiao/WD22T_11/continental_movement/Results 1 64 1 1 1
+./ees_3d /media/huijieqiao/WD22T_11/GABI/Configuration/configuration.sqlite /media/huijieqiao/WD22T_11/GABI/Configuration/conf.sqlite /media/huijieqiao/WD22T_11/GABI/Results 1 64 1 1 1
 
 

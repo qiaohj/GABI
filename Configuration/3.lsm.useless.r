@@ -2,7 +2,7 @@ library(terra)
 library(ncdf4)
 library(data.table)
 library(ggplot2)
-setwd("/media/huijieqiao/WD22T_11/continental_movement/Script")
+setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 if (F){
   continents<-read_sf("../Data/Shape/continents/continent.shp")
   america<-continents[which(continents$id %in% c(2, 5)),]

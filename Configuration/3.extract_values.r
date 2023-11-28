@@ -2,7 +2,7 @@ library(terra)
 library(ggplot2)
 library(data.table)
 library(ncdf4)
-setwd("/media/huijieqiao/WD22T_11/continental_movement/Script")
+setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 all_age<-readRDS("../Data/meta_table.rda")
 
 vars<-c("precipmon_av", "tempmonmax_abs", "tempmonmin_abs")

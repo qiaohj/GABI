@@ -3,7 +3,7 @@ library(sf)
 library(RSQLite)
 library(DBI)
 
-setwd("/media/huijieqiao/WD22T_11/continental_movement/Script")
+setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 #for north and south america only.
 label<-"N_S_America"
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
@@ -30,7 +30,7 @@ library(sf)
 library(RSQLite)
 library(DBI)
 
-setwd("/media/huijieqiao/WD22T_11/continental_movement/Script")
+setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 label<-"World"
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration_continent.sqlite")
 pr<-data.table(dbReadTable(conn, "pr"))

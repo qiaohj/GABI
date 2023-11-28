@@ -1,7 +1,7 @@
 library(terra)
 library(ncdf4)
 library(data.table)
-setwd("/media/huijieqiao/WD22T_11/continental_movement/Script")
+setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 all_age<-readRDS("../Data/meta_table.rda")
 variables<-unique(all_age[group=="variable", c("label", "name", "folder", "file", "age")])
 
