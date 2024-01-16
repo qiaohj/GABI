@@ -12,7 +12,7 @@ for (f in folders){
   files<-list.files(f)
   #print(length(files))
   if (length(files)<4){
-    
+    print(files)
     unlink(f, recursive=T)
     
   }

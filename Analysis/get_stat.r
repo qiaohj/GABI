@@ -19,7 +19,7 @@ for (f in folders){
   files<-list.files(f)
   #print(length(files))
   if (length(files)>=4){
-    print(f)
+    print(paste(f, length(folders)))
     target<-sprintf("%s/stat.rda", f)
     if (file.exists(target)){
       next()
@@ -40,16 +40,23 @@ for (f in folders){
 }
 
 if (F){
+  library(data.table)
+  library(sf)
+  library(RSQLite)
+  library(DBI)
+  library(ggplot2)
+  setwd("/media/huijieqiao/WD22T_11/GABI/Script")
+  target<-"/media/huijieqiao/WD22T_11/GABI/Results"
   #merge data table
   conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
   simulations<-data.table(dbReadTable(conn, "simulations"))
   dbDisconnect(conn)
-  simulations_sub<-simulations[continent_id<=100 & species_id<=100]
+  simulations_sub<-simulations[continent_id<=1000 & species_id<=100]
   ns<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
   ns<-data.table(ns)
   ns$geometry<-NULL
   all_df<-list()
-  for (i in c(1:nrow(simulations_sub))){
+  for (i in c(217778:nrow(simulations_sub))){
     print(paste(i, nrow(simulations_sub)))
     item<-simulations_sub[i]
     target<-sprintf("/media/huijieqiao/WD22T_11/GABI/Results/%d/%s/stat.rda", 
@@ -67,5 +74,5 @@ if (F){
     all_df[[i]]<-df
   }
   all_dfx<-rbindlist(all_df)
-  saveRDS(all_dfx, "../Data/Tables/100.100.rda")
+  saveRDS(all_dfx, "../Data/Tables/c1000.s100.rda")
 }
