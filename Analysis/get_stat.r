@@ -14,7 +14,7 @@ folders<-folders[sample(length(folders), length(folders))]
 for (f in folders){
   if (!grepl("GOOD", f) & !grepl("POOR", f)){
     next()
-  }
+  } 
   
   files<-list.files(f)
   #print(length(files))
