@@ -344,7 +344,7 @@ if (F){
   all_v_last_df$lat<-coord$Y
   
   all_v_last_df<-all_v_last_df[which(all_v_last_df$lon>(-160)),]
-  
+ 
   hexagonxx<-merge(hexagon, all_v_last_df[which(all_v_last_df$var=="pr"),], by="seqnum")
   hexagonxx<-hexagonxx[which(!(hexagonxx$seqnum %in% c(32634, 62227, 62388, 62790, 
                                                       63031, 63272))),]

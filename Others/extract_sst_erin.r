@@ -6,7 +6,7 @@ all_age<-readRDS("../Data/meta_table.rda")
 variables<-unique(all_age[group=="variable", c("label", "name", "folder", "file", "age")])
 View(all_age[grepl("pf", file)])
 View(all_age[grepl("pf", name) & label=="tEVT0"])
-
+all_age[name=="temp_ym_dpth" & label=="tEVT0"]
 
 fff<-"pgclann_SST_Salinity_MLD"
 targets_vars<-variables[grepl(fff, file)]

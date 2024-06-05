@@ -7,7 +7,7 @@ all_age<-readRDS("../Data/3600Ma_simulations_ocean/meta_table.rda")
 variables<-unique(all_age[group=="variable", c("label", "name", "folder", "file", "age")])
 View(all_age[grepl("pf", file)])
 View(all_age[grepl("pf", name) & label=="tEVT0"])
-
+all_age[name=="temp_mm_dpth" & label=="tEVT0"]
 
 fff<-"ocean"
 targets_vars<-variables

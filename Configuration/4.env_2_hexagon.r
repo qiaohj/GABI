@@ -69,6 +69,8 @@ hexagon_ns_raw<-hexagon_ns_raw[which(hexagon_ns_raw$continent!="World"),]
 hexagon_ns_raw[which(hexagon_ns_raw$seqnum %in% c(9004, 9086, 9168)), ]$continent<-"South America"
 
 bridges<-read_sf("../Data/Shape/bridges/bridges.shp")
+plot(america_items$geometry)
+plot(bridges$geometry, fill="red", add=T)
 bridge_index<-st_intersects(bridges, hexagon_ns_raw)
 for (i in c(1:length(bridge_index))){
   bridge_item<-bridges[i,]
@@ -92,7 +94,8 @@ table(hexagon_ns_raw$continent)
 
 hexagon_ns_raw<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
 hexagon_ns_raw<-hexagon_ns_raw[which(!hexagon_ns_raw$seqnum %in% 
-                                       c(7292, 7946,8027,8026,8108,7942,33048,33292,33373,33454,33045,33126,33289,33452,33534)),]
+                                       c(7292, 7946,8027,8026,8108,7942,33048,33292,33373,33454,
+                                         33045,33126,33289,33452,33534)),]
 write_sf(hexagon_ns_raw, "../Data/Shape/isea3h8/N_S_America.shp")
 
 hexagon<-read_sf(shpfname)
@@ -230,7 +233,7 @@ dist<-data.table(dbReadTable(conn, "distances"))
 dbDisconnect(conn)
 
 #before 3.1My 
-pr_item<-pr[year==3600]
+pr_item<-pr[year==1800]
 hexagon_pr<-merge(hexagon, pr_item, by.x="seqnum", by.y="global_id")
 ggplot(hexagon_pr)+
   geom_sf(aes(fill=v))
