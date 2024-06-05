@@ -213,6 +213,6 @@ if (F){
   
   dbDisconnect(mydb)
 }
-./ees_3d /media/huijieqiao/WD22T_11/GABI/Configuration/configuration.sqlite /media/huijieqiao/WD22T_11/GABI/Configuration/conf.sqlite /media/huijieqiao/WD22T_11/GABI/Results 8496321 64 1 0 0
+./ees_3d /media/huijieqiao/WD22T_11/GABI/Configuration/configuration.sqlite /media/huijieqiao/WD22T_11/GABI/Configuration/conf.sqlite /media/huijieqiao/WD22T_11/GABI/Results -1 64 0 0 0
 
 9984596
