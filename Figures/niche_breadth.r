@@ -6,14 +6,18 @@ nb_df$breadth_quantile<-nb_df$q99 - nb_df$q01
 nb_df$breadth_minmax<-nb_df$max - nb_df$min
 hist(nb_df$breadth_quantile)
 
-quantiles_pr_quantile<-quantile(nb_df[var=="pr"]$breadth_quantile, c(0.25, 0.5, 0.75))
-quantiles_pr_minmax<-quantile(nb_df[var=="pr"]$breadth_minmax, c(0.25, 0.5, 0.75))
+quantiles_pr_quantile<-quantile(nb_df[var=="pr"]$breadth_quantile, 
+                                c(0, 0.01, 0.1, 0.25, 0.5, 0.75, 0.90, 0.99, 1))
+quantiles_pr_minmax<-quantile(nb_df[var=="pr"]$breadth_minmax, 
+                              c(0, 0.01, 0.1, 0.25, 0.5, 0.75, 0.90, 0.99, 1))
 
 tasmax<-nb_df[var=="tasmax"]
 tasmin<-nb_df[var=="tasmin"]
 tas<-merge(tasmax, tasmin, by=c("species"))
-quantiles_tas_quantile<-quantile(tas$q99.x - tas$q01.y, c(0.25, 0.5, 0.75))
-quantiles_tas_minmax<-quantile(tas$max.x - tas$min.y, c(0.25, 0.5, 0.75))
+quantiles_tas_quantile<-quantile(tas$q99.x - tas$q01.y, 
+                                 c(0, 0.01, 0.1, 0.25, 0.5, 0.75, 0.90, 0.99, 1))
+quantiles_tas_minmax<-quantile(tas$max.x - tas$min.y, 
+                               c(0, 0.01, 0.1, 0.25, 0.5, 0.75, 0.90, 0.99, 1))
 
 plot(tas$max.x - tas$min.y, nb_df[var=="pr"]$breadth_minmax)
 nb_list<-data.table(nb=c(nb_df[var=="pr"]$breadth_minmax, tas$max.x - tas$min.y),
@@ -26,9 +30,13 @@ pr<-ceiling(quantiles_pr_minmax)
 t<-ceiling(quantiles_tas_minmax)
 
 saveRDS(list(pr=pr, t=t), "../Data/nb.rda")
-lines<-data.table(v=c(pr, t), type=c(rep("pr", 3), rep("tas", 3)))
+lines<-data.table(v=c(pr, t), type=c(rep("pr", length(pr)), rep("tas", length(pr))))
 ggplot(nb_list)+
   geom_histogram(aes(x=nb), bins=50)+
   geom_vline(data=lines, aes(xintercept = v), linetype=2)+
   scale_x_log10()+
   facet_wrap(~type, nrow=1, scale="free")
+
+
+
+

@@ -3,7 +3,8 @@ library(ggplot2)
 library(sf)
 setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 
-df<-readRDS("../Data/Tables/c1000.s100.rda")
+t_folder<-"500k.speciation.years"
+df<-readRDS(sprintf("../Data/Tables/%s/c100.virtual.species.rda", t_folder))
 
 #df$label<-sprintf("%s_%s_%s", df$global_id, df$sp_id, df$da)
 
@@ -72,7 +73,7 @@ table(result_df$xx)
 result_df[is.na(min_year)]$min_year<-1800
 xx<-result_df[, .(N=.N), by=list(continent, status)]
 setorderv(xx, c("status", "continent"))
-saveRDS(result_df, "../Data/Tables/dispersal_result.rda")
+saveRDS(result_df, sprintf("../Data/Tables/%s/dispersal_result.rda", t_folder))
 
 #North to South: 334
 dim(result_df[init_n==1 & middle_s==1])

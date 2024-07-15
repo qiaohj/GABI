@@ -34,7 +34,7 @@ seeds<-data.table(global_id=mask_seeds$seqnum,
                   lon=mask_seeds$lon,
                   lat=mask_seeds$lat,
                   continent=mask_seeds$continent)
-seeds<-seeds[between(lat, -40, 40)]
+seeds<-seeds[between(lat, -45, 45)]
 seeds<-seeds[,.SD[sample(.N, .N)],by = continent]
 
 
@@ -55,8 +55,8 @@ seeds_v<-merge(seeds, pr, by=c("global_id"))
 seeds_v<-merge(seeds_v, tasmin, by=c("global_id"))
 seeds_v<-merge(seeds_v, tasmax, by=c("global_id"))
 
-nb_pr<-nb$pr
-nb_tm<-nb$t
+nb_pr<-nb$pr[c(5, 6, 8)]
+nb_tm<-nb$t[c(5, 6, 8)]
 
 
 i=1
