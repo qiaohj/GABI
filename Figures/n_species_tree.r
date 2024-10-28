@@ -6,12 +6,14 @@ library(data.table)
 library(ggpubr)
 library(ggrepel)
 setwd("/media/huijieqiao/WD22T_11/GABI/Script")
-t_folder<-"500k.speciation.years"
+t_folder<-"500k.NB_BROAD.speciation.years"
 dispersal_result<-readRDS(sprintf("../Data/Tables/%s/dispersal_result.rda", t_folder))
 extinct<-c("Extinct after isthmus", "Extinct before isthmus", "Extinct immediately")
 extant<-c("Extant")
 
 N.Speciation.Extinction<-readRDS(sprintf("../Data/Tables/%s/N.Speciation.Extinction.rda", t_folder))
+table(N.Speciation.Extinction[year==0]$N_SPECIATION)
+N.Speciation.Extinction[N_SPECIATION>=50]
 table(dispersal_result$status)
 S_N_Extant<-dispersal_result[continent=="South America" & 
                                status %in% extant &
