@@ -3,7 +3,7 @@ library(ggplot2)
 library(sf)
 setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 
-t_folder<-"500k.speciation.years"
+t_folder<-"500k.NB_BROAD.speciation.years/"
 df<-readRDS(sprintf("../Data/Tables/%s/c100.virtual.species.rda", t_folder))
 
 #df$label<-sprintf("%s_%s_%s", df$global_id, df$sp_id, df$da)

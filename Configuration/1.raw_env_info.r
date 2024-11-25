@@ -55,3 +55,7 @@ all$label<-gsub("../Data/3600Ma_simulations/", "", all$folder)
 all_age<-merge(all, year_labels, by="label")
 fwrite(all_age, "../Data/meta_table.csv")
 saveRDS(all_age, "../Data/meta_table.rda")
+all_age<-readRDS("../Data/meta_table.rda")
+
+
+all_age[att=="long_name" & age==1872]$comment
