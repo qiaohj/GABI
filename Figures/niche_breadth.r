@@ -1,6 +1,7 @@
 library(data.table)
 setwd("/media/huijieqiao/WD22T_11/GABI/Script")
-nb_df<-readRDS(sprintf("../Data/IUCN_NB/%s/Mammals.rda", "N_S_America"))
+nb_df<-readRDS(sprintf("../Data/IUCN_NB/%s/Mammals.rda", "World"))
+length(unique(nb_df$species))
 nb_df<-nb_df[N_CELLS>1]
 nb_df$breadth_quantile<-nb_df$q99 - nb_df$q01
 nb_df$breadth_minmax<-nb_df$max - nb_df$min

@@ -16,20 +16,9 @@ all_v<-rbindlist(list(pr, tasmax, tasmin))
 all_v_first<-all_v[year==1800]
 #nb_df<-readRDS(sprintf("../Data/IUCN_NB/%s/Mammals.rda", "N_S_America"))
 #length(unique(nb_df$species))
-if (F) {
-  tb<-readRDS("../Data/nb_range_mammals_iucn.rda")
-  nb<-list(pr=ceiling(tb[var=="pr" & type=="3sd"]$v),
-           t=ceiling(tb[var=="tm" & type=="3sd"]$v))
-  names(nb$pr)<-sprintf("%d%%", round(tb[var=="pr" & type=="3sd"]$quantile * 100))
-  names(nb$t)<-names(nb$pr)
-  saveRDS(nb, "../Data/nb.rda")
-}
-
-
 nb<-readRDS("../Data/nb.rda")
 
-nb_pr<-nb$pr[c(1, 2, 3, 14)]
-nb_tm<-nb$t[c(1, 2, 3, 14)]
+nb
 
 shpfname = "../Data/Shape/isea3h8/N_S_America.shp"
 hexagon<-read_sf(shpfname)
@@ -46,9 +35,9 @@ seeds<-data.table(global_id=mask_seeds$seqnum,
                   lon=mask_seeds$lon,
                   lat=mask_seeds$lat,
                   continent=mask_seeds$continent)
-#seeds<-seeds[between(lat, -45, 45)]
+seeds<-seeds[between(lat, -45, 45)]
 seeds<-seeds[,.SD[sample(.N, .N)],by = continent]
-table(seeds$continent)
+
 
 seeds$continent_id<-c(c(1:nrow(seeds[continent=="North America"])),
                       c(1:nrow(seeds[continent=="South America"])))
@@ -67,14 +56,14 @@ seeds_v<-merge(seeds, pr, by=c("global_id"))
 seeds_v<-merge(seeds_v, tasmin, by=c("global_id"))
 seeds_v<-merge(seeds_v, tasmax, by=c("global_id"))
 
-
+nb_pr<-nb$pr[c(5, 6, 8)]
+nb_tm<-nb$t[c(5, 6, 8)]
 
 
 i=1
-nb_labels<-c("NARROW", "MODERATE", "BROAD", "HUGE")
+nb_labels<-c("NARROW", "MODERATE", "BROAD")
 
-#nb_list<-data.table(expand.grid(x=c(1:4), y=c(1:4)))
-nb_list<-data.table(x=c(1:4), y=c(1:4))
+nb_list<-data.table(expand.grid(x=c(1:3), y=c(1:3)))
 
 simulations<-list()
 for (i in c(1:nrow(seeds_v))){
@@ -116,7 +105,7 @@ for (i in c(1:nrow(seeds_v))){
     sim_item_all$dispersal_speed<-1
     sim_item_all$dispersal_method<-2
     sim_item_all$number_of_path<--1
-    sim_item_all$speciation_years<-100
+    sim_item_all$speciation_years<-250
     sim_item_all$species_extinction_threshold<-0
     sim_item_all$species_extinction_time_steps<-1
     sim_item_all$species_extinction_threahold_percentage<-1
@@ -142,10 +131,9 @@ for (i in c(1:nrow(seeds_v))){
 }
 simulations<-rbindlist(simulations)
 simulations$id<-c(1:nrow(simulations))
-#simulations$speciation_years<-100
 simulations$random_index<-simulations[sample(nrow(simulations), nrow(simulations))]$id
 timeline<-data.table(from=1800, to=0, step=-1)
-dim(simulations)
+
 for (i in c(1:ncol(simulations))){
   class_col<-class(simulations[[i]])
   print(class_col)
@@ -169,6 +157,7 @@ cols<-readRDS("../Configuration/conf.colnames.rda")
 
 simulations<-simulations[, ..cols]
 
+
 base_db<-"../Configuration/conf.sqlite"
 mydb <- dbConnect(RSQLite::SQLite(), base_db)
 dbWriteTable(mydb, "simulations", simulations, overwrite=T)
@@ -181,14 +170,12 @@ if (F){
   hexagon<-read_sf(shpfname)
   simulations<-data.table(simulations)
   seeds<-simulations[continent_id<=100]
-  seeds<-simulations
   seeds<-unique(seeds$global_id)
   ggplot(hexagon)+geom_sf()+ geom_sf(data=hexagon[which(hexagon$seqnum %in% seeds),], aes(fill=continent))
 }
 
 if (F){
-  environments<-data.table(names=c("tasmin", "tasmax", "pr"), 
-                           begin_year=1800, end_year=0, step=-1)
+  environments<-data.table(names=c("tasmin", "tasmax", "pr"), begin_year=1800, end_year=0, step=-1)
   for (i in c(1:ncol(environments))){
     class_col<-class(environments[[i]])
     print(class_col)
