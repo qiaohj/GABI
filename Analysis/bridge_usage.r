@@ -3,8 +3,8 @@ library(ggplot2)
 library(sf)
 setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 
-t_folder<-"500k.NB_BROAD.speciation.years/"
-df<-readRDS(sprintf("../Data/Tables/%s/c100.virtual.species.rda", t_folder))
+t_folder<-"100k.speciation.years/"
+df<-readRDS(sprintf("../Data/Tables/%s/virtual.species.rda", t_folder))
 
 #df$label<-sprintf("%s_%s_%s", df$global_id, df$sp_id, df$da)
 
@@ -75,14 +75,14 @@ xx<-result_df[, .(N=.N), by=list(continent, status)]
 setorderv(xx, c("status", "continent"))
 saveRDS(result_df, sprintf("../Data/Tables/%s/dispersal_result.rda", t_folder))
 
-#North to South: 334
+#North to South: 11996
 dim(result_df[init_n==1 & middle_s==1])
-#North to South to the end: 320
+#North to South to the end: 11953
 dim(result_df[init_n==1 & final_s==1])
 
-#Sorth to Nouth: 2787
+#Sorth to Nouth: 14864
 dim(result_df[init_s==1 & middle_n==1])
-#Sorth to Nouth to the end: 2428
+#Sorth to Nouth to the end: 14765
 dim(result_df[init_s==1 & final_n==1])
 
 result_df[, .(N=.N), by=c("init_s", "init_n", "status")]

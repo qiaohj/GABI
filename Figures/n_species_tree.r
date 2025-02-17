@@ -6,7 +6,7 @@ library(data.table)
 library(ggpubr)
 library(ggrepel)
 setwd("/media/huijieqiao/WD22T_11/GABI/Script")
-t_folder<-"500k.NB_BROAD.speciation.years"
+t_folder<-"100k.speciation.years"
 dispersal_result<-readRDS(sprintf("../Data/Tables/%s/dispersal_result.rda", t_folder))
 extinct<-c("Extinct after isthmus", "Extinct before isthmus", "Extinct immediately")
 extant<-c("Extant")

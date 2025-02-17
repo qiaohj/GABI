@@ -21,7 +21,7 @@ mydb <- dbConnect(RSQLite::SQLite(), base_db)
 simulations<-dbReadTable(mydb, "simulations")
 dbDisconnect(mydb)
 simulations<-data.table(simulations)
-simulations<-simulations[continent_id<=100]
+#simulations<-simulations[continent_id<=100]
 
 i=233
 
@@ -59,7 +59,7 @@ for (i in c(1:nrow(all_df))){
   
   if (file.exists(ttt)){
     print("skip")
-    next()
+    #next()
     size<-file.size(ttt)
     if (size>100){
       
@@ -73,18 +73,27 @@ for (i in c(1:nrow(all_df))){
   
   log<-sprintf("%s/%s/%s.sqlite", base, sp, sp)
   
-  
+  if (F){
+    ddd<-sprintf("%s/%s/%s.log", base, sp, sp)
+    dff<-fread(ddd)
+    colnames(dff)<-c("year", "global_id", "group_id", "n", "sp_id", "suitable")
+    dff<-dff[suitable==1]
+    unique(dff$sp_id)
+  }
   
   saveRDS(NULL, ttt)
   
   mydb <- dbConnect(RSQLite::SQLite(), log)
   trees<-dbReadTable(mydb, "trees")
   dbDisconnect(mydb)
-  
-  text.string<-trees[1,2]
-  text.string<-gsub("\\]", "#", gsub("\\[", "#", text.string))
-  if (!grepl("\\(", text.string)){
-    text.string<-sprintf("(a:0)%s", text.string)
+  if (nrow(trees)==0){
+    text.string<-sprintf("SP%d @ 1799-0:1799;", item$global_id)
+  }else{
+    text.string<-trees[1,2]
+    text.string<-gsub("\\]", "#", gsub("\\[", "#", text.string))
+    if (!grepl("\\(", text.string)){
+      text.string<-sprintf("(a:0)%s", text.string)
+    }
   }
   vert.tree<-read.tree(text=text.string)
   #plot(vert.tree)
@@ -158,5 +167,5 @@ if (F){
     df_full[[i]]<-df
   }
   df_full<-rbindlist(df_full)
-  saveRDS(df_full, "../Data/Tables/500k.speciation.years/N.Speciation.Extinction.rda")
+  saveRDS(df_full, "../Data/Tables/100k.speciation.years/N.Speciation.Extinction.rda")
 }
