@@ -53,6 +53,7 @@ table(seeds$continent)
 seeds$continent_id<-c(c(1:nrow(seeds[continent=="North America"])),
                       c(1:nrow(seeds[continent=="South America"])))
 
+saveRDS(seeds, "../Data/seeds.rda")
 if (F){
   ggplot(seeds)+geom_point(aes(x=lon, y=lat, color=continent))
   ggplot(seeds[continent_id<=100])+geom_point(aes(x=lon, y=lat, color=continent))
