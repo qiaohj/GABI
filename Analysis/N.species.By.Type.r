@@ -14,16 +14,18 @@ if (F){
   table(sp$continent)
   sp$Parent<-sub("-[^-]*$", "", sp$sp_id)
   sp<-sp[nb!="HUGE-HUGE"]
+  sp[sp_id==Parent, Parent:=""]
   head(sp)
   
-  
   species.type.N<-readRDS("../Data/Tables/100k.speciation.years/species.type.N.rda")
-  
-  species.type.N[sp_id=="13011-2"]
-  
+  species.type.N$sp_id<-as.character(species.type.N$sp_id)
+  species.type.N$Parent<-as.character(species.type.N$Parent)
+  species.type.N[sp_id==Parent, Parent:=""]
+
   seeds.all<-readRDS("../Data/Tables/100k.speciation.years/random.seeds.rda")
   
   colnames(species.type.N)[c(8, 12)]<-c("origin_continent", "seed_continent")
+  
   species.type<-species.type.N[, c("sp_id", "NB", "DA", "from", "to", "type",
                                    "origin_continent", "seed_continent")]
   species.type<-species.type[NB!="HUGE-HUGE"]
@@ -35,19 +37,32 @@ if (F){
   sp_full<-merge(sp, species.type, by=c("sp_id", "NB", "DA"))
   colnames(sp_full)[5]<-"current_continent"
   sp_full$year<-sp_full$year * -1
-  #sp_full<-sp_full[current_continent %in% c("South America", "North America")]
   
-  sp_full.N<-sp_full[,.(N=length(unique(current_continent))), 
-                     by=list(year, sp_id, NB, DA, seed_id, Parent, 
+  sp_full.N<-sp_full[, .(N=uniqueN(current_continent)), 
+                     by=.(year, sp_id, NB, DA, seed_id, Parent, 
                              from, to, origin_continent, seed_continent)]
-  #one continent
-  one_continent <- merge(sp_full.N[N==1], sp_full, 
-                         by=c("sp_id", "NB", "DA", "year", "Parent", 
-                              "from", "to", "origin_continent", "seed_continent"))
-  sp_full.N<-merge(sp_full.N, one_continent[, c("year", "sp_id", "NB", "DA", "current_continent")],
-                   by=c("year", "sp_id", "NB", "DA"), all.x=T)
-  sp_full.N[is.na(current_continent), current_continent:="Two continents"]
+  sp_full$species.label.year<-sprintf("%s.%s.%s.%d", sp_full$sp_id,
+                                 sp_full$NB, sp_full$DA, sp_full$year)
+  sp_full.N$species.label.year<-sprintf("%s.%s.%s.%d", sp_full.N$sp_id,
+                                   sp_full.N$NB, sp_full.N$DA, sp_full.N$year)
+  sp_full.N$current_continent<-""
+  bridge1.labels<-unique(sp_full[current_continent=="bridge1"]$species.label.year)
+  bridge2.labels<-unique(sp_full[current_continent=="bridge2"]$species.label.year)
+  sa.labels<-unique(sp_full[current_continent=="South America"]$species.label.year)
+  na.labels<-unique(sp_full[current_continent=="North America"]$species.label.year)
+  
+  sp_full.N[species.label.year %in% bridge1.labels,
+            current_continent:="bridge1"]
+  sp_full.N[species.label.year %in% bridge2.labels,
+            current_continent:="bridge2"]
+  sp_full.N[species.label.year %in% sa.labels,
+            current_continent:="South America"]
+  sp_full.N[species.label.year %in% na.labels,
+            current_continent:="North America"]
+  sp_full.N[species.label.year %in% sa.labels & species.label.year %in% na.labels,
+            current_continent:="Two continents"]
   table(sp_full.N$current_continent)
+  sp_full.N[current_continent=="bridge1"]
   
   sp_prev<-sp_full.N[, c("current_continent", "sp_id", "NB", "DA", "year")]
   sp_prev$year<-sp_prev$year+1
@@ -55,6 +70,11 @@ if (F){
   colnames(sp_prev)[1]<-"previous_continent"
   
   sp_full_continents<-merge(sp_full.N, sp_prev, by=c("sp_id", "NB", "DA", "year"), all=T)
+  sp_full_continents.bak<-sp_full_continents
+  #sp_full_continents[year>0]
+  
+  sp_full_continents<-sp_full_continents[year<=0]
+  
   sp_full_continents[is.na(previous_continent), previous_continent:="Unknown"]
   sp_full_continents[is.na(current_continent), current_continent:="Unknown"]
   
@@ -77,7 +97,6 @@ if (F){
   sp_full_continents[is.na(parent_continent), parent_continent:=""]
   
   
-  sp_full_continents<-sp_full_continents[year<=0]
   
   sp_full_extinct<-sp_full_continents[current_continent=="Unknown"]
   sp_full_extinct<-sp_full_extinct[!sp_id %in% sp_full_continents$Parent]
@@ -97,10 +116,16 @@ if (F){
   
   sp_full_continents<-sp_full_continents[current_continent!="Unknown"]
   sp_full_continents<-rbindlist(list(sp_full_continents, sp_full_extinct), use.names=T)
-  
+  sp_full_continents[parent_continent=="Unknown" & year-from==1, parent_continent:=""]
   #sp_full_continents[type=="Speciation" & is.na(parent_continent)]
   
-  sp_full_continents[previous_continent=="Unknown" & current_continent=="South America" & is.na(parent_continent)]
+  #sp_full_continents[previous_continent=="North America" & current_continent=="North America" & parent_continent=="Unknown"]
+  sp_full_continents[species.label=="10046-2-1.MODERATE-MODERATE.POOR"]
+  
+  sp_full_continents$type<-""
+  sp_full_continents$gain.continent<-""
+  sp_full_continents$loss.continent<-""
+  
   combinations<-sp_full_continents[, .(N=.N), 
                                    by=list(parent_continent, previous_continent,
                                            current_continent, type, gain.continent,
@@ -108,14 +133,6 @@ if (F){
   setorderv(combinations, c("previous_continent", "current_continent", "parent_continent"))
   fwrite(combinations, 
          "../Data/full.combination.csv")
-  
-  event.N<-sp_full_continents[,.(N=.N), by=list(parent_continent, previous_continent, current_continent, type)]
-  fwrite(event.N, 
-         "../Data/full.event.N.csv")
-  
-  sp_full_continents$type<-""
-  sp_full_continents$gain.continent<-""
-  sp_full_continents$loss.continent<-""
   
   ##Detect the type of species
   combinations<-fread( "../Data/full.combination.csv")
@@ -133,7 +150,9 @@ if (F){
                             loss.continent=com$loss.continent)]
     
   }
-  
+  event.N<-sp_full_continents[,.(N=.N), by=list(parent_continent, previous_continent, current_continent, type)]
+  fwrite(event.N, 
+         "../Data/full.event.N.csv")
   table(sp_full_continents$type)
   
   sp_full_continents$south.america<-0
@@ -162,13 +181,13 @@ seeds.all<-readRDS("../Data/Tables/100k.speciation.years/random.seeds.rda")
 rrrr<-1
 delta_Species.all<-list()
 type_N.all<-list()
-for (rrrr in c(1:1)){
+for (rrrr in c(1:10)){
   print(rrrr)
   seeds<-seeds.all[rep==rrrr]
   sp_filter<-sp_full_continents[label %in% seeds$label]
-  xxx<-sp_filter[, .(N=.N), by=list(NB, type, year, origin_continent)]
-  setorderv(xxx, c("NB", "year"))
-  View(xxx[type=="New.Immigrants"])
+  #xxx<-sp_filter[, .(N=.N), by=list(NB, type, year, origin_continent)]
+  #setorderv(xxx, c("NB", "year"))
+  #View(xxx[type=="New.Immigrants"])
   
   y=-500
   for (y in c(-1800:0)){
@@ -178,12 +197,12 @@ for (rrrr in c(1:1)){
     delta_Species<-item[, .(south.america=sum(south.america),
                             north.america=sum(north.america),
                             year=y, rep=rrrr), 
-                        by=list(NB, origin_continent)]
+                        by=list(NB, seed_continent)]
     
     type_N<-item[, .(south.america=sum(south.america),
                      north.america=sum(north.america),
                      year=y, rep=rrrr), 
-                 by=list(NB, type, origin_continent)]
+                 by=list(NB, type, seed_continent)]
     delta_Species.all[[length(delta_Species.all)+1]]<-delta_Species
     type_N.all[[length(type_N.all)+1]]<-type_N
   }

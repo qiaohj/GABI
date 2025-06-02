@@ -13,7 +13,7 @@ library(tidyverse)
 
 setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 #source("commons/functions.r")
-setDTthreads(1)
+setDTthreads(24)
 print(sprintf("Number of core(s) is(are) %d.", getDTthreads()))
 
 base_db<-"../Configuration/conf.sqlite"
