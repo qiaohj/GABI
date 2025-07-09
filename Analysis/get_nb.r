@@ -4,11 +4,11 @@ library(RSQLite)
 library(DBI)
 library(ggplot2)
 library(ggh4x)
-setwd("/media/huijieqiao/WD22T_11/GABI/Script")
-target<-"/media/huijieqiao/WD22T_11/GABI/Results"
+setwd("/media/huijieqiao/Butterfly/GABI/GABI")
+target<-"/media/huijieqiao/Butterfly/GABI/Results"
 folders<-list.dirs(target, full.names=T)
 length(folders)
-ns<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
+ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
 ns<-data.table(ns)
 ns$geometry<-NULL
 folders<-folders[sample(length(folders), length(folders))]
@@ -29,7 +29,7 @@ colnames(tasmin)[2]<-"tasmin"
 envs<-merge(merge(pr, tasmax, by=c("global_id", "year")),
             tasmin, by=c("global_id", "year"))
 i=36084
-for (i in c(2:length(folders))){
+for (i in c(1:length(folders))){
   f<-folders[i]
   files<-list.files(f)
   #print(length(files))
@@ -59,7 +59,7 @@ for (i in c(2:length(folders))){
     nb$pr<-nb$max_pr - nb$min_pr
     nb$tas<-nb$max_tas - nb$min_tas
     if (F){
-      nb<-readRDS("/media/huijieqiao/WD22T_11/GABI/Results/40435.MODERATE-MODERATE.GOOD/nb.rda")
+      nb<-readRDS("/media/huijieqiao/Butterfly/GABI/Results/40435.MODERATE-MODERATE.GOOD/nb.rda")
       ggplot(nb)+geom_line(aes(x=year*-2, y=pr, color=sp_id))+
         theme(legend.position = "none")
       ggplot(nb[year %in% c(1800, 1000, 500, 0)])+geom_histogram(aes(x=tas))+
@@ -72,7 +72,7 @@ for (i in c(2:length(folders))){
 }
 
 if (F){
-  target<-"/media/huijieqiao/WD22T_11/GABI/Results"
+  target<-"/media/huijieqiao/Butterfly/GABI/Results"
   folders<-list.dirs(target, full.names=T)
   nblist<-list()
   for (i in c(2:length(folders))){

@@ -1,8 +1,7 @@
 library(data.table)
 library(ggh4x)
 library(ggplot2)
-setwd("/media/huijieqiao/WD22T_11/GABI/GABI")
-
+setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 if (F){
   delta_Species<-readRDS("../Data/Tables/100k.speciation.years/delta_Species.rda")
   type_N<-readRDS("../Data/Tables/100k.speciation.years/type_N.rda")

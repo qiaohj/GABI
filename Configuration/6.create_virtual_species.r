@@ -3,7 +3,7 @@ library(sf)
 library(RSQLite)
 library(DBI)
 library(ggplot2)
-setwd("/media/huijieqiao/WD22T_11/GABI/Script")
+setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
 pr<-data.table(dbReadTable(conn, "pr"))
 tasmax<-data.table(dbReadTable(conn, "tasmax"))
@@ -28,10 +28,10 @@ if (F) {
 
 nb<-readRDS("../Data/nb.rda")
 
-nb_pr<-nb$pr[c(1, 2, 3, 14)]
-nb_tm<-nb$t[c(1, 2, 3, 14)]
+nb_pr<-nb$pr[c(1, 2, 3, 13)]
+nb_tm<-nb$t[c(1, 2, 3, 13)]
 
-shpfname = "../Data/Shape/isea3h8/N_S_America.shp"
+shpfname = "../Shape/isea3h8/N_S_America.shp"
 hexagon<-read_sf(shpfname)
 table(hexagon$continent)
 ggplot(hexagon)+geom_sf(aes(fill=continent))
@@ -72,7 +72,7 @@ seeds_v<-merge(seeds_v, tasmax, by=c("global_id"))
 
 
 i=1
-nb_labels<-c("NARROW", "MODERATE", "BROAD", "HUGE")
+nb_labels<-c("NARROW", "MODERATE", "BROAD", "BIG")
 
 #nb_list<-data.table(expand.grid(x=c(1:4), y=c(1:4)))
 nb_list<-data.table(x=c(1:4), y=c(1:4))
@@ -228,6 +228,6 @@ if (F){
   
   dbDisconnect(mydb)
 }
-./ees_3d /media/huijieqiao/WD22T_11/GABI/Configuration/configuration.sqlite /media/huijieqiao/WD22T_11/GABI/Configuration/conf.sqlite /media/huijieqiao/WD22T_11/GABI/Results -1 64 0 0 0
+./ees_3d /media/huijieqiao/Butterfly/GABI/Configuration/configuration.sqlite /media/huijieqiao/Butterfly/GABI/Configuration/conf.sqlite /media/huijieqiao/Butterfly/GABI/Results -1 64 0 0 0
 
 9984596

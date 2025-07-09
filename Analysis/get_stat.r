@@ -3,11 +3,11 @@ library(sf)
 library(RSQLite)
 library(DBI)
 library(ggplot2)
-setwd("/media/huijieqiao/WD22T_11/GABI/Script")
-target<-"/media/huijieqiao/WD22T_11/GABI/Results"
+setwd("/media/huijieqiao/Butterfly/GABI/GABI")
+target<-"/media/huijieqiao/Butterfly/GABI/Results"
 folders<-list.dirs(target, full.names=T)
 length(folders)
-ns<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
+ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
 ns<-data.table(ns)
 ns$geometry<-NULL
 folders<-folders[sample(length(folders), length(folders))]
@@ -55,15 +55,15 @@ if (F){
   library(RSQLite)
   library(DBI)
   library(ggplot2)
-  setwd("/media/huijieqiao/WD22T_11/GABI/Script")
-  target<-"/media/huijieqiao/WD22T_11/GABI/Results"
+  setwd("/media/huijieqiao/Butterfly/GABI/GABI")
+  target<-"/media/huijieqiao/Butterfly/GABI/Results"
   #merge data table
   conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
   simulations<-data.table(dbReadTable(conn, "simulations"))
   dbDisconnect(conn)
   #simulations_sub<-simulations[continent_id<=100]
   simulations_sub<-simulations
-  ns<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
+  ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
   ns<-data.table(ns)
   ns$geometry<-NULL
   all_df<-list()
@@ -75,7 +75,7 @@ if (F){
   for (i in c(1:nrow(simulations_sub))){
     print(paste(i, nrow(simulations_sub)))
     item<-simulations_sub[i]
-    target<-sprintf("/media/huijieqiao/WD22T_11/GABI/Results/%s/continent_n_cells.rda", 
+    target<-sprintf("/media/huijieqiao/Butterfly/GABI/Results/%s/continent_n_cells.rda", 
                     item$label)
     df<-readRDS(target)
     
@@ -101,7 +101,7 @@ if (F){
     all_df[[i]]<-df
     
     rm(list=c("target", "df", "init_df"))
-    target_div<-sprintf("/media/huijieqiao/WD22T_11/GABI/Results/%s/species.richness.rda", 
+    target_div<-sprintf("/media/huijieqiao/Butterfly/GABI/Results/%s/species.richness.rda", 
                     item$label)
     if (file.exists(target_div)){
       df_div<-readRDS(target_div)

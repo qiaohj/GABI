@@ -2,7 +2,7 @@ library(data.table)
 library(ggplot2)
 library(ggrepel)
 library(ggh4x)
-setwd("/media/huijieqiao/WD22T_11/GABI/GABI")
+setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 
 seeds<-readRDS("../Data/seeds.rda")
 table(seeds[between(lat, -22, 50)]$continent)

@@ -11,9 +11,9 @@ library(tidyverse)
 #library(plotKML)
 #library(ggtree)
 
-setwd("/media/huijieqiao/WD22T_11/GABI/Script")
+setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 #source("commons/functions.r")
-setDTthreads(24)
+setDTthreads(1)
 print(sprintf("Number of core(s) is(are) %d.", getDTthreads()))
 
 base_db<-"../Configuration/conf.sqlite"
@@ -53,18 +53,18 @@ for (i in c(1:nrow(all_df))){
   print(paste(i, nrow(all_df), sp))
   
   
-  base<-"/media/huijieqiao/WD22T_11/GABI/Results"
+  base<-"/media/huijieqiao/Butterfly/GABI/Results"
   
   ttt<-sprintf("%s/%s/%s.N.speciation.extinction.rda", base, sp, sp)
   
   if (file.exists(ttt)){
     print("skip")
-    #next()
+    next()
     size<-file.size(ttt)
     if (size>100){
       
       #print(sprintf("rm -rf %s", ttt))
-      next()
+      #next()
     }
     print("redo")
     #next()
@@ -153,7 +153,7 @@ if (F){
     print(paste(i, nrow(all_df), sp))
     
     
-    base<-"/media/huijieqiao/WD22T_11/GABI/Results"
+    base<-"/media/huijieqiao/Butterfly/GABI/Results"
     
     ttt<-sprintf("%s/%s/%s.N.speciation.extinction.rda", base, sp, sp)
     df<-readRDS(ttt)
