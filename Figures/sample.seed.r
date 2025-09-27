@@ -79,14 +79,19 @@ N_species<-N_species[nb!="HUGE-HUGE"]
 quantiles<-quantile(N_species$N_SPECIES, c(0, 1, 0.99, 0.95, 0.90, 0.999))
 table(N_species[N_SPECIES>quantiles[3]]$continent)
 N_species$seed_label<-paste(N_species$seed_id, N_species$nb, N_species$da)
-outliers<-unique(N_species[N_SPECIES>quantiles[3]]$seed_label)
-outliers_ID<-unique(N_species[N_SPECIES>quantiles[3]]$seed_id)
+outliers<-unique(N_species[N_SPECIES>quantiles[3]])
+
+outliers<-unique(N_species[(N_SPECIES>quantiles[3] & continent=="South America") | 
+                             (N_SPECIES>500 & continent=="North America")])
+
+outliers_ID<-unique(outliers$seed_id)
 unique(N_species$nb)
 #random seeds
 seed_pool<-unique(df_filtered_seeds[!seed_id %in% outliers_ID, c("seed_id", "continent")])
 table(seed_pool$continent)
+table(seed_pool$nb)
 
-coms<-data.table(expand.grid(nb=c("NARROW-NARROW", "MODERATE-MODERATE", "BROAD-BROAD"),
+coms<-data.table(expand.grid(nb=c("NARROW-NARROW", "MODERATE-MODERATE", "BIG-BIG", "BROAD-BROAD"),
                   da=c("GOOD", "POOR")))
 all_ramdom_seeds<-list()
 for (rep in c(1:100)){

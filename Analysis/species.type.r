@@ -8,7 +8,7 @@ library(ape)
 library(phytools)
 library(ggtree)
 library(phangorn)
-setwd("/media/huijieqiao/WD22T_11/GABI/GABI")
+setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 sp<-readRDS("../Data/Tables/100k.speciation.years/virtual.species.rda")
 sp_N<-sp[,.(N=.N), by=list(seed_id, nb, da)]
 sp$Parent<-sub("-[^-]*$", "", sp$sp_id)
@@ -119,11 +119,12 @@ all_N<-rbindlist(all_N)
 all_N[continent=="", continent:=all_N[continent==""]$origin_continent]
 saveRDS(all_N, "../Data/Tables/100k.speciation.years/species.type.N.rda")
 table(all_N$NB)
-all_N_gg<-all_N[NB %in% c("BROAD-BROAD", "MODERATE-MODERATE", "NARROW-NARROW")]
+all_N_gg<-all_N[NB %in% c("BROAD-BROAD", "BIG-BIG", "MODERATE-MODERATE", "NARROW-NARROW")]
 
 p<-ggplot(all_N_gg)+geom_point(aes(x=Extinction, y=Speciation))+
   facet_grid(origin_continent+NB~continent)+
   scale_x_sqrt()+scale_y_sqrt()
+p
 ggsave(p, filename="../Figures/N.Speciation.Extinction.by.species.type.png",
        width=10, height=12)
 

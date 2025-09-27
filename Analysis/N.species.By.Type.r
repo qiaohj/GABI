@@ -8,7 +8,7 @@ library(ape)
 library(phytools)
 library(ggtree)
 library(phangorn)
-setwd("/media/huijieqiao/WD22T_11/GABI/GABI")
+setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 if (F){
   sp<-readRDS("../Data/Tables/100k.speciation.years/virtual.species.rda")
   table(sp$continent)
@@ -25,6 +25,7 @@ if (F){
   seeds.all<-readRDS("../Data/Tables/100k.speciation.years/random.seeds.rda")
   
   colnames(species.type.N)[c(8, 12)]<-c("origin_continent", "seed_continent")
+  species.type.N[origin_continent!=seed_continent]
   
   species.type<-species.type.N[, c("sp_id", "NB", "DA", "from", "to", "type",
                                    "origin_continent", "seed_continent")]
@@ -65,15 +66,18 @@ if (F){
   sp_full.N[current_continent=="bridge1"]
   
   sp_prev<-sp_full.N[, c("current_continent", "sp_id", "NB", "DA", "year")]
+  
   sp_prev$year<-sp_prev$year+1
   
   colnames(sp_prev)[1]<-"previous_continent"
   
   sp_full_continents<-merge(sp_full.N, sp_prev, by=c("sp_id", "NB", "DA", "year"), all=T)
   sp_full_continents.bak<-sp_full_continents
+  
   #sp_full_continents[year>0]
   
   sp_full_continents<-sp_full_continents[year<=0]
+  #sp_full_continents[is.na(seed_id)]
   
   sp_full_continents[is.na(previous_continent), previous_continent:="Unknown"]
   sp_full_continents[is.na(current_continent), current_continent:="Unknown"]
@@ -113,6 +117,7 @@ if (F){
                                         "NB", "DA", "label")])
   
   sp_full_extinct<-merge(sp_full_extinct, sp_raw, by=c("sp_id", "NB", "DA"))
+  sp_full_extinct<-sp_full_extinct[!is.na(seed_id)]
   
   sp_full_continents<-sp_full_continents[current_continent!="Unknown"]
   sp_full_continents<-rbindlist(list(sp_full_continents, sp_full_extinct), use.names=T)
@@ -131,8 +136,10 @@ if (F){
                                            current_continent, type, gain.continent,
                                            loss.continent)]
   setorderv(combinations, c("previous_continent", "current_continent", "parent_continent"))
-  fwrite(combinations, 
-         "../Data/full.combination.csv")
+  if (F){
+    fwrite(combinations, 
+           "../Data/full.combination.csv")
+  }
   
   ##Detect the type of species
   combinations<-fread( "../Data/full.combination.csv")
@@ -211,3 +218,34 @@ delta_Species.df<-rbindlist(delta_Species.all)
 type_N.df<-rbindlist(type_N.all)
 saveRDS(delta_Species.df, "../Data/Tables/100k.speciation.years/delta_Species.rda")
 saveRDS(type_N.df, "../Data/Tables/100k.speciation.years/type_N.rda")
+
+
+delta_Species.origin<-list()
+type_N.origin<-list()
+for (rrrr in c(1:10)){
+  print(rrrr)
+  seeds<-seeds.all[rep==rrrr]
+  sp_filter<-sp_full_continents[label %in% seeds$label]
+  
+  y=-500
+  for (y in c(-1800:0)){
+    print(paste(rrrr, y))
+    item<-sp_filter[year==y]
+    
+    delta_Species<-item[, .(south.america=sum(south.america),
+                            north.america=sum(north.america),
+                            year=y, rep=rrrr), 
+                        by=list(NB, origin_continent)]
+    
+    type_N<-item[, .(south.america=sum(south.america),
+                     north.america=sum(north.america),
+                     year=y, rep=rrrr), 
+                 by=list(NB, type, origin_continent)]
+    delta_Species.origin[[length(delta_Species.origin)+1]]<-delta_Species
+    type_N.origin[[length(type_N.origin)+1]]<-type_N
+  }
+}
+delta_Species.origin.df<-rbindlist(delta_Species.origin)
+type_N.origin.df<-rbindlist(type_N.origin)
+saveRDS(delta_Species.origin.df, "../Data/Tables/100k.speciation.years/delta_Species.origin.rda")
+saveRDS(type_N.origin.df, "../Data/Tables/100k.speciation.years/type_N.origin.rda")
