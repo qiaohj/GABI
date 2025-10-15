@@ -109,57 +109,36 @@ if (F){
     final[[i]]<-item
   }
   final.df<-rbindlist(final)
+  saveRDS(final.df, "../Data/Tables/100k.speciation.years/N.with.bridge.simulation.rda")
 }
 
-#all.with.bridge.item.df<-readRDS("../Data/Tables/100k.speciation.years/N.with.bridge.continent.rda")
-all.with.bridge.seed.df<-readRDS("../Data/Tables/100k.speciation.years/N.with.bridge.seed.rda")
-#all.without.bridge.item.df<-readRDS("../Data/Tables/100k.speciation.years/N.without.bridge.continent.rda")
-#all.without.bridge.seed.df<-readRDS("../Data/Tables/100k.speciation.years/N.without.bridge.seed.rda")
+df<-readRDS("../Data/Tables/N.with.bridge.simulation.rda")
+df<-df[NB %in% c("BIG-BIG", "MODERATE-MODERATE")]
+df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
+table(df$seed_continent)
 
-setorderv(all.with.bridge.seed.df, "year", 1)
+seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
 
-df.seed.with.bridge<-all.with.bridge.seed.df[current_continent %in% c("South America", "North America")]
-df.seed.with.bridge<-df.seed.with.bridge[current_continent!=seed_continent]
-df.seed.with.bridge$current_continent<-NULL
+rep.list<-list()
+for (rrrr in c(1:10)){
+  print(rrrr)
+  seeds<-seeds.all[rep==rrrr]
+  item<-df[label %in% seeds$label]
+  rep.to_target_continent<-item[to_target_continent==T, .(N.to_target_continent=.N), 
+                                by=list(NB, DA, seed_continent)]
+  rep.to_target_continent_final<-item[to_target_continent_final==T, .(N.to_target_continent_final=.N), 
+                                      by=list(NB, DA, seed_continent)]
+  rep<-merge(rep.to_target_continent_final, rep.to_target_continent, by=c("NB", "DA", "seed_continent"), all=T)
+  rep$rep<-rrrr
+  rep.list[[rrrr]]<-rep
+}
+rep.df.seed<-rbindlist(rep.list)
+rep.df.seed$NB.label<-factor(rep.df.seed$NB, 
+                        levels=c("BIG-BIG", "MODERATE-MODERATE"),
+                        labels=c("BROAD", "NARROW"))
 
-min_year <- min(df.seed.with.bridge$year)
-max_year <- max(df.seed.with.bridge$year)
-
-
-cutoff_years <- data.table(Cutoff_Year = seq(min_year, max_year + 1, by = 1))
-
-
-group_keys <- unique(df.seed.with.bridge[, .(NB, seed_continent, rep)])
-
-group_keys[, temp_key := 1]
-cutoff_years[, temp_key := 1]
-dt_combinations <- merge(group_keys, cutoff_years, by = "temp_key", allow.cartesian = TRUE)
-dt_combinations[, temp_key := NULL]
-
-
-dt_final_result <- df.seed.with.bridge[
-  # 引用 x (dt_combinations) 表，并使用 .() 语法选择和重命名列
-  dt_combinations, 
-  
-  # 在 j 中：将原始表的 N 和 x 表的 Cutoff_Year 取出
-  .(N = N, 
-    Cutoff_Year = x.Cutoff_Year), 
-  # 注意：i.N 是原始 N 值，x.Cutoff_Year 是截止年份
-  
-  on = .(
-    NB = NB, 
-    seed_continent = seed_continent, 
-    rep = rep,
-    year <= Cutoff_Year 
-  ),
-  allow.cartesian = TRUE
-]
-
-# 6. 分组累计 N
-# 现在 dt_final_result 已经包含了 N 和 Cutoff_Year，可以直接按名称分组
-dt_final_result <- dt_final_result[, 
-                                   .(Cumulative_N = sum(N, na.rm = TRUE)),
-                                   by = .(NB, seed_continent, rep, Cutoff_Year)
-]
-# 7. 排序和展示结果
-setorder(dt_final_result, NB, seed_continent, rep, Cutoff_Year)
+saveRDS(rep.df.seed, "../Data/Tables/N.Seed.Dispersal.rep.rda")
+rep.df.seed$label<-sprintf("%s.%s", rep.df.seed$NB.label, rep.df.seed$DA)
+ggplot(rep.df.seed[NB.label %in% c("BROAD", "NARROW")], 
+       aes(x=label, y=N.to_target_continent, color=seed_continent))+geom_point()+
+  geom_boxplot()

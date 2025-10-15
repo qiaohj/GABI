@@ -228,6 +228,6 @@ if (F){
   
   dbDisconnect(mydb)
 }
-./ees_3d /media/huijieqiao/Butterfly/GABI/Configuration/configuration.sqlite /media/huijieqiao/Butterfly/GABI/Configuration/conf.sqlite /media/huijieqiao/Butterfly/GABI/Results -1 64 0 0 0
+./ees_3d /media/huijieqiao/Butterfly/GABI/Configuration/null.sqlite /media/huijieqiao/Butterfly/GABI/Configuration/conf.null.sqlite /media/huijieqiao/Butterfly/GABI/Results.NULL -1 64 0 0 0
 
 9984596
