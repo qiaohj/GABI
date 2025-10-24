@@ -2,17 +2,29 @@ library(data.table)
 library(ggplot2)
 library(ggrepel)
 library(ggh4x)
+library(sf)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 
-seeds<-readRDS("../Data/seeds.rda")
-table(seeds$continent)
-table(seeds[between(lat, -22, 50)]$continent)
+#80: 663 vs 2041
+#70: 600 vs 1509
+#60: 527 vs 1070
+threshold<-70
+seeds<-readRDS("../Data/Tables/seeds.rda")
+seed.dist<-readRDS("../Data/cells.with.dist.rda")
+selected.seeds<-data.table(seed.dist)
+selected.seeds$geometry<-NULL
+table(selected.seeds[between(min.dist, 1, threshold)]$continent)
+
+selected.seeds<-selected.seeds[between(min.dist, 1, threshold)]
+seeds<-seeds[global_id %in% selected.seeds$seqnum]
+ggplot(seeds)+geom_sf(data=seed.dist)+geom_point(aes(x=lon, y=lat, color=continent))
+
 df<-readRDS("../Data/Tables/N.Speciation.Extinction.rda")
 nrow(df)
 df$continent<-NULL
 df<-merge(df, seeds, by.x="seed_id", by.y="global_id")
 
-df<-df[between(lat, -22, 50)]
+#df<-df[between(lat, -35, 45)]
 range(df$lat)
 #burn in 3100/2
 burn_in<-3100/2
@@ -29,6 +41,7 @@ df_N<-df[, .(N_SPECIES=sum(N_SPECIES),
              N_SEED=length(unique(seed_id))),
          by=list(continent, year)]
 
+df[seed_id=="5412" & nb=="MODERATE-MODERATE"]
 df_N[year==1799]$N_ALL_SPECIES<-df_N[year==1799]$N_SEED
 
 
@@ -36,7 +49,7 @@ df_N_checked<-df[year==burn_in+1 & N_SPECIES>0,
                  .(N=.N), by=list(seed_id)]
 
 df_filtered_seeds<-df[seed_id %in% df_N_checked[N==4]$seed_id]
-
+df_filtered_seeds[seed_id=="5412"]
 df_filtered_N<-df_filtered_seeds[, .(N_SPECIES=sum(N_SPECIES), 
                                      N_SPECIATION=sum(N_SPECIATION),
                                      N_EXTINCTION=sum(N_EXTINCTION),
@@ -76,21 +89,38 @@ ggplot(df_filtered_N)+
 
 #define outliers
 N_species<-df_filtered_seeds[year==0 & N_SPECIES>0]
-N_species<-N_species[nb!="HUGE-HUGE"]
-quantiles.na<-quantile(N_species[continent=="North America"]$N_SPECIES, c(0, 1, 0.99, 0.95, 0.90, 0.999))
-quantiles.sa<-quantile(N_species[continent=="South America"]$N_SPECIES, c(0, 1, 0.99, 0.95, 0.90, 0.999))
+
+
+if (F){
+  ggplot(N_species[N_SPECIES<113])+
+    geom_histogram(aes(x=N_SPECIES))+
+    scale_x_sqrt()+
+    facet_grid(nb+da~continent)
+  
+  seed.end<-N_species[N_SPECIES<113, .(N=.N), by=list(seed_id, continent)]
+  seed.end<-seed.end[N==4]
+  table(seed.end$continent)
+  
+  seed.na<-seed.end[continent=="North America"]
+  random.seed.na<-seed.na[sample(nrow(seed.na), 1000)]
+  
+  seed.sa<-seed.end[continent=="South America"]
+  random.seed.sa<-seed.sa[sample(nrow(seed.sa), 1000)]
+  
+  ramdom.N_species<-N_species[seed_id %in% c(random.seed.sa$seed_id, random.seed.na$seed_id)]
+  ggplot(ramdom.N_species)+
+    geom_histogram(aes(x=N_SPECIES))+
+    scale_x_sqrt()+
+    facet_grid(nb+da~continent)
+  
+  xxx<-ramdom.N_species[,.(N=sum(N_SPECIES)), by=list(continent, nb, da)]
+  setorderv(xxx, c("nb", "da", "continent"))
+}
+
 quantiles<-quantile(N_species$N_SPECIES, c(0, 1, 0.99, 0.95, 0.90, 0.999))
 
-table(N_species[N_SPECIES>quantiles[3]]$continent)
 N_species$seed_label<-paste(N_species$seed_id, N_species$nb, N_species$da)
 outliers<-unique(N_species[N_SPECIES>quantiles[3]])
-
-View(N_species[N_SPECIES>100])
-#outliers<-unique(N_species[(N_SPECIES>quantiles.na[3] & continent=="North America") | 
-#                             (N_SPECIES>quantiles.sa[3] & continent=="South America")])
-
-#outliers<-unique(N_species[(N_SPECIES>quantiles[3] & continent=="South America") | 
-#                             (N_SPECIES>500 & continent=="North America")])
 
 N_species_filter<-df_filtered_seeds[!seed_id %in% outliers$seed_id]
 df_filtered_N_filter<-N_species_filter[, .(N_SPECIES=sum(N_SPECIES), 
@@ -106,11 +136,11 @@ ggplot(df_filtered_N_filter)+
   geom_line(aes(y=N_SPECIES, x=year * -1, color=continent))+
   geom_vline(xintercept = burn_in * -1, linetype=2)+
   geom_text(data=df_N[year==1799], 
-            aes(x=-1900, y=c(6e4, 7e4), 
+            aes(x=-1900, y=c(2e4, 2.5e4), 
                 label=paste(continent, N_SEED, sep=": ")),
             hjust = 0)+
   geom_text(data=df_filtered_N[year==burn_in+1], 
-            aes(x=burn_in * -1 + 10, y=c(5.5e4, 6.5e4), 
+            aes(x=burn_in * -1 + 10, y=c(1.7e4, 1.9e4), 
                 label=paste(continent, N_SEED, sep=": ")),
             hjust = 0)
 
@@ -131,15 +161,16 @@ ggplot(df_filtered_N_filter)+
 outliers_ID<-unique(outliers$seed_id)
 unique(N_species$nb)
 #random seeds
-seed_pool<-unique(df_filtered_seeds[!seed_id %in% outliers_ID, c("seed_id", "continent")])
-table(seed_pool$continent)
-table(seed_pool$nb)
+seed_pool<-df_filtered_seeds[(year==0 & !(seed_id %in% outliers_ID)), 
+                             .(N_SPECIES=sum(N_SPECIES)), by=list(seed_id, continent)]
+
+
 
 coms<-data.table(expand.grid(nb=c("MODERATE-MODERATE", "BIG-BIG"),
                   da=c("GOOD", "POOR")))
 all_ramdom_seeds<-list()
 for (rep in c(1:10)){
-  ramdom_seeds<-seed_pool[,.SD[sample(.N, 1000)],by = "continent"]
+  ramdom_seeds<-seed_pool[,.SD[sample(.N, 500)],by = "continent"]
   all_seeds<-list()
   for (i in c(1:nrow(coms))){
     com_item<-coms[i]

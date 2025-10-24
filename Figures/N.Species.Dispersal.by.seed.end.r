@@ -1,10 +1,10 @@
 library(data.table)
 library(ggplot2)
+library(sf)
 setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 if (F){
-  sp.with.bridge<-readRDS("../Data/Tables/100k.speciation.years/sp_full_continents.rda")
-  seeds.all<-readRDS("../Data/Tables/100k.speciation.years/random.seeds.rda")
+  sp.with.bridge<-readRDS("../Data/Tables/sp_full_continents.rda")
   seeds<-sp.with.bridge[,.(N=.N), by=list(NB, DA, seed_id)]
   final<-list()
   for (i in c(1:nrow(seeds))){
@@ -37,7 +37,12 @@ df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
 
 seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
-
+if (F){
+  cell.ll<-readRDS("../Data/cells.with.dist.rda")
+  seeds.xy<-unique(seeds.all[, c("continent", "seed_id")])
+  seeds.xy<-merge(seeds.xy, cell.ll, by.x="seed_id", by.y="seqnum")
+  ggplot(seeds.xy)+geom_point(aes(x=lon, y=lat, fill=continent.x))
+}
 rep.list<-list()
 for (rrrr in c(1:10)){
   print(rrrr)
@@ -59,6 +64,7 @@ rep.df$NB.label<-factor(rep.df$NB,
 saveRDS(rep.df, "../Data/Tables/N.Species.Dispersal.by.seed.end.rep.rda")
 ggplot(rep.df[NB.label %in% c("BROAD", "NARROW")], 
        aes(x=NB.label, y=N.to_target_continent, color=seed_continent))+geom_point()+
+  labs(y="Number of species to the other continent")+
   geom_boxplot()+
   facet_wrap(~DA)
 
