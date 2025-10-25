@@ -62,8 +62,8 @@ rep.df$NB.label<-factor(rep.df$NB,
                         labels=c("BROAD", "NARROW"))
 
 saveRDS(rep.df, "../Data/Tables/N.Species.Dispersal.by.seed.end.rep.rda")
-ggplot(rep.df[NB.label %in% c("BROAD", "NARROW")], 
-       aes(x=NB.label, y=N.to_target_continent, color=seed_continent))+geom_point()+
+ggplot(rep.df, 
+       aes(x=NB.label, y=N.to_target_continent, color=seed_continent))+
   labs(y="Number of species to the other continent")+
   geom_boxplot()+
   facet_wrap(~DA)
@@ -87,8 +87,18 @@ item.final$final.continent<-ifelse(item.final$seed_continent=="North America", "
 item.final[type=="in_source_continent", final.continent:=seed_continent]
 
 ggplot(item.final, 
-       aes(x=final.continent, y=N, color=seed_continent))+geom_point()+
+       aes(x=final.continent, y=N, color=seed_continent))+
   geom_boxplot()
+
+summary_dt<-item.final[, .(mean=mean(N), sd=sd(N)),
+                       by=list(seed_continent, type)]
+colnames(summary_dt)<-c("Original continent", "Type", "mean", "sd")
+summary_dt$Value<-sprintf("%.2f±%.2f", summary_dt$mean, summary_dt$sd)
+summary_dt$mean<-NULL
+summary_dt$sd<-NULL
+to.doc(summary_dt, 
+       "Number of species stay in the original continent and dispersal to the other continent", 
+       "../Table.Doc/species.2.other.continent.full.docx")
 
 item1<-rep.df[,c("seed_continent",   "rep", "N.to_target_continent", "NB.label", "DA")]
 colnames(item1)[3]<-"N"
@@ -103,6 +113,17 @@ item.final<-rbindlist(list(item1, item2))
 item.final$final.continent<-ifelse(item.final$seed_continent=="North America", "South America", "North America")
 item.final[type=="in_source_continent", final.continent:=seed_continent]
 
-ggplot(item.final[NB.label %in% c("BROAD", "NARROW")], 
-       aes(x=final.continent, y=N, color=seed_continent))+geom_point()+
+ggplot(item.final, 
+       aes(x=final.continent, y=N, color=seed_continent))+
   geom_boxplot()+facet_grid(NB.label~DA, scale="free")
+
+
+summary_dt<-item.final[, .(mean=mean(N), sd=sd(N)),
+                       by=list(seed_continent, type, NB.label, DA)]
+colnames(summary_dt)<-c("Original continent", "Type", "Niche Breadth", "Dispersal Ability", "mean", "sd")
+summary_dt$Value<-sprintf("%.2f±%.2f", summary_dt$mean, summary_dt$sd)
+summary_dt$mean<-NULL
+summary_dt$sd<-NULL
+to.doc(summary_dt, 
+       "Number of species stay in the original continent and dispersal to the other continent", 
+       "../Table.Doc/species.2.other.continent.detail.docx")

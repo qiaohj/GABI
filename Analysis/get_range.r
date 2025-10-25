@@ -68,3 +68,44 @@ for (i in c(1:length(folders))){
   
 }
 
+
+
+cells<-readRDS("../Data/cells.with.dist.rda")
+colnames(cells)[1]<-"global_id"
+cells$geometry<-NULL
+cells<-data.table(cells)
+folders<-readRDS("../Data/LOG/all.sim.folders.rda")
+folders<-folders[sample(length(folders), length(folders))]
+f<-folders[1]
+seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
+seeds.all$rep<-NULL
+seeds.all$N_SPECIES<-NULL
+seeds.all<-unique(seeds.all$seed_id)
+range.list<-list()
+final.dis<-list()
+for (i in c(1:length(folders))){
+  f<-folders[i]
+  info<-basename(f)
+  infos<-strsplit(info, "\\.")[[1]]
+  seed_id<-as.numeric(infos[1])
+  
+  target<-sprintf("%s/range.rda", f)
+  if (! seed_id %in% seeds.all){
+    #print("seed id is not in the picked seed pool, skip")
+    next()
+  }
+  print(paste(f, i, length(folders)))
+  range.item<-readRDS(target)
+  range.list[[length(range.list)+1]]<-range.item
+  
+  dis.item<-readRDS(sprintf("%s/final.dis.rda", f))
+  dis.item$seed_id<-seed_id
+  dis.item$nb<-infos[2]
+  dis.item$da<-infos[3]
+  final.dis[[length(final.dis)+1]]<-dis.item
+}
+
+range.df<-rbindlist(range.list)
+saveRDS(range.df, "../Data/Tables/Species.Range.rda")
+final.dis.df<-rbindlist(final.dis)
+saveRDS(final.dis.df, "../Data/Tables/Final.Distribution.rda")

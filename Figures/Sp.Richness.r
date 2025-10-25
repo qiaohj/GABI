@@ -184,6 +184,68 @@ if (F){
   saveRDS(by.continent.nb.da.richness.df, "../Data/Tables/Richness/by.continent.nb.da.richness.rda")
   
 }
+
+if (F){
+  seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
+  sim.dis<-readRDS("../Data/Richness.NULL/0.rda")
+  hexagon<-readRDS("../Data/cells.with.dist.rda")
+  cells<-data.table(seqnum=hexagon$seqnum, seed.continent=hexagon$continent)
+  sim.dis$seed_id<-as.numeric(sim.dis$seed_id)
+  sim.dis.geo.full<-merge(sim.dis, cells, by.y="seqnum", by.x="seed_id")
+  sim.dis.geo.full[continent %in% c("bridge1", "bridge2"), continent:="North America"]
+  coms<-data.table(expand.grid(nb=c("MODERATE-MODERATE", "BIG-BIG"),
+                               da=c("POOR", "GOOD")))
+  
+  full.richness.list<-list()
+  by.continent.richness.list<-list()
+  by.continent.nb.da.richness.list<-list()
+  
+  for (r in c(1:10)){
+    print(r)
+    sim.dis.geo<-sim.dis.geo.full[seed_id %in% seeds.all[rep==r]$seed_id]
+    richness<-sim.dis.geo[, .(N.species=sum(N_SP),
+                              rep=r), 
+                          by=list(global_id)]
+    full.richness.list[[length(full.richness.list)+1]]<-richness
+    for (ccc in c("North America", "South America")){
+      item<-sim.dis.geo[seed.continent==ccc]
+      richness<-item[, .(N.species=sum(N_SP),
+                         rep=r,
+                         seed.continent=ccc), 
+                     by=list(global_id)]
+      by.continent.richness.list[[length(by.continent.richness.list)+1]]<-richness
+      if (F){
+        ggplot()+ 
+          geom_sf(data=richness,  aes(fill=N.species),
+                  color=NA, linewidth=0.1) +
+          scale_fill_gradient2(low="#2166AC",
+                               mid="#F7F7F7",
+                               high="#B2182B",
+                               midpoint = median(richness$N.species))
+      }
+      for (i in c(1:nrow(coms))){
+        com<-coms[i]
+        item2<-item[nb==com$nb & da==com$da]
+        richness<-item2[, .(N.species=sum(N_SP),
+                            rep=r,
+                            seed.continent=ccc,
+                            nb=com$nb,
+                            da=com$da), 
+                        by=list(global_id)]
+        
+        by.continent.nb.da.richness.list[[length(by.continent.nb.da.richness.list)+1]]<-richness
+      }
+    }
+  }
+  full.richness.df<-rbindlist(full.richness.list)
+  by.continent.richness.df<-rbindlist(by.continent.richness.list)
+  by.continent.nb.da.richness.df<-rbindlist(by.continent.nb.da.richness.list)
+  
+  saveRDS(full.richness.df, "../Data/Tables/Richness/full.richness.NULL.rda")
+  saveRDS(by.continent.richness.df, "../Data/Tables/Richness/by.continent.richness.NULL.rda")
+  saveRDS(by.continent.nb.da.richness.df, "../Data/Tables/Richness/by.continent.nb.da.richness.NULL.rda")
+  
+}
 seeds<-readRDS("../Data/Tables/random.seeds.rda")
 seeds<-unique(seeds$seed_id)
 hexagon<-readRDS("../Data/cells.with.dist.rda")
@@ -193,15 +255,28 @@ richness<-richness[, .(N.sim.species=mean(N.species)),
 
 colnames(richness)<-c("seqnum", "N.sim.species")
 
+richness.NULL<-readRDS("../Data/Tables/Richness/full.richness.NULL.rda")
+richness.NULL<-richness.NULL[, .(N.sim.species=mean(N.species)),
+                   by=list(global_id)]
+
+colnames(richness.NULL)<-c("seqnum", "N.sim.NULL.species")
+
+
 mammal.richness<-readRDS("../Data/IUCN/mammals.richness.rda")
 full.richness<-merge(mammal.richness, richness, by="seqnum")
+full.richness<-merge(full.richness, richness.NULL, by="seqnum")
 table(mammal.richness[which(mammal.richness$seqnum %in% seeds),]$continent)
 plot(full.richness$N.sim.species, 
     full.richness$N.species)
 cor(full.richness$N.sim.species, 
      full.richness$N.species, 
     method = "spearman")
+cor(full.richness$N.sim.NULL.species, 
+    full.richness$N.species)
 
+cor(full.richness$N.sim.NULL.species, 
+    full.richness$N.species, 
+    method = "spearman")
 
 p1<-ggplot()+ 
   geom_sf(data=full.richness,  aes(fill=N.species),
@@ -245,8 +320,29 @@ p2<-ggplot()+
     plot.title = element_text(hjust = 0.5)
   )
 
-p1+p2+plot_annotation(
-  title = 'Mammals richness (left) and Simulated richess (right)',
+p3<-ggplot()+ 
+  geom_sf(data=full.richness,  aes(fill=N.sim.NULL.species),
+          color=NA, linewidth=0.1) +
+  scale_fill_gradient2(low="#2166AC",
+                       mid="#F7F7F7",
+                       high="#B2182B",
+                       midpoint = median(full.richness$N.sim.species))+
+  theme(
+    axis.line = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_line(linetype = "dashed", linewidth = 0.5, color="#dab27f"),
+    plot.background = element_rect(fill="#fde7c0"),
+    panel.background = element_rect(fill="#fde7c0"),
+    legend.background = element_rect(fill = "#fde7c0", color = NA),
+    legend.title = element_blank(),
+    legend.position="bottom",
+    legend.key.width = unit(1, 'cm'),
+    plot.title = element_text(hjust = 0.5)
+  )
+
+p1+p2+p3+plot_annotation(
+  title = 'Mammals richness (left), Simulated richess (middle) and NULL model (right)',
   tag_levels = 'A'
 )
 
