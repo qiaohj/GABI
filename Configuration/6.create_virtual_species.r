@@ -17,7 +17,7 @@ all_v_first<-all_v[year==1800]
 #nb_df<-readRDS(sprintf("../Data/IUCN_NB/%s/Mammals.rda", "N_S_America"))
 #length(unique(nb_df$species))
 if (F) {
-  tb<-readRDS("../Data/nb_range_mammals_iucn.rda")
+  tb<-readRDS("../Data/Tables/nb_range_mammals_iucn.rda")
   nb<-list(pr=ceiling(tb[var=="pr" & type=="3sd"]$v),
            t=ceiling(tb[var=="tm" & type=="3sd"]$v))
   names(nb$pr)<-sprintf("%d%%", round(tb[var=="pr" & type=="3sd"]$quantile * 100))

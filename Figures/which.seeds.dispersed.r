@@ -1,1 +1,16 @@
-•	Examine which seeds dispersed 
+library(data.table)
+library(flextable)
+library(officer)
+library(ggplot2)
+setDTthreads(30)
+setwd("/media/huijieqiao/Butterfly/GABI/GABI")
+df<-readRDS("../Data/Tables/N.with.bridge.simulation.rda")
+df<-df[NB %in% c("BIG-BIG", "MODERATE-MODERATE")]
+df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
+table(df$seed_continent)
+cells<-readRDS("../Data/cells.with.dist.rda")
+cells<-data.table(seed_id=cells$seqnum, min.dist=cells$min.dist)
+
+df<-merge(df, cells, by="seed_id")
+model<-glm(to_target_continent_final~min.dist+NB+DA, data=df, family = binomial)
+summary(model)
