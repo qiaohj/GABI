@@ -3,6 +3,7 @@ library(sf)
 library(RSQLite)
 library(DBI)
 library(ggplot2)
+library(terra)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
 pr<-data.table(dbReadTable(conn, "pr"))
@@ -13,10 +14,43 @@ mask<-data.table(dbReadTable(conn, "mask"))
 environments<-data.table(dbReadTable(conn, "environments"))
 dbDisconnect(conn)
 
-first.pr<-pr[year==1800]
-first.tasmax<-tasmax[year==1800]
-first.tasmin<-tasmin[year==1800]
 
+
+first.pr<-pr[year==0]
+first.tasmax<-pr[year==0]
+first.tasmin<-pr[year==0]
+
+hexagon<-read_sf("../Shape/isea3h8/N_S_America.shp")
+
+if (F){
+  plot(hexagon[which(hexagon$seqnum %in% first.pr$global_id),]$geometry)
+}
+vars<-c("pr", "tasmax", "tasmin")
+for (v in vars){
+  print(v)
+  template<-pr[year==0]
+  template$v<-NULL
+  tif<-rast(sprintf("../Data/Raster/Fine.1x1/%s.tif", v))
+  values<-extract(tif, data.frame(lon=hexagon$lon, lat=hexagon$lat))
+  values<-data.table(global_id=hexagon$seqnum, v=values$y3600)
+  if (v=="pr"){
+    first.pr<-merge(template, values, by="global_id")
+  }
+  if (v=="tasmax"){
+    first.tasmax<-merge(template, values, by="global_id")
+  }
+  if (v=="tasmin"){
+    first.tasmin<-merge(template, values, by="global_id")
+  }
+  
+  
+}
+
+first.tasmin<-first.tasmin[, c("global_id", "v", "year")]
+first.tasmax<-first.tasmax[, c("global_id", "v", "year")]
+first.pr<-first.pr[, c("global_id", "v", "year")]
+
+plot(tasmin[year==1800]$v, first.tasmin[global_id %in% tasmin[year==1800]$global_id]$v)
 pr.list<-list()
 tasmax.list<-list()
 tasmin.list<-list()
@@ -48,6 +82,8 @@ dbWriteTable(mydb, "distances", distances, overwrite=T)
 dbWriteTable(mydb, "mask", mask, overwrite=T)
 dbWriteTable(mydb, "environments", environments, overwrite=T)
 dbDisconnect(mydb)
+
+
 
 range(pr$year)
 

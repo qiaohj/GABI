@@ -118,8 +118,11 @@ seeds$geometry<-NULL
 
 table(seeds[between(min.dist, 1, 65)]$continent)
 seeds<-seeds[between(min.dist, 1, 65)]
+
+polygon<-readRDS("../Data/cells.with.dist.rda")
+
+
 ggplot(polygon)+
   geom_sf(fill="lightgrey")+
-  geom_sf(data=polygon[which(polygon$seqnum %in% seeds$seqnum),], aes(fill=min.dist))+
+  geom_sf(aes(fill=min.dist))+
   scale_fill_continuous(low="blue", high="red")
-seeds

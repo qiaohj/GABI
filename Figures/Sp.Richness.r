@@ -68,8 +68,7 @@ if (F){
 }
 
 if (F){
-  hexagon<-readRDS("../Data/cells.with.dist.rda")
-  
+  hexagon<-read_sf("../Shape/isea3h8/N_S_America.shp")
   mammals<-st_read("../Shape/IUCN/MAMMALS/MAMMALS_TERRESTRIAL_ONLY.shp")
   species<-unique(mammals$binomial)
   dis.list<-list()
@@ -100,6 +99,8 @@ if (F){
   }
   
   dis.df<-rbindlist(dis.list)
+  mammal.nb.filter<-readRDS("../Data/Tables/mammal.nb.filter.table.rda")
+  
   dis.range<-dis.df[, .(N.Cell=length(unique(seqnum)),
                          min.lon=min(lon),
                          max.lon=max(lon),
@@ -108,6 +109,17 @@ if (F){
                      by=list(species)]
   dis.range<-dis.range[N.Cell>1]
   saveRDS(dis.range, "../Data/IUCN/mammals.dis.range.rda")
+  rm("species")
+  dis.range.filter<-dis.df[species %in% mammal.nb.filter$species, 
+                    .(N.Cell=length(unique(seqnum)),
+                        min.lon=min(lon),
+                        max.lon=max(lon),
+                        min.lat=min(lat),
+                        max.lat=max(lat)),
+                    by=list(species)]
+  dis.range.filter<-dis.range.filter[N.Cell>1]
+  saveRDS(dis.range.filter, "../Data/IUCN/mammals.dis.range.filter.rda")
+  
   dis.df<-dis.df[species %in% dis.range$species]
   dis.df$geometry<-NULL
   dis.df$min.dist<-NULL
@@ -120,13 +132,23 @@ if (F){
                  by=list(seqnum)]
   dis.richness<-merge(hexagon, dis.richness, by="seqnum")
   saveRDS(dis.richness, "../Data/IUCN/mammals.richness.rda")
+  
+  dis.df<-dis.df[species %in% dis.range.filter$species]
+  
+  dis.geo<-merge(hexagon, dis.df, by="seqnum")
+  saveRDS(dis.geo, "../Data/IUCN/mammals.dis.filter.rda")
+  dis.richness<-dis.df[, .(N.species=length(unique(species))),
+                       by=list(seqnum)]
+  dis.richness<-merge(hexagon, dis.richness, by="seqnum")
+  saveRDS(dis.richness, "../Data/IUCN/mammals.richness.filter.rda")
+  
   #ggplot(dis.richness)+geom_sf(aes(fill=N.species))
 }
 
 if (F){
   seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
   sim.dis<-readRDS("../Data/Richness/0.rda")
-  hexagon<-readRDS("../Data/cells.with.dist.rda")
+  hexagon<-read_sf("../Shape/isea3h8/N_S_America.shp")
   cells<-data.table(seqnum=hexagon$seqnum, seed.continent=hexagon$continent)
   sim.dis$seed_id<-as.numeric(sim.dis$seed_id)
   sim.dis.geo.full<-merge(sim.dis, cells, by.y="seqnum", by.x="seed_id")
@@ -188,7 +210,10 @@ if (F){
 if (F){
   seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
   sim.dis<-readRDS("../Data/Richness.NULL/0.rda")
-  hexagon<-readRDS("../Data/cells.with.dist.rda")
+  hexagon<-read_sf("../Shape/isea3h8/N_S_America.shp")
+  if (F){
+    plot(hexagon[which(hexagon$seqnum %in% unique(sim.dis$global_id)),]$geometry)
+  }
   cells<-data.table(seqnum=hexagon$seqnum, seed.continent=hexagon$continent)
   sim.dis$seed_id<-as.numeric(sim.dis$seed_id)
   sim.dis.geo.full<-merge(sim.dis, cells, by.y="seqnum", by.x="seed_id")
@@ -263,14 +288,27 @@ colnames(richness.NULL)<-c("seqnum", "N.sim.NULL.species")
 
 
 mammal.richness<-readRDS("../Data/IUCN/mammals.richness.rda")
+mammal.richness.filter<-readRDS("../Data/IUCN/mammals.richness.filter.rda")
+mammal.richness.filter<-data.table(seqnum=mammal.richness.filter$seqnum,
+                                   N.species.filter=mammal.richness.filter$N.species)
 full.richness<-merge(mammal.richness, richness, by="seqnum")
 full.richness<-merge(full.richness, richness.NULL, by="seqnum")
+full.richness<-merge(full.richness, mammal.richness.filter, by="seqnum")
+
 table(mammal.richness[which(mammal.richness$seqnum %in% seeds),]$continent)
 plot(full.richness$N.sim.species, 
     full.richness$N.species)
 cor(full.richness$N.sim.species, 
      full.richness$N.species, 
     method = "spearman")
+
+plot(full.richness$N.sim.species, 
+    full.richness$N.species.filter)
+
+cor(full.richness$N.sim.species, 
+    full.richness$N.species.filter, 
+    method = "spearman")
+
 cor(full.richness$N.sim.NULL.species, 
     full.richness$N.species)
 
@@ -299,6 +337,27 @@ p1<-ggplot()+
     plot.title = element_text(hjust = 0.5)
   )
 
+p1.2<-ggplot()+ 
+  geom_sf(data=full.richness,  aes(fill=N.species.filter),
+          color=NA, linewidth=0.1) +
+  scale_fill_gradient2(low="#2166AC",
+                       mid="#F7F7F7",
+                       high="#B2182B",
+                       midpoint = median(full.richness$N.species.filter))+
+  theme(
+    axis.line = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_line(linetype = "dashed", linewidth = 0.5, color="#dab27f"),
+    plot.background = element_rect(fill="#fde7c0"),
+    panel.background = element_rect(fill="#fde7c0"),
+    legend.background = element_rect(fill = "#fde7c0", color = NA),
+    legend.title = element_blank(),
+    legend.position="bottom",
+    legend.key.width = unit(1, 'cm'),
+    plot.title = element_text(hjust = 0.5)
+  )
+p1.2
 p2<-ggplot()+ 
   geom_sf(data=full.richness,  aes(fill=N.sim.species),
           color=NA, linewidth=0.1) +
@@ -326,7 +385,7 @@ p3<-ggplot()+
   scale_fill_gradient2(low="#2166AC",
                        mid="#F7F7F7",
                        high="#B2182B",
-                       midpoint = median(full.richness$N.sim.species))+
+                       midpoint = median(full.richness$N.sim.NULL.species))+
   theme(
     axis.line = element_blank(),
     axis.title.x = element_blank(),

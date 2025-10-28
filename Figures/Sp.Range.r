@@ -13,29 +13,33 @@ sim.range<-readRDS("../Data/Tables/Species.Range.rda")
 nb<-readRDS("../Data/Tables/nb.rda")
 
 
-
-mammal.nb<-readRDS(sprintf("../Data/IUCN_NB/%s/%s.rda","World",  "Mammals"))
-mammal.nb$nb<-mammal.nb$sd * 6
-
-mammal.nb.list<-list()
-for (sp in unique(mammal.nb$species)){
-  item<-mammal.nb[species==sp]
-  item.sp<-data.table(species=sp,
-                      nb.tasmin=item[var=="tasmin"]$nb,
-                      nb.tasmax=item[var=="tasmax"]$nb,
-                      nb.pr=item[var=="pr"]$nb)
-  mammal.nb.list[[length(mammal.nb.list)+1]]<-item.sp
+if (F){
+  mammal.nb<-readRDS(sprintf("../Data/IUCN_NB/%s/%s.rda","World",  "Mammals"))
+  mammal.nb$nb<-mammal.nb$sd * 6
+  
+  mammal.nb.list<-list()
+  for (sp in unique(mammal.nb$species)){
+    item<-mammal.nb[species==sp]
+    item.sp<-data.table(species=sp,
+                        nb.tasmin=item[var=="tasmin"]$nb,
+                        nb.tasmax=item[var=="tasmax"]$nb,
+                        nb.pr=item[var=="pr"]$nb)
+    mammal.nb.list[[length(mammal.nb.list)+1]]<-item.sp
+  }
+  mammal.nb.df<-rbindlist(mammal.nb.list)
+  
+  nb_pr<-quantile(mammal.nb.filter$nb.pr, 0.75)
+  nb_tm<-quantile(mammal.nb.filter$nb.tasmax, 0.75)
+  
+  mammal.nb.filter<-mammal.nb.df[(nb.tasmin>=nb_tm) |
+                                   (nb.tasmax>=nb_tm ) |
+                                   (nb.pr>nb_pr)]
+  saveRDS(mammal.nb.df, "../Data/Tables/mammal.nb.table.rda")
+  saveRDS(mammal.nb.filter, "../Data/Tables/mammal.nb.filter.table.rda")
+  
+  hist(mammal.range$N.Cell)
+  hist(sim.range$N.Cells)
 }
-mammal.nb.df<-rbindlist(mammal.nb.list)
-
-nb_pr<-quantile(mammal.nb.filter$nb.pr, 0.75)
-nb_tm<-quantile(mammal.nb.filter$nb.tasmax, 0.75)
-
-mammal.nb.filter<-mammal.nb.df[(nb.tasmin>=nb_tm) |
-                                 (nb.tasmax>=nb_tm ) |
-                                 (nb.pr>nb_pr)]
-hist(mammal.range$N.Cell)
-hist(sim.range$N.Cells)
 
 p1<-ggplot(mammal.range[species %in% mammal.nb.filter$species])+
   geom_histogram(aes(x=N.Cell))
