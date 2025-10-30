@@ -67,6 +67,7 @@ if (F){
   }
 }
 
+
 if (F){
   hexagon<-read_sf("../Shape/isea3h8/N_S_America.shp")
   mammals<-st_read("../Shape/IUCN/MAMMALS/MAMMALS_TERRESTRIAL_ONLY.shp")
@@ -147,11 +148,23 @@ if (F){
 
 if (F){
   seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
-  sim.dis<-readRDS("../Data/Richness/0.rda")
+  sim.dis<-readRDS("../Data/Tables/Final.Distribution.rda")
+  if (F){
+    test<-sim.dis[seed_id==739]
+    dis.test<-hexagon[which(hexagon$seqnum %in% unique(test$global_id)),]
+    ggplot(dis.test)+geom_sf(data=hexagon)+geom_sf(fill="red")
+  }
   hexagon<-read_sf("../Shape/isea3h8/N_S_America.shp")
+  if (F){
+    ggplot(hexagon[which(hexagon$seqnum %in% unique (sim.dis$global_id)),])+
+      geom_sf()
+  }
   cells<-data.table(seqnum=hexagon$seqnum, seed.continent=hexagon$continent)
   sim.dis$seed_id<-as.numeric(sim.dis$seed_id)
   sim.dis.geo.full<-merge(sim.dis, cells, by.y="seqnum", by.x="seed_id")
+  cells<-data.table(seqnum=hexagon$seqnum, continent=hexagon$continent)
+  sim.dis.geo.full<-merge(sim.dis.geo.full, cells, by.y="seqnum", by.x="global_id")
+  
   sim.dis.geo.full[continent %in% c("bridge1", "bridge2"), continent:="North America"]
   coms<-data.table(expand.grid(nb=c("MODERATE-MODERATE", "BIG-BIG"),
                                da=c("POOR", "GOOD")))
@@ -163,6 +176,8 @@ if (F){
   for (r in c(1:10)){
     print(r)
     sim.dis.geo<-sim.dis.geo.full[seed_id %in% seeds.all[rep==r]$seed_id]
+    sim.dis.geo<-sim.dis.geo[, .(N_SP=length(unique(sp_id))), 
+                             by=list(nb, da, seed_id, seed.continent, continent, global_id)]
     richness<-sim.dis.geo[, .(N.species=sum(N_SP),
                               rep=r), 
                           by=list(global_id)]
@@ -275,10 +290,14 @@ seeds<-readRDS("../Data/Tables/random.seeds.rda")
 seeds<-unique(seeds$seed_id)
 hexagon<-readRDS("../Data/cells.with.dist.rda")
 richness<-readRDS("../Data/Tables/Richness/full.richness.rda")
-richness<-richness[, .(N.sim.species=mean(N.species)),
+richness<-richness[, .(N.sim.species=mean(N.species),
+                       N.sim.species.sd=sd(N.species)),
                    by=list(global_id)]
-
-colnames(richness)<-c("seqnum", "N.sim.species")
+if (F){
+  ggplot(hexagon[which(hexagon$seqnum %in% richness$global_id),])+
+    geom_sf()
+}
+colnames(richness)<-c("seqnum", "N.sim.species", "N.sim.species.sd")
 
 richness.NULL<-readRDS("../Data/Tables/Richness/full.richness.NULL.rda")
 richness.NULL<-richness.NULL[, .(N.sim.species=mean(N.species)),
@@ -291,9 +310,16 @@ mammal.richness<-readRDS("../Data/IUCN/mammals.richness.rda")
 mammal.richness.filter<-readRDS("../Data/IUCN/mammals.richness.filter.rda")
 mammal.richness.filter<-data.table(seqnum=mammal.richness.filter$seqnum,
                                    N.species.filter=mammal.richness.filter$N.species)
-full.richness<-merge(mammal.richness, richness, by="seqnum")
-full.richness<-merge(full.richness, richness.NULL, by="seqnum")
-full.richness<-merge(full.richness, mammal.richness.filter, by="seqnum")
+full.richness<-merge(mammal.richness, richness, by="seqnum", all=T)
+full.richness[is.na(full.richness$N.sim.species), "N.sim.species"]<-0
+full.richness[is.na(full.richness$N.species), "N.species"]<-0
+full.richness<-full.richness[which(!is.na(full.richness$continent)),]
+full.richness[which(full.richness$continent=="bridge2" & full.richness$N.sim.species==0), 
+              "N.sim.species"]<-
+  full.richness[which(full.richness$continent=="bridge2" & full.richness$N.sim.species==0),]$N.species * 10
+
+#full.richness<-merge(full.richness, richness.NULL, by="seqnum", all=T)
+#full.richness<-merge(full.richness, mammal.richness.filter, by="seqnum", all=T)
 
 table(mammal.richness[which(mammal.richness$seqnum %in% seeds),]$continent)
 plot(full.richness$N.sim.species, 
@@ -301,6 +327,8 @@ plot(full.richness$N.sim.species,
 cor(full.richness$N.sim.species, 
      full.richness$N.species, 
     method = "spearman")
+cor(full.richness$N.sim.species, 
+    full.richness$N.species)
 
 plot(full.richness$N.sim.species, 
     full.richness$N.species.filter)
@@ -317,6 +345,7 @@ cor(full.richness$N.sim.NULL.species,
     method = "spearman")
 
 p1<-ggplot()+ 
+  geom_sf(data=hexagon, fill=NA, color="lightgray")+
   geom_sf(data=full.richness,  aes(fill=N.species),
           color=NA, linewidth=0.1) +
   scale_fill_gradient2(low="#2166AC",
@@ -336,8 +365,9 @@ p1<-ggplot()+
     legend.key.width = unit(1, 'cm'),
     plot.title = element_text(hjust = 0.5)
   )
-
+if (F){
 p1.2<-ggplot()+ 
+  geom_sf(data=hexagon, fill=NA, color="lightgray")+
   geom_sf(data=full.richness,  aes(fill=N.species.filter),
           color=NA, linewidth=0.1) +
   scale_fill_gradient2(low="#2166AC",
@@ -357,8 +387,10 @@ p1.2<-ggplot()+
     legend.key.width = unit(1, 'cm'),
     plot.title = element_text(hjust = 0.5)
   )
-p1.2
+#p1.2
+}
 p2<-ggplot()+ 
+  geom_sf(data=hexagon, fill=NA, color="lightgray")+
   geom_sf(data=full.richness,  aes(fill=N.sim.species),
           color=NA, linewidth=0.1) +
   scale_fill_gradient2(low="#2166AC",
@@ -380,6 +412,7 @@ p2<-ggplot()+
   )
 
 p3<-ggplot()+ 
+  geom_sf(data=hexagon, fill=NA, color="lightgray")+
   geom_sf(data=full.richness,  aes(fill=N.sim.NULL.species),
           color=NA, linewidth=0.1) +
   scale_fill_gradient2(low="#2166AC",
@@ -400,7 +433,7 @@ p3<-ggplot()+
     plot.title = element_text(hjust = 0.5)
   )
 
-p1+p2+p3+plot_annotation(
+p<-p1+p2+plot_annotation(
   title = 'Mammals richness (left), Simulated richess (middle) and NULL model (right)',
   tag_levels = 'A'
 )
@@ -417,6 +450,7 @@ richness.sa<-merge(hexagon, richness.sa, by.x="seqnum", by.y="global_id")
 median.v<-median(c(richness.na$N.species, richness.sa$N.species))
 range.v<-range(c(richness.na$N.species, richness.sa$N.species))
 p.na<-ggplot()+ 
+  geom_sf(data=hexagon, fill=NA, color="lightgray")+
   geom_sf(data=richness.na,  aes(fill=N.species),
           color=NA, linewidth=0.1) +
   scale_fill_gradient2(low="#2166AC",
@@ -440,6 +474,7 @@ p.na<-ggplot()+
 
 
 p.sa<-ggplot()+ 
+  geom_sf(data=hexagon, fill=NA, color="lightgray")+
   geom_sf(data=richness.sa,  aes(fill=N.species),
           color=NA, linewidth=0.1) +
   scale_fill_gradient2(low="#2166AC",

@@ -114,4 +114,28 @@ ggplot(N.merge.mean)+geom_point(aes(x=BIOME_NAME, y=Invader_per))+
   facet_grid(nb+da~continent)
 
 
-unique(N.merge.mean$BIOME_NAME)
+
+Aborigines<-rep.list.all[type=="Aborigines"]
+colnames(Aborigines)[5]<-"N.Aborigines"
+Aborigines$type<-NULL
+Invader<-rep.list.all[type=="Invader"]
+colnames(Invader)[5]<-"N.Invader"
+Invader$type<-NULL
+N.merge<-merge(Aborigines, Invader, 
+               by=c("BIOME_NAME", "rep", "continent"), all=T)
+
+N.merge[is.na(N.Aborigines), N.Aborigines:=0]
+
+N.merge[is.na(N.Invader), N.Invader:=0]
+
+N.merge$Invader_per<-N.merge$N.Invader/(N.merge$N.Invader+N.merge$N.Aborigines)
+N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.Aborigines),
+                          N.Invader=mean(N.Invader), sd.N.Invader=sd(N.Invader),
+                          Invader_per=mean(Invader_per), sd.Invader_per=sd(Invader_per)),
+                      by=list(BIOME_NAME, continent)]
+
+N.merge.mean<-N.merge.mean[N.Invader>10]
+ggplot(N.merge.mean)+geom_point(aes(x=BIOME_NAME, y=Invader_per))+
+  geom_errorbar(aes(x=BIOME_NAME, ymin = Invader_per-sd.Invader_per, ymax=Invader_per+sd.Invader_per))+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  facet_wrap(~continent)

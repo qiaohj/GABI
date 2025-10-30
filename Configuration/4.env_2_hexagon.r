@@ -8,7 +8,7 @@ library(reshape2)
 library(data.table)
 library(ggplot2)
 
-setwd("/media/huijieqiao/WD22T_11/GABI/Script")
+setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 find_connected_hexagon <- function(hexagons){
   
   neighbors_list <- tibble(index=1:nrow(hexagons)) %>% 
@@ -174,7 +174,9 @@ for (v in vars){
 dbDisconnect(conn_continent)
 dbDisconnect(conn_ns_america)
 
-hexagon_ns<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
+
+
+hexagon_ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
 centroids<-st_centroid(hexagon_ns)
 plot(centroids$geometry)
 dist<-st_distance(centroids)
@@ -219,8 +221,16 @@ all_dist<-rbindlist(all_dist)
 all_dist$i<-as.integer(as.character(all_dist$i))
 all_dist$j<-as.integer(as.character(all_dist$j))
 all_dist$dist<-as.integer(all_dist$dist)
-conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
-dbWriteTable(conn, "distances", all_dist, overwrite=T)
+
+conn<-dbConnect(RSQLite::SQLite(), "../Configuration/env_Hadley3D.sqlite")
+dist<-data.table(dbReadTable(conn, "distances"))
+dbDisconnect(conn)
+hexagon_ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
+dist<-dist[i %in% hexagon_ns$seqnum | j %in% hexagon_ns$seqnum]
+dist[i==7130 & dist==2]
+
+conn<-dbConnect(RSQLite::SQLite(), "../Configuration/null.sqlite")
+dbWriteTable(conn, "distances", dist, overwrite=T)
 dbDisconnect(conn)
 
 #check the data

@@ -40,6 +40,7 @@ if (F){
   hist(mammal.range$N.Cell)
   hist(sim.range$N.Cells)
 }
+mammal.nb.filter<-readRDS("../Data/Tables/mammal.nb.filter.table.rda")
 
 p1<-ggplot(mammal.range[species %in% mammal.nb.filter$species])+
   geom_histogram(aes(x=N.Cell))

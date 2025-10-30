@@ -29,6 +29,7 @@ table(df$type)
 seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
 
 rep.list<-list()
+rep.list.all<-list()
 for (rrrr in c(1:10)){
   print(rrrr)
   seeds<-seeds.all[rep==rrrr]
@@ -37,23 +38,32 @@ for (rrrr in c(1:10)){
                  by=list(NB, DA, seed_continent, type)]
   item.rep$rep<-rrrr
   rep.list[[rrrr]]<-item.rep
+  item.rep<-item[, .(N=sum(N)), 
+                 by=list(seed_continent, type)]
+  item.rep$rep<-rrrr
+  rep.list.all[[rrrr]]<-item.rep
 }
 rep.df<-rbindlist(rep.list)
-
+rep.df.all<-rbindlist(rep.list.all)
 rep.df$NB.label<-factor(rep.df$NB, 
                         levels=c("BIG-BIG", "MODERATE-MODERATE"),
                         labels=c("BROAD", "NARROW"))
 
 saveRDS(rep.df, "../Data/Tables/N.Speciation.Extinction.Dispersal.rep.rda")
+saveRDS(rep.df.all, "../Data/Tables/N.Speciation.Extinction.Dispersal.all.rep.rda")
 
-rep.df.sd<-rep.df[, .(N=mean(N), sd=sd(N)),
+rep.df.sd<-rep.df.all[, .(N=mean(N), sd=sd(N)),
                   by=list(seed_continent, type)]
-ggplot(rep.df.sd)+geom_bar(aes(x=type, y=N, fill=seed_continent), stat = "identity", position="dodge")
+ggplot(rep.df.sd)+
+  geom_bar(aes(x=type, y=N, fill=seed_continent), stat = "identity", position="dodge")+
+  geom_errorbar(aes(x=type, ymin=N-sd, ymax=N+sd, group=seed_continent), position="dodge")
 
 
 rep.df.sd<-rep.df[, .(N=mean(N), sd=sd(N)),
                   by=list(seed_continent, type, NB.label, DA)]
-ggplot(rep.df.sd)+geom_bar(aes(x=type, y=N, fill=seed_continent), stat = "identity", position="dodge")+
+ggplot(rep.df.sd)+
+  geom_bar(aes(x=type, y=N, fill=seed_continent), stat = "identity", position="dodge")+
+  geom_errorbar(aes(x=type, ymin=N-sd, ymax=N+sd, group=seed_continent), position="dodge")+
   facet_grid(NB.label~DA, scale="free")+
   theme(axis.text.x = element_text(
     angle = 45,
