@@ -34,8 +34,8 @@ for (i in c(1:length(folders))){
   infos<-strsplit(info, "\\.")[[1]]
   seed_id<-as.numeric(infos[1])
   if (! seed_id %in% seeds.all){
-    print("seed id is not in the picked seed pool, skip")
-    next()
+    #print("seed id is not in the picked seed pool, skip")
+    #next()
   }
   print(paste(f, i, length(folders)))
   target<-sprintf("%s/range.rda", f)
@@ -85,13 +85,17 @@ range.list<-list()
 final.dis<-list()
 for (i in c(1:length(folders))){
   f<-folders[i]
+  #f<-gsub("/Results/", "/Results.NULL/", f)
   info<-basename(f)
   infos<-strsplit(info, "\\.")[[1]]
   seed_id<-as.numeric(infos[1])
   
   target<-sprintf("%s/range.rda", f)
   if (! seed_id %in% seeds.all){
-    #print("seed id is not in the picked seed pool, skip")
+    print("seed id is not in the picked seed pool, skip")
+    next()
+  }
+  if (!file.exists(target)){
     next()
   }
   print(paste(f, i, length(folders)))
@@ -107,5 +111,7 @@ for (i in c(1:length(folders))){
 
 range.df<-rbindlist(range.list)
 saveRDS(range.df, "../Data/Tables/Species.Range.rda")
+#saveRDS(range.df, "../Data/Tables/Species.Range.NULL.rda")
 final.dis.df<-rbindlist(final.dis)
 saveRDS(final.dis.df, "../Data/Tables/Final.Distribution.rda")
+#saveRDS(final.dis.df, "../Data/Tables/Final.Distribution.NULL.rda")

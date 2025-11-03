@@ -109,7 +109,7 @@ custom_colors <- c(
   "South America" = "#2166AC"
 )
 
-p<-ggplot(rep.df.seed, 
+p1<-ggplot(rep.df.seed, 
        aes(x=label, y=N.to_target_continent_final, color=seed_continent))+
   labs(color="Original continent", y="Number of seeds to the other continent")+
   scale_color_manual(values=custom_colors)+
@@ -117,10 +117,10 @@ p<-ggplot(rep.df.seed,
   geom_boxplot()+
   theme_bw()+
   theme(axis.title.x = element_blank())
-p
+p1
 
 
-p<-ggplot(rep.df.all.seed, 
+p2<-ggplot(rep.df.all.seed, 
           aes(x=seed_continent, y=N.to_target_continent_final, 
               color=seed_continent))+
   labs(color="Original continent", y="Number of seeds to the other continent")+
@@ -129,7 +129,7 @@ p<-ggplot(rep.df.all.seed,
   geom_boxplot()+
   theme_bw()+
   theme(axis.title.x = element_blank())
-p
+p2
 
 
 summary_dt<-rep.df.seed[, .(mean=mean(N.to_target_continent_final),

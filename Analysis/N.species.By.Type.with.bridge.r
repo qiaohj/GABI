@@ -10,19 +10,19 @@ library(ggtree)
 library(phangorn)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 if (F){
-  sp<-readRDS("../Data/Tables/100k.speciation.years/virtual.species.rda")
+  sp<-readRDS("../Data/Tables/virtual.species.rda")
   table(sp$continent)
   sp$Parent<-sub("-[^-]*$", "", sp$sp_id)
   sp<-sp[nb!="HUGE-HUGE"]
   sp[sp_id==Parent, Parent:=""]
   head(sp)
   
-  species.type.N<-readRDS("../Data/Tables/100k.speciation.years/species.type.N.rda")
+  species.type.N<-readRDS("../Data/Tables/species.type.N.rda")
   species.type.N$sp_id<-as.character(species.type.N$sp_id)
   species.type.N$Parent<-as.character(species.type.N$Parent)
   species.type.N[sp_id==Parent, Parent:=""]
 
-  seeds.all<-readRDS("../Data/Tables/100k.speciation.years/random.seeds.rda")
+  seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
   
   colnames(species.type.N)[c(8, 12)]<-c("origin_continent", "seed_continent")
   species.type.N[origin_continent!=seed_continent]
@@ -177,14 +177,14 @@ if (F){
                      south.america:=-1]
   sp_full_continents[south.america==1 & north.america==1]
   
-  saveRDS(sp_full_continents, "../Data/Tables/100k.speciation.years/sp_full_continents.rda")
+  saveRDS(sp_full_continents, "../Data/Tables/sp_full_continents.rda")
 }
 
-sp_full_continents<-readRDS("../Data/Tables/100k.speciation.years/sp_full_continents.rda")
+sp_full_continents<-readRDS("../Data/Tables/sp_full_continents.rda")
 xxx<-sp_full_continents[, .(N=.N), by=list(NB, type, year)]
 View(xxx[type=="New.Immigrants"])
 
-seeds.all<-readRDS("../Data/Tables/100k.speciation.years/random.seeds.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
 rrrr<-1
 delta_Species.all<-list()
 type_N.all<-list()
@@ -216,8 +216,8 @@ for (rrrr in c(1:10)){
 }
 delta_Species.df<-rbindlist(delta_Species.all)
 type_N.df<-rbindlist(type_N.all)
-saveRDS(delta_Species.df, "../Data/Tables/100k.speciation.years/delta_Species.rda")
-saveRDS(type_N.df, "../Data/Tables/100k.speciation.years/type_N.rda")
+saveRDS(delta_Species.df, "../Data/Tables/delta_Species.rda")
+saveRDS(type_N.df, "../Data/Tables/type_N.rda")
 
 
 delta_Species.origin<-list()
@@ -247,5 +247,5 @@ for (rrrr in c(1:10)){
 }
 delta_Species.origin.df<-rbindlist(delta_Species.origin)
 type_N.origin.df<-rbindlist(type_N.origin)
-saveRDS(delta_Species.origin.df, "../Data/Tables/100k.speciation.years/delta_Species.origin.rda")
-saveRDS(type_N.origin.df, "../Data/Tables/100k.speciation.years/type_N.origin.rda")
+saveRDS(delta_Species.origin.df, "../Data/Tables/delta_Species.origin.rda")
+saveRDS(type_N.origin.df, "../Data/Tables/type_N.origin.rda")

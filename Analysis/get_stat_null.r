@@ -12,8 +12,16 @@ ns<-data.table(ns)
 ns$geometry<-NULL
 folders<-folders[sample(length(folders), length(folders))]
 f<-folders[1]
+cells<-readRDS("../Data/cells.with.dist.rda")
+colnames(cells)[1]<-"global_id"
+cells$geometry<-NULL
+cells<-data.table(cells)
+
 for (i in c(1:length(folders))){
   f<-folders[i]
+  info<-basename(f)
+  infos<-strsplit(info, "\\.")[[1]]
+  seed_id<-as.numeric(infos[1])
   files<-list.files(f)
   #print(length(files))
   if (length(files)>=4){
@@ -47,6 +55,28 @@ for (i in c(1:length(folders))){
                          nb=ids[2], da=ids[3]), 
                      by=list(year, continent, global_id)]
     saveRDS(log.div, sprintf("%s/species.richness.rda", f))
+    
+    log<-log[suitable==1]
+    log<-log[year==0]
+    saveRDS(log, sprintf("%s/final.dis.rda", f))
+    if (nrow(log)==0){
+      next()
+    }
+    
+    log.full<-merge(log, cells, by=c("global_id"))
+    range<-log.full[, .(N.Cells=length(unique(global_id)),
+                        min.lon=min(lon),
+                        min.lat=min(lat),
+                        max.lon=max(lon),
+                        max.lat=max(lat)),
+                    by=list(sp_id)]
+    
+    range$seed_id<-infos[1]
+    range$nb<-infos[2]
+    range$da<-infos[3]
+    target<-sprintf("%s/range.rda", f)
+    saveRDS(range, target)
+    
   }
 }
 

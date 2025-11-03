@@ -63,7 +63,7 @@ if (F){
 species.dis.geo<-readRDS("../Data/Tables/species.dis.biome.rda")
 species.dis.geo[continent %in% c("bridge1", "bridge2"), 
                 continent:="North America"]
-
+#species.dis.geo[global_id %in% sa.bridge2, continent:="South America"]
 seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
 
 rep.list<-list()
@@ -108,12 +108,15 @@ N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.
                       by=list(nb, da, BIOME_NAME, continent)]
 
 N.merge.mean<-N.merge.mean[N.Invader>10]
-ggplot(N.merge.mean)+geom_point(aes(x=BIOME_NAME, y=Invader_per))+
-  geom_errorbar(aes(x=BIOME_NAME, ymin = Invader_per-sd.Invader_per, ymax=Invader_per+sd.Invader_per))+
+p<-ggplot(N.merge.mean)+geom_point(aes(x=BIOME_NAME, y=Invader_per))+
+  geom_errorbar(aes(x=BIOME_NAME, 
+                    ymin = Invader_per-sd.Invader_per, 
+                    ymax=Invader_per+sd.Invader_per), width=0.5)+
+  theme_bw()+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   facet_grid(nb+da~continent)
-
-
+p
+ggsave(p, filename="../Figures/biome_invader_da_nb.pdf", width=8, height=10)
 
 Aborigines<-rep.list.all[type=="Aborigines"]
 colnames(Aborigines)[5]<-"N.Aborigines"
@@ -135,7 +138,11 @@ N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.
                       by=list(BIOME_NAME, continent)]
 
 N.merge.mean<-N.merge.mean[N.Invader>10]
-ggplot(N.merge.mean)+geom_point(aes(x=BIOME_NAME, y=Invader_per))+
-  geom_errorbar(aes(x=BIOME_NAME, ymin = Invader_per-sd.Invader_per, ymax=Invader_per+sd.Invader_per))+
+p<-ggplot(N.merge.mean)+geom_point(aes(x=BIOME_NAME, y=Invader_per))+
+  geom_errorbar(aes(x=BIOME_NAME, 
+                    ymin = Invader_per-sd.Invader_per, 
+                    ymax=Invader_per+sd.Invader_per), width=0.5)+
+  theme_bw()+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   facet_wrap(~continent)
+ggsave(p, filename="../Figures/biome_invader.pdf", width=8, height=6)
