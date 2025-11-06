@@ -36,7 +36,7 @@ df<-df[NB %in% c("BIG-BIG", "MODERATE-MODERATE")]
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
 
-seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.rda")
 if (F){
   cell.ll<-readRDS("../Data/cells.with.dist.rda")
   seeds.xy<-unique(seeds.all[, c("continent", "seed_id")])
@@ -54,6 +54,10 @@ for (rrrr in c(1:10)){
                                 by=list(NB, DA, seed_continent)]
   rep.to_target_continent$rep<-rrrr
   rep.list[[rrrr]]<-rep.to_target_continent
+  if (F){
+    ggplot(seed.dist)+geom_sf(fill=NA, color="lightgrey")+
+      geom_sf(data=seed.dist[which(seed.dist$seqnum %in% seeds$seed_id),], aes(fill=continent))
+  }
 }
 rep.df<-rbindlist(rep.list)
 

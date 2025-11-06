@@ -54,19 +54,27 @@ saveRDS(rep.df.all, "../Data/Tables/N.Speciation.Extinction.Dispersal.all.rep.rd
 
 rep.df.sd<-rep.df.all[, .(N=mean(N), sd=sd(N)),
                   by=list(seed_continent, type)]
-ggplot(rep.df.sd)+
-  geom_bar(aes(x=type, y=N, fill=seed_continent), stat = "identity", position="dodge")+
-  geom_errorbar(aes(x=type, ymin=N-sd, ymax=N+sd, group=seed_continent), position="dodge")
+pd <- position_dodge(width = 0.9)
 
-
+p<-ggplot(rep.df.sd)+
+  geom_bar(aes(x=type, y=N, fill=seed_continent), 
+           stat = "identity", position="dodge")+
+  geom_errorbar(aes(x=type, ymin=N-sd, ymax=N+sd, group=seed_continent), 
+                position=pd, width=0.2)+
+  theme_bw()
+p
+ggsave(p, filename="../Figures/event.type.pdf", width=12, height=6)
 rep.df.sd<-rep.df[, .(N=mean(N), sd=sd(N)),
                   by=list(seed_continent, type, NB.label, DA)]
-ggplot(rep.df.sd)+
+p<-ggplot(rep.df.sd)+
   geom_bar(aes(x=type, y=N, fill=seed_continent), stat = "identity", position="dodge")+
-  geom_errorbar(aes(x=type, ymin=N-sd, ymax=N+sd, group=seed_continent), position="dodge")+
+  geom_errorbar(aes(x=type, ymin=N-sd, ymax=N+sd, group=seed_continent), 
+                position=pd, width=0.2)+
   facet_grid(NB.label~DA, scale="free")+
+  theme_bw()+
   theme(axis.text.x = element_text(
     angle = 45,
     hjust = 1,
     vjust = 1 
   ))
+p

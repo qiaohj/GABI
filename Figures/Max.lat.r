@@ -73,7 +73,8 @@ ggplot(range.se)+
                 position=position_dodge(width = 0.8), width=0.2)+
   geom_point(aes(x=continent, y=abs.max.lat, color=seed_continent),
              position=position_dodge(width = 0.8), size=5)+
-  facet_grid(nb~da)
+  facet_grid(nb~da)+
+  theme_bw()
 
 
 range.se<-range.df[, .(max.lat=mean(max.lat), 
@@ -88,7 +89,8 @@ ggplot(range.se)+
                     group=seed_continent),
                 position=position_dodge(width = 0.8), width=0.2)+
   geom_point(aes(x=continent, y=abs.max.lat, color=seed_continent),
-             position=position_dodge(width = 0.8), size=5)
+             position=position_dodge(width = 0.8), size=5)+
+  theme_bw()
 
 
 #############useless.
