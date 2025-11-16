@@ -30,7 +30,7 @@ table(simulations$species_evo_type)
 
 table(simulations[, c("nb", "da")])
 
-simulations<-simulations[nb %in% c("BIG-BIG", "MODERATE-MODERATE")]
+#simulations<-simulations[nb %in% c("BIG-BIG", "MODERATE-MODERATE")]
 template<-"%d.%s.%s"
 all_df<-simulations
 all_df<-all_df[sample(nrow(all_df), nrow(all_df)),]
@@ -167,5 +167,5 @@ if (F){
     df_full[[i]]<-df
   }
   df_full<-rbindlist(df_full)
-  saveRDS(df_full, "../Data/Tables/N.Speciation.Extinction.rda")
+  saveRDS(df_full, "../Data/Tables/N.Speciation.Extinction.All.NB.rda")
 }

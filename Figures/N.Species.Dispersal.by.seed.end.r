@@ -32,9 +32,10 @@ if (F){
 
 
 df<-readRDS("../Data/Tables/N.with.bridge.seed.continent.rda")
-df<-df[NB %in% c("BIG-BIG", "MODERATE-MODERATE")]
+#df<-df[NB %in% c("BIG-BIG", "MODERATE-MODERATE")]
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
+table(df$label)
 
 seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.rda")
 if (F){
@@ -42,6 +43,13 @@ if (F){
   seeds.xy<-unique(seeds.all[, c("continent", "seed_id")])
   seeds.xy<-merge(seeds.xy, cell.ll, by.x="seed_id", by.y="seqnum")
   ggplot(seeds.xy)+geom_point(aes(x=lon, y=lat, fill=continent.x))
+}
+if (F){
+  seeds.allx<-seeds.all
+  seeds.allx[nb=="BIG-BIG", nb:="NARROW-NARROW"]
+  seeds.allx[nb=="MODERATE-MODERATE", nb:="BROAD-BROAD"]
+  seeds.allx$label<-sprintf("%d.%s.%s", seeds.allx$seed_id, seeds.allx$nb, seeds.allx$da)
+  seeds.all<-rbindlist(list(seeds.allx, seeds.all))
 }
 rep.list<-list()
 for (rrrr in c(1:10)){
@@ -60,10 +68,11 @@ for (rrrr in c(1:10)){
   }
 }
 rep.df<-rbindlist(rep.list)
+table(rep.df$NB)
 
 rep.df$NB.label<-factor(rep.df$NB, 
-                        levels=c("BIG-BIG", "MODERATE-MODERATE"),
-                        labels=c("BROAD", "NARROW"))
+                        levels=c("BROAD-BROAD", "BIG-BIG", "MODERATE-MODERATE", "NARROW-NARROW"),
+                        labels=c( "BROAD", "BIG", "MODERATE", "NARROW"))
 
 saveRDS(rep.df, "../Data/Tables/N.Species.Dispersal.by.seed.end.rep.rda")
 ggplot(rep.df, 
@@ -72,7 +81,7 @@ ggplot(rep.df,
   geom_boxplot()+
   facet_wrap(~DA)
 
-rep.df.all<-rep.df[NB.label %in% c("BROAD", "NARROW"),
+rep.df.all<-rep.df[NB.label %in% c("BROAD", "NARROW", "BIG", "BROAD"),
                    .(N.to_target_continent=sum(N.to_target_continent),
                       N.in_source_continent=sum(N.in_source_continent)),
                    by=list(seed_continent, rep)]

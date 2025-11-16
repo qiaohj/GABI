@@ -5,7 +5,7 @@ library(ggh4x)
 library(sf)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 
-#80: 663 vs 2041
+#80: 663 vs 2041d
 #70: 600 vs 1509
 #60: 527 vs 1070
 threshold<-70
@@ -19,7 +19,8 @@ selected.seeds<-selected.seeds[between(min.dist, 1, threshold)]
 seeds<-seeds[global_id %in% selected.seeds$seqnum]
 ggplot(seeds)+geom_sf(data=seed.dist)+geom_point(aes(x=lon, y=lat, color=continent))
 
-df<-readRDS("../Data/Tables/N.Speciation.Extinction.rda")
+df<-readRDS("../Data/Tables/N.Speciation.Extinction.All.NB.rda")
+table(df$nb)
 nrow(df)
 df$continent<-NULL
 df<-merge(df, seeds, by.x="seed_id", by.y="global_id")
@@ -29,7 +30,7 @@ range(df$lat)
 #burn in 3100/2
 burn_in<-3100/2
 unique(df$nb)
-df<-df[nb %in% c("BIG-BIG", "MODERATE-MODERATE")]
+#df<-df[nb %in% c("BIG-BIG", "MODERATE-MODERATE")]
 
 
 df_N<-df[, .(N_SPECIES=sum(N_SPECIES), 
@@ -48,14 +49,15 @@ df_N[year==1799]$N_ALL_SPECIES<-df_N[year==1799]$N_SEED
 df_N_checked<-df[year==burn_in+1 & N_SPECIES>0, 
                  .(N=.N), by=list(seed_id)]
 
-df_filtered_seeds<-df[seed_id %in% df_N_checked[N==4]$seed_id]
+df_filtered_seeds<-df[seed_id %in% df_N_checked[N==8]$seed_id]
 
 ggplot(seeds)+
   geom_sf(data=seed.dist)+
   geom_point(aes(x=lon, y=lat, color=continent), alpha=0.2)+
-  geom_point(data=seeds[global_id %in% df_N_checked[N==4]$seed_id],
+  geom_point(data=seeds[global_id %in% df_N_checked[N==8]$seed_id],
              aes(x=lon, y=lat, color=continent))
-table(seeds[global_id %in% df_N_checked[N==4]$seed_id]$continent)
+
+table(seeds[global_id %in% df_N_checked[N==8]$seed_id]$continent)
 table(seeds$continent)
 
 df_filtered_seeds[seed_id=="5412"]
@@ -152,20 +154,39 @@ ggplot(df_filtered_N_filter)+
             aes(x=burn_in * -1 + 10, y=c(1.7e4, 1.9e4), 
                 label=paste(continent, N_SEED, sep=": ")),
             hjust = 0)
-
-df_filtered_N_filter<-N_species_filter[, .(N_SPECIES=sum(N_SPECIES), 
-                                           N_SPECIATION=sum(N_SPECIATION),
-                                           N_EXTINCTION=sum(N_EXTINCTION),
-                                           N_SPECIATION_YEAR=sum(N_SPECIATION_YEAR),
-                                           N_EXTINCTION_YEAR=sum(N_EXTINCTION_YEAR),
-                                           N_ALL_SPECIES=sum(N_ALL_SPECIES),
-                                           N_SEED=length(unique(seed_id))),
-                                       by=list(continent, year, nb, da)]
-
-ggplot(df_filtered_N_filter)+
-  geom_line(aes(y=N_SPECIES, x=year * -1, color=continent))+
-  geom_vline(xintercept = burn_in * -1, linetype=2)+
-  facet_grid(nb~da, scale="free")
+if (F){
+  seeds.rep<-readRDS("../Data/Tables/random.seeds.threshold.full.nb.rda")
+  df.list<-list()
+  for (r in c(1:10)){
+    print(r)
+    item<-seeds.rep[rep==r]
+    xxx<-N_species_filter[seed_id %in% item$seed_id, 
+                          .(rep=r,
+                            N_SPECIES=sum(N_SPECIES), 
+                            N_SPECIATION=sum(N_SPECIATION),
+                            N_EXTINCTION=sum(N_EXTINCTION),
+                            N_SPECIATION_YEAR=sum(N_SPECIATION_YEAR),
+                            N_EXTINCTION_YEAR=sum(N_EXTINCTION_YEAR),
+                            N_ALL_SPECIES=sum(N_ALL_SPECIES),
+                            N_SEED=length(unique(seed_id))),
+                          by=list(continent, year, nb, da)]
+    df.list[[r]]<-xxx
+  }
+  df.se<-rbindlist(df.list)
+  df.se.se<-df.se[, .(N_SPECIES=mean(N_SPECIES),
+                      N_SPECIES_sd=sd(N_SPECIES)),
+                  by=list(continent, year, nb, da)]
+  ggplot(df.se.se[nb!="BROAD-BROAD"])+
+    geom_ribbon(aes(x=year * -1, ymin=N_SPECIES-N_SPECIES_sd,
+                    ymax=N_SPECIES+N_SPECIES_sd,
+                    group=continent), alpha=0.2)+
+    geom_line(aes(y=N_SPECIES, x=year * -1, color=continent))+
+    geom_vline(xintercept = burn_in * -1, linetype=2)+
+    lims(x=c(-1000, 0))+
+    labs(color="seed continent")+
+    facet_grid(nb~da, scale="free")
+  
+}
 
 outliers_ID<-unique(outliers$seed_id)
 unique(N_species$nb)
@@ -175,7 +196,8 @@ seed_pool<-df_filtered_seeds[(year==0 & !(seed_id %in% outliers_ID)),
 
 
 
-coms<-data.table(expand.grid(nb=c("MODERATE-MODERATE", "BIG-BIG"),
+coms<-data.table(expand.grid(nb=c("MODERATE-MODERATE", "BIG-BIG", 
+                                  "NARROW-NARROW", "BROAD-BROAD"),
                   da=c("GOOD", "POOR")))
 all_ramdom_seeds<-list()
 for (rep in c(1:10)){
@@ -197,4 +219,12 @@ for (rep in c(1:10)){
 all_ramdom_seeds_df<-rbindlist(all_ramdom_seeds)
 
 unique(all_ramdom_seeds_df[, .(N=.N), by=list(continent, rep, nb, da)]$N)
-saveRDS(all_ramdom_seeds_df, "../Data/Tables/random.seeds.rda")
+saveRDS(all_ramdom_seeds_df, "../Data/Tables/random.seeds.threshold.full.nb.rda")
+
+
+all_ramdom_seeds_df<-readRDS("../Data/Tables/random.seeds.threshold.full.nb.rda")
+
+N.seed<-all_ramdom_seeds_df[, .(N=.N/8), by=list(seed_id)]
+N.seed<-merge(seed.dist, N.seed, by.x="seqnum", by.y="seed_id")
+ggplot()+geom_sf(data=seed.dist, fill=NA, color="lightgrey")+
+  geom_sf(data=N.seed, aes(fill=N))
