@@ -32,12 +32,14 @@ if (F){
 
 
 df<-readRDS("../Data/Tables/N.with.bridge.seed.continent.rda")
-#df<-df[NB %in% c("BIG-BIG", "MODERATE-MODERATE")]
+target.nb<-c("BIG-BIG", "MODERATE-MODERATE")
+#target.nb<-c("BIG-BIG", "MODERATE-MODERATE", "NARROW-NARROW")
+df<-df[NB %in% target.nb]
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
 table(df$label)
 
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
 if (F){
   cell.ll<-readRDS("../Data/cells.with.dist.rda")
   seeds.xy<-unique(seeds.all[, c("continent", "seed_id")])
@@ -52,7 +54,7 @@ if (F){
   seeds.all<-rbindlist(list(seeds.allx, seeds.all))
 }
 rep.list<-list()
-for (rrrr in c(1:10)){
+for (rrrr in c(1:100)){
   print(rrrr)
   seeds<-seeds.all[rep==rrrr]
   item<-df[label %in% seeds$label]
@@ -70,18 +72,18 @@ for (rrrr in c(1:10)){
 rep.df<-rbindlist(rep.list)
 table(rep.df$NB)
 
-rep.df$NB.label<-factor(rep.df$NB, 
-                        levels=c("BROAD-BROAD", "BIG-BIG", "MODERATE-MODERATE", "NARROW-NARROW"),
-                        labels=c( "BROAD", "BIG", "MODERATE", "NARROW"))
+#rep.df$NB.label<-factor(rep.df$NB, 
+#                        levels=c("BROAD-BROAD", "BIG-BIG", "MODERATE-MODERATE", "NARROW-NARROW"),
+#                        labels=c( "BROAD", "BIG", "MODERATE", "NARROW"))
 
 saveRDS(rep.df, "../Data/Tables/N.Species.Dispersal.by.seed.end.rep.rda")
 ggplot(rep.df, 
-       aes(x=NB.label, y=N.to_target_continent, color=seed_continent))+
+       aes(x=NB, y=N.to_target_continent, color=seed_continent))+
   labs(y="Number of species to the other continent")+
   geom_boxplot()+
   facet_wrap(~DA)
 
-rep.df.all<-rep.df[NB.label %in% c("BROAD", "NARROW", "BIG", "BROAD"),
+rep.df.all<-rep.df[,
                    .(N.to_target_continent=sum(N.to_target_continent),
                       N.in_source_continent=sum(N.in_source_continent)),
                    by=list(seed_continent, rep)]
@@ -101,7 +103,8 @@ item.final[type=="in_source_continent", final.continent:=seed_continent]
 
 ggplot(item.final, 
        aes(x=final.continent, y=N, color=seed_continent))+
-  geom_boxplot()
+  geom_boxplot()+
+  labs(title=str_c(unique(target.nb), collapse = "|"))
 
 summary_dt<-item.final[, .(mean=mean(N), sd=sd(N)),
                        by=list(seed_continent, type)]
@@ -113,11 +116,11 @@ to.doc(summary_dt,
        "Number of species stay in the original continent and dispersal to the other continent", 
        "../Table.Doc/species.2.other.continent.full.docx")
 
-item1<-rep.df[,c("seed_continent",   "rep", "N.to_target_continent", "NB.label", "DA")]
+item1<-rep.df[,c("seed_continent",   "rep", "N.to_target_continent", "NB", "DA")]
 colnames(item1)[3]<-"N"
 item1$type<-"to_target_continent"
 
-item2<-rep.df[,c("seed_continent",   "rep", "N.in_source_continent", "NB.label", "DA")]
+item2<-rep.df[,c("seed_continent",   "rep", "N.in_source_continent", "NB", "DA")]
 colnames(item2)[3]<-"N"
 item2$type<-"in_source_continent"
 
@@ -128,7 +131,8 @@ item.final[type=="in_source_continent", final.continent:=seed_continent]
 
 ggplot(item.final, 
        aes(x=final.continent, y=N, color=seed_continent))+
-  geom_boxplot()+facet_grid(NB.label~DA, scale="free")
+  labs(title=str_c(unique(item.final$NB), collapse = "|"))+
+  geom_boxplot()+facet_grid(NB~DA, scale="free")
 
 
 summary_dt<-item.final[, .(mean=mean(N), sd=sd(N)),

@@ -4,6 +4,8 @@ library(sf)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 
 folders<-readRDS("../Data/LOG/all.sim.folders.rda")
+
+folders<-gsub("MODERATE-MODERATE", "NARROW-NARROW", folders)
 folders<-folders[sample(length(folders), length(folders))]
 cells<-readRDS("../Data/cells.with.dist.rda")
 bridge2.id<-cells[which(cells$continent=="bridge2"), ]$seqnum
@@ -17,7 +19,8 @@ for (i in c(1:length(folders))){
     print("Skip 1")
     next()
   }
-  path<-sprintf("%s/species.richness.rda", gsub("/Results/", "/Results.NULL/", f))
+  #path<-sprintf("%s/species.richness.rda", gsub("/Results/", "/Results.NULL/", f))
+  path<-sprintf("%s/species.richness.rda", f)
   if (!file.exists(path)){
     next()
   }

@@ -30,7 +30,8 @@ table(simulations$species_evo_type)
 
 table(simulations[, c("nb", "da")])
 
-simulations<-simulations[nb %in% c("BIG-BIG", "MODERATE-MODERATE")]
+#simulations<-simulations[nb %in% c("BIG-BIG", "MODERATE-MODERATE", "NARROW-NARROW")]
+simulations<-simulations[nb %in% c("NARROW-NARROW")]
 template<-"%d.%s.%s"
 all_df<-simulations
 all_df<-all_df[sample(nrow(all_df), nrow(all_df)),]

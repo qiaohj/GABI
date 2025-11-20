@@ -38,7 +38,8 @@ if (F){
 }
 source("Figures/common.r")
 df<-readRDS("../Data/Tables/N.with.bridge.simulation.rda")
-#df<-df[NB %in% c("BIG-BIG", "MODERATE-MODERATE")]
+target.nb<-c("BIG-BIG", "MODERATE-MODERATE")
+df<-df[NB %in% target.nb]
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
 cell.dist<-readRDS("../Data/cells.with.dist.rda")
@@ -47,30 +48,27 @@ if (F){
 }
 df_map<-merge(cell.dist, df, by.x="seqnum",
               by.y="seed_id")
-df_map$NB_label<-factor(df_map$NB, 
-                        levels=c("NARROW-NARROW", "MODERATE-MODERATE", "BIG-BIG"),
-                        labels=c("NARROW", "MODERATE", "BIG"))
 df_map$to_target_continent_final_label<-ifelse(df_map$to_target_continent_final,
                                                "Y", "N")
 p<-ggplot()+
   geom_sf(data=cell.dist, fill=NA, color="lightgrey")+
-  geom_sf(data=df_map[which(df_map$NB!="BROAD-BROAD"),], 
+  geom_sf(data=df_map, 
           aes(fill=to_target_continent_final_label), alpha=0.5, color=NA)+
   coord_sf(crs=map_crs)+
   scale_fill_manual(values=c("Y"=color_high, "N"=color_low))+
   labs(fill="Dispersal to the other continent")+
-  facet_grid(NB_label~DA)+map_theme
+  facet_grid(NB~DA)+map_theme
 
 p
 ggsave(p, filename="../Figures/Seed.Dispersal.Map.pdf", width=10, height=8)
 
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.full.nb.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
 seeds.all[seed_id=="5412"]
 
 rep.list<-list()
 rep.all.list<-list()
 
-for (rrrr in c(1:10)){
+for (rrrr in c(1:100)){
   print(rrrr)
   seeds<-seeds.all[rep==rrrr]
   item<-df[label %in% seeds$label]
@@ -93,14 +91,14 @@ for (rrrr in c(1:10)){
   rep.all.list[[rrrr]]<-rep
 }
 rep.df.seed<-rbindlist(rep.list)
-rep.df.seed$NB.label<-factor(rep.df.seed$NB, 
-                        levels=c("BIG-BIG", "MODERATE-MODERATE"),
-                        labels=c("BROAD", "NARROW"))
+#rep.df.seed$NB.label<-factor(rep.df.seed$NB, 
+#                        levels=c("BIG-BIG", "MODERATE-MODERATE"),
+#                        labels=c("BROAD", "NARROW"))
 
 rep.df.all.seed<-rbindlist(rep.all.list)
-rep.df.all.seed$NB.label<-factor(rep.df.all.seed$NB, 
-                             levels=c("BIG-BIG", "MODERATE-MODERATE"),
-                             labels=c("BROAD", "NARROW"))
+#rep.df.all.seed$NB.label<-factor(rep.df.all.seed$NB, 
+#                             levels=c("BIG-BIG", "MODERATE-MODERATE"),
+#                             labels=c("BROAD", "NARROW"))
 
 saveRDS(rep.df.seed, "../Data/Tables/N.Seed.Dispersal.rep.rda")
 saveRDS(rep.df.all.seed, "../Data/Tables/N.Seed.Dispersal.all.rep.rda")
@@ -110,9 +108,10 @@ custom_colors <- c(
   "South America" = "#2166AC"
 )
 
-p1<-ggplot(rep.df.seed[NB!="BROAD-BROAD"], 
+p1<-ggplot(rep.df.seed, 
        aes(x=label, y=N.to_target_continent_final, color=seed_continent))+
-  labs(color="Original continent", y="Number of seeds to the other continent")+
+  labs(color="Original continent", y="Number of seeds to the other continent",
+       title=str_c(unique(rep.df.seed$NB), collapse = "|"))+
   scale_color_manual(values=custom_colors)+
   #geom_point()+
   geom_boxplot()+
@@ -129,7 +128,9 @@ p1
 p2<-ggplot(rep.df.all.seed, 
           aes(x=seed_continent, y=N.to_target_continent_final, 
               color=seed_continent))+
-  labs(color="Original continent", y="Number of seeds to the other continent")+
+  labs(color="Original continent", 
+       y="Number of seeds to the other continent",
+       title=str_c(target.nb, collapse = "|"))+
   scale_color_manual(values=custom_colors)+
   #geom_point()+
   geom_boxplot()+
