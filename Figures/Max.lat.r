@@ -46,12 +46,12 @@ species.range$seed_id<-as.numeric(species.range$seed_id)
 species.range$label<-sprintf("%s.%s", species.range$nb, species.range$da)
 
 
-seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
 hexagon<-readRDS("../Data/cells.with.dist.rda")
 cells<-data.table(seed_id=hexagon$seqnum, seed_continent=hexagon$continent)
 range.list<-list()
 
-for (r in c(1:10)){
+for (r in c(1:100)){
   print(r)
   item<-species.range[seed_id %in% seeds.all[rep==r]$seed_id]
   item$rep<-r

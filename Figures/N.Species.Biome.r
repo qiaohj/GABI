@@ -55,7 +55,8 @@ if (F){
   species.dis.geo<-merge(species.dis.geo, seeds, by="seed_id")
   
   
-  species.dis.geo$type<-ifelse(species.dis.geo$continent==species.dis.geo$seed_continent, "Aborigines", "Invader")
+  species.dis.geo$type<-ifelse(species.dis.geo$continent==species.dis.geo$seed_continent, 
+                               "Aborigines", "Invader")
   
   saveRDS(species.dis.geo, "../Data/Tables/species.dis.biome.rda")
   
@@ -63,12 +64,15 @@ if (F){
 species.dis.geo<-readRDS("../Data/Tables/species.dis.biome.rda")
 species.dis.geo[continent %in% c("bridge1", "bridge2"), 
                 continent:="North America"]
+species.dis.geo[global_id %in% c(9580, 9662,9744,9663,9745,9664), continent:="South America"]
+
+
 #species.dis.geo[global_id %in% sa.bridge2, continent:="South America"]
-seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
 
 rep.list<-list()
 rep.list.all<-list()
-for (rrrr in c(1:10)){
+for (rrrr in c(1:100)){
   print(rrrr)
   seeds<-seeds.all[rep==rrrr]
   item<-species.dis.geo[seed_id %in% seeds$seed_id]
@@ -112,6 +116,7 @@ p<-ggplot(N.merge.mean)+geom_point(aes(x=BIOME_NAME, y=Invader_per))+
   geom_errorbar(aes(x=BIOME_NAME, 
                     ymin = Invader_per-sd.Invader_per, 
                     ymax=Invader_per+sd.Invader_per), width=0.5)+
+  geom_hline(yintercept = 0.5, linetype=2)+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   facet_grid(nb+da~continent)
@@ -142,7 +147,9 @@ p<-ggplot(N.merge.mean)+geom_point(aes(x=BIOME_NAME, y=Invader_per))+
   geom_errorbar(aes(x=BIOME_NAME, 
                     ymin = Invader_per-sd.Invader_per, 
                     ymax=Invader_per+sd.Invader_per), width=0.5)+
+  geom_hline(yintercept = 0.5, linetype=2)+
   theme_bw()+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   facet_wrap(~continent)
+p
 ggsave(p, filename="../Figures/biome_invader.pdf", width=8, height=6)

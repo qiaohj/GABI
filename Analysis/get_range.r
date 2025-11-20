@@ -23,7 +23,7 @@ cells<-data.table(cells)
 folders<-readRDS("../Data/LOG/all.sim.folders.rda")
 folders<-folders[sample(length(folders), length(folders))]
 f<-folders[1]
-seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
 seeds.all$rep<-NULL
 seeds.all$N_SPECIES<-NULL
 seeds.all<-unique(seeds.all$seed_id)
@@ -77,7 +77,7 @@ cells<-data.table(cells)
 folders<-readRDS("../Data/LOG/all.sim.folders.rda")
 folders<-folders[sample(length(folders), length(folders))]
 f<-folders[1]
-seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
 seeds.all$rep<-NULL
 seeds.all$N_SPECIES<-NULL
 seeds.all<-unique(seeds.all$seed_id)

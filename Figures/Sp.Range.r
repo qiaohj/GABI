@@ -52,6 +52,31 @@ mean(sim.range$N.Cells)
 p2<-ggplot(sim.range)+geom_histogram(aes(x=N.Cells))
 p2
 
+
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
+
+rep.list<-list()
+for (rrrr in c(1:100)){
+  print(rrrr)
+  seeds<-seeds.all[rep==rrrr]
+  item<-sim.range[seed_id %in% seeds$seed_id]
+  item$rep<-rrrr
+  rep.list[[length(rep.list)+1]]<-item
+}
+rep.df<-rbindlist(rep.list)
+ggplot(rep.df)+geom_density(aes(x=N.Cells, color=factor(rep)), 
+                            linewidth = 1,
+                            alpha = 0.8)+
+  labs(
+    title = "Overlaid Density Plots of N across 10 Repetitions",
+    x = "Value of N",
+    y = "Density",
+    color = "Repetition ID"
+  ) +
+  theme_minimal()+
+  theme(legend.position = "none")
+
+
 p1+p2 + plot_annotation(
   title = 'Range of mammals (left) and range of simulation (right)',
   tag_levels = 'A'

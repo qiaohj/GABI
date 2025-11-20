@@ -17,6 +17,7 @@ seeds<-seeds[global_id %in% selected.seeds$seqnum]
 ggplot(seeds)+geom_sf(data=seed.dist)+geom_point(aes(x=lon, y=lat, color=continent))
 
 df<-readRDS("../Data/Tables/N.Speciation.Extinction.All.NB.rda")
+df<-df[nb %in% c("BIG-BIG", "MODERATE-MODERATE")]
 table(df$nb)
 nrow(df)
 df$continent<-NULL
@@ -187,8 +188,7 @@ all_ramdom_seeds<-list()
 for (rep in c(1:100)){
   
   all_seeds<-list()
-  for (nb.str in c("MODERATE-MODERATE", "BIG-BIG", 
-                   "NARROW-NARROW", "BROAD-BROAD")){
+  for (nb.str in c("MODERATE-MODERATE", "BIG-BIG")){
     ramdom_seeds.na<-seed_pool.na[nb==nb.str,.SD[sample(.N, 100)],
                                by = "continent"]
     

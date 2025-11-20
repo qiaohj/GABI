@@ -22,11 +22,12 @@ if (F){
   saveRDS(sp.with.bridge.N, "../Data/Tables/N.Speciation.Extinction.Dispersal.rda")
 }
 df<-readRDS("../Data/Tables/N.Speciation.Extinction.Dispersal.rda")
-#df<-df[NB %in% c("BIG-BIG", "MODERATE-MODERATE")]
+table(df$NB)
+df<-df[NB %in% c("BIG-BIG", "MODERATE-MODERATE")]
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$type)
 
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.full.nb.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
 if (F){
   seeds.allx<-seeds.all
   seeds.allx[nb=="BIG-BIG", nb:="NARROW-NARROW"]
@@ -36,7 +37,7 @@ if (F){
 }
 rep.list<-list()
 rep.list.all<-list()
-for (rrrr in c(1:10)){
+for (rrrr in c(1:100)){
   print(rrrr)
   seeds<-seeds.all[rep==rrrr]
   item<-df[label %in% seeds$label]
@@ -52,9 +53,9 @@ for (rrrr in c(1:10)){
 rep.df<-rbindlist(rep.list)
 rep.df.all<-rbindlist(rep.list.all)
 
-rep.df$NB.label<-factor(rep.df$NB, 
-                        levels=c("BROAD-BROAD", "BIG-BIG", "MODERATE-MODERATE", "NARROW-NARROW"),
-                        labels=c( "BROAD", "BIG", "MODERATE", "NARROW"))
+#rep.df$NB.label<-factor(rep.df$NB, 
+#                        levels=c("BROAD-BROAD", "BIG-BIG", "MODERATE-MODERATE", "NARROW-NARROW"),
+#                        labels=c( "BROAD", "BIG", "MODERATE", "NARROW"))
 
 
 saveRDS(rep.df, "../Data/Tables/N.Speciation.Extinction.Dispersal.rep.rda")
@@ -73,17 +74,17 @@ p<-ggplot(rep.df.sd)+
 p
 ggsave(p, filename="../Figures/event.type.pdf", width=12, height=6)
 rep.df.sd<-rep.df[, .(N=mean(N), sd=sd(N)),
-                  by=list(seed_continent, type, NB.label, DA)]
+                  by=list(seed_continent, type, NB, DA)]
 
 if (F){
   rep.df.sd[type %in% c("Local Speciation", "Non-local Speciation"), type:="Speciation"]
   rep.df.sd<-rep.df.sd[, .(N=sum(N), sd=mean(sd)), by=list(NB.label, DA, seed_continent, type)]
 }
-p<-ggplot(rep.df.sd[NB.label!="BROAD" & type %in% c("Extinction", "Speciation")])+
+p<-ggplot(rep.df.sd[type %in% c("Extinction", "Local Speciation", "Non-local Speciation")])+
   geom_bar(aes(x=type, y=N, fill=seed_continent), stat = "identity", position="dodge")+
   geom_errorbar(aes(x=type, ymin=N-sd, ymax=N+sd, group=seed_continent), 
                 position=pd, width=0.2)+
-  facet_grid(NB.label~DA, scale="free")+
+  facet_grid(NB~DA, scale="free")+
   theme_bw()+
   theme(axis.text.x = element_text(
     angle = 45,

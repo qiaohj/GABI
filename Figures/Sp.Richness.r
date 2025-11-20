@@ -6,8 +6,15 @@ setDTthreads(20)
 sf::sf_use_s2(FALSE)
 
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
+
+#Skip the following script until the next comment. It is useless now.
 if (F){
-  seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
+  if (F){
+    seeds.all<-seeds.all[nb %in% c("MODERATE-MODERATE", "BIG-BIG")]
+    saveRDS(seeds.all, "../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
+  }
+  unique(seeds.all$nb)
   seeds.all$rep<-NULL
   seeds.all$N_SPECIES<-NULL
   seeds.all<-unique(seeds.all)
@@ -36,7 +43,7 @@ if (F){
 }
 
 if (F){
-  seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
   seeds.all$rep<-NULL
   seeds.all$N_SPECIES<-NULL
   seeds.all<-unique(seeds.all)
@@ -145,9 +152,10 @@ if (F){
   
   #ggplot(dis.richness)+geom_sf(aes(fill=N.species))
 }
+### end of useless code
 
 if (F){
-  seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
   sim.dis<-readRDS("../Data/Tables/Final.Distribution.rda")
   if (F){
     test<-sim.dis[seed_id==739]
@@ -174,7 +182,7 @@ if (F){
   by.continent.richness.list<-list()
   by.continent.nb.da.richness.list<-list()
   
-  for (r in c(1:10)){
+  for (r in c(1:100)){
     print(r)
     sim.dis.geo<-sim.dis.geo.full[seed_id %in% seeds.all[rep==r]$seed_id]
     sim.dis.geo<-sim.dis.geo[, .(N_SP=length(unique(sp_id))), 
@@ -224,7 +232,7 @@ if (F){
 }
 
 if (F){
-  seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
   sim.dis<-readRDS("../Data/Tables/Final.Distribution.NULL.rda")
   if (F){
     test<-sim.dis[seed_id==739]
@@ -251,7 +259,7 @@ if (F){
   by.continent.richness.list<-list()
   by.continent.nb.da.richness.list<-list()
   
-  for (r in c(1:10)){
+  for (r in c(1:100)){
     print(r)
     sim.dis.geo<-sim.dis.geo.full[seed_id %in% seeds.all[rep==r]$seed_id]
     sim.dis.geo<-sim.dis.geo[, .(N_SP=length(unique(sp_id))), 
@@ -301,7 +309,8 @@ if (F){
   
 }
 source("Figures/common.r")
-seeds<-readRDS("../Data/Tables/random.seeds.rda")
+seeds<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
+range(seeds$N_SPECIES)
 seeds<-unique(seeds$seed_id)
 hexagon<-readRDS("../Data/cells.with.dist.rda")
 richness<-readRDS("../Data/Tables/Richness/full.richness.rda")
@@ -335,32 +344,40 @@ full.richness<-merge(full.richness, mammal.richness.filter, by="seqnum", all=T)
 full.richness[is.na(full.richness$N.sim.NULL.species), "N.sim.NULL.species"]<-0
 full.richness[is.na(full.richness$N.sim.species), "N.sim.species"]<-0
 full.richness[is.na(full.richness$N.species), "N.species"]<-0
+full.richness[is.na(full.richness$N.species.filter), "N.species.filter"]<-0
+
 full.richness<-full.richness[which(!is.na(full.richness$continent)),]
 
 table(mammal.richness[which(mammal.richness$seqnum %in% seeds),]$continent)
-plot(full.richness$N.sim.species, 
-    full.richness$N.species)
-cor(full.richness$N.sim.species, 
-     full.richness$N.species, 
+full.richness.cor[continent=="bridge2"]
+full.richness.cor<-data.table(full.richness)
+#full.richness.cor<-full.richness.cor[N.sim.species>0 & N.species>0 & N.sim.NULL.species>0]
+plot(full.richness.cor$N.sim.species, 
+     full.richness.cor$N.species)
+cor(full.richness.cor$N.sim.species, 
+    full.richness.cor$N.species, 
     method = "spearman")
 
-cor(full.richness$N.sim.species, 
-    full.richness$N.species)
+cor(full.richness.cor$N.sim.species, 
+    full.richness.cor$N.species)
 
-plot(full.richness$N.sim.species, 
-    full.richness$N.species.filter)
+plot(full.richness.cor$N.sim.species, 
+     full.richness.cor$N.species.filter)
+full.richness[which(is.na(full.richness$N.species.filter)),]
 
-cor(full.richness$N.sim.species, 
-    full.richness$N.species.filter, 
+cor(full.richness.cor$N.sim.species, 
+    full.richness.cor$N.species.filter, 
     method = "spearman")
 
-cor(full.richness$N.sim.NULL.species, 
-    full.richness$N.species)
+cor(full.richness.cor[N.sim.NULL.species>0 & N.species>0]$N.sim.NULL.species, 
+    full.richness.cor[N.sim.NULL.species>0 & N.species>0]$N.species)
 
-cor(full.richness$N.sim.NULL.species, 
-    full.richness$N.species, 
+cor(full.richness.cor[N.sim.NULL.species>0 & N.species>0]$N.sim.NULL.species, 
+    full.richness.cor[N.sim.NULL.species>0 & N.species>0]$N.species, 
     method = "spearman")
+
 full.richness[which(full.richness$continent=="bridge2"),]
+write_sf(full.richness, "../Data/Shape/Species.richness/Species.richness.shp")
 p1<-ggplot()+ 
   geom_sf(data=hexagon, fill=NA, color="lightgray")+
   geom_sf(data=full.richness,  aes(fill=N.species),
@@ -401,11 +418,13 @@ p2<-ggplot()+
   geom_sf(data=hexagon, fill=NA, color="lightgray")+
   geom_sf(data=full.richness,  aes(fill=N.sim.species),
           color=NA, linewidth=0.1) +
+  
   labs(fill="Number of simulated species")+
   scale_fill_gradient2(low=color_low,
                        mid=color_mid,
                        high=color_high,
-                       midpoint = median(full.richness$N.sim.species))+
+                       midpoint = 
+                         median(full.richness[which(full.richness$N.sim.species>0),]$N.sim.species))+
   coord_sf(crs=map_crs)+
   guide_colorbar_top+
   map_theme
@@ -414,11 +433,11 @@ p3<-ggplot()+
   geom_sf(data=hexagon, fill=NA, color="lightgray")+
   geom_sf(data=full.richness,  aes(fill=N.sim.NULL.species),
           color=NA, linewidth=0.1) +
-  labs(fill="Number of simulated species")+
+  labs(fill="Number of simulated species (Null model)")+
   scale_fill_gradient2(low=color_low,
                        mid=color_mid,
                        high=color_high,
-                       midpoint = median(full.richness$N.sim.NULL.species))+
+                       midpoint = median(full.richness[which(full.richness$N.sim.NULL.species>0),]$N.sim.NULL.species))+
   coord_sf(crs=map_crs)+
   guide_colorbar_top+
   map_theme
@@ -427,17 +446,22 @@ p<-p1+p2+p3+plot_annotation(
   title = 'Mammals richness (left), Simulated richess (middle) and NULL model (right)',
   tag_levels = 'A'
 )
+p
 ggsave(p, filename="../Figures/Species.richness.pdf", width=12, height = 7)
+
 richness<-readRDS("../Data/Tables/Richness/by.continent.richness.rda")
 richness<-richness[, .(N.species=mean(N.species)),
                    by=list(global_id, seed.continent)]
 
 richness.na<-richness[seed.continent=="North America"]
 richness.sa<-richness[seed.continent=="South America"]
-richness.na<-merge(hexagon, richness.na, by.x="seqnum", by.y="global_id")
-richness.sa<-merge(hexagon, richness.sa, by.x="seqnum", by.y="global_id")
+richness.na<-merge(hexagon, richness.na, by.x="seqnum", by.y="global_id", all=T)
+richness.sa<-merge(hexagon, richness.sa, by.x="seqnum", by.y="global_id", all=T)
+richness.na[which(is.na(richness.na$N.species)), "N.species"]<-0
+richness.sa[which(is.na(richness.sa$N.species)), "N.species"]<-0
 
-median.v<-median(c(richness.na$N.species, richness.sa$N.species))
+median.v<-median(c(richness.na[which(richness.na$N.species>0),]$N.species, 
+                   richness.sa[which(richness.sa$N.species>0),]$N.species))
 range.v<-range(c(richness.na$N.species, richness.sa$N.species))
 p.na<-ggplot()+ 
   geom_sf(data=hexagon, fill=NA, color="lightgray")+
@@ -472,21 +496,25 @@ p<-p.na+p.sa+plot_annotation(
 )
 
 ggsave(p, filename="../Figures/Species.Richness.By.Seed.continent.pdf", width=10, height=7)
+
 richness<-readRDS("../Data/Tables/Richness/by.continent.nb.da.richness.rda")
 richness<-richness[, .(N.species=mean(N.species)),
                    by=list(global_id, seed.continent, nb, da)]
 
-
+coms<-unique(richness[, c("nb", "da")])
 
 for (i in c(1:nrow(coms))){
   com<-coms[i]
   richness.na<-richness[seed.continent=="North America" & nb==com$nb & da==com$da]
   richness.sa<-richness[seed.continent=="South America" & nb==com$nb & da==com$da]
-  richness.na<-merge(hexagon, richness.na, by.x="seqnum", by.y="global_id")
-  richness.sa<-merge(hexagon, richness.sa, by.x="seqnum", by.y="global_id")
+  richness.na<-merge(hexagon, richness.na, by.x="seqnum", by.y="global_id", all=T)
+  richness.sa<-merge(hexagon, richness.sa, by.x="seqnum", by.y="global_id", all=T)
+  richness.na[which(is.na(richness.na$N.species)), "N.species"]<-0
+  richness.sa[which(is.na(richness.sa$N.species)), "N.species"]<-0
+  median.v<-median(c(richness.na[which(richness.na$N.species>0),]$N.species, 
+                     richness.sa[which(richness.sa$N.species>0),]$N.species))
   
   
-  median.v<-median(c(richness.na$N.species, richness.sa$N.species))
   range.v<-range(c(richness.na$N.species, richness.sa$N.species))
   p.na<-ggplot()+ 
     geom_sf(data=hexagon, fill=NA, color="lightgrey")+

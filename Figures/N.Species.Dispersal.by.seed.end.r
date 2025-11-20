@@ -1,6 +1,7 @@
 library(data.table)
 library(ggplot2)
 library(sf)
+library(stringr)
 setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 if (F){
