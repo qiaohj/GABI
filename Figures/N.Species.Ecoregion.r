@@ -6,31 +6,32 @@ sf_use_s2(FALSE)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 
 if (F){
-  biome<-read_sf("../Shape/Ecoregions2017/Ecoregions2017.shp")
-  biome_meter <- st_transform(biome, crs = 3035)
-  biome.sim <- st_simplify(biome_meter, preserveTopology = TRUE, dTolerance = 10000)
-  biome.sim.lat <- st_transform(biome.sim, crs = st_crs(biome))
-  write_sf(biome.sim.lat, "../Shape/Ecoregions2017/Ecoregions2017.simpify.shp")
-  biome_group <- biome_meter %>%
-    group_by(BIOME_NAME) %>%
+  ecoregion<-read_sf("../Shape/Ecoregions2017/Ecoregions2017.shp")
+  ecoregion_meter <- st_transform(ecoregion, crs = 3035)
+  ecoregion.sim <- st_simplify(ecoregion_meter, preserveTopology = TRUE, dTolerance = 10000)
+  ecoregion.sim.lat <- st_transform(ecoregion.sim, crs = st_crs(ecoregion))
+  write_sf(ecoregion.sim.lat, "../Shape/Ecoregions2017/Ecoregions2017.simpify.shp")
+  ecoregion.sim.lat<-read_sf("../Shape/Ecoregions2017/Ecoregions2017.simpify.shp")
+  ecoregion_group <- ecoregion_meter %>%
+    group_by(ECO_NAME, REALM) %>%
     summarise(
       geometry = st_union(geometry) 
     ) %>%
     ungroup()
   
   
-  biome.lat <- st_transform(biome_group, crs = st_crs(biome))
-  write_sf(biome.lat, "../Shape/Ecoregions2017/biome.shp")
-  biome_group_sim<-st_simplify(biome_group, preserveTopology = TRUE, dTolerance = 10000)
-  biome.lat <- st_transform(biome_group_sim, crs = st_crs(biome))
+  ecoregion.lat <- st_transform(ecoregion_group, crs = st_crs(ecoregion))
+  write_sf(ecoregion.lat, "../Shape/Ecoregions2017/ecoregion.shp")
+  ecoregion_group_sim<-st_simplify(ecoregion_group, preserveTopology = TRUE, dTolerance = 10000)
+  ecoregion.lat <- st_transform(ecoregion_group_sim, crs = st_crs(ecoregion))
   
-  write_sf(biome.lat, "../Shape/Ecoregions2017/biome.simplify.shp")
+  write_sf(ecoregion.lat, "../Shape/Ecoregions2017/ecoregion.simplify.shp")
   
   
   hexagon<-readRDS("../Data/cells.with.dist.rda")
   cells<-data.table(global_id=as.numeric(hexagon$seqnum), continent=hexagon$continent,
                     lon=hexagon$lon, lat=hexagon$lat)
-  biome<-read_sf("../Shape/Ecoregions2017/biome.simplify.shp")
+  ecoregion<-read_sf("../Shape/Ecoregions2017/ecoregion.simplify.shp")
   
   cells <- st_as_sf(
     cells, 
@@ -38,16 +39,16 @@ if (F){
     crs = 4326 
   )
   
-  cells.biome <- st_join(
+  cells.ecoregion <- st_join(
     cells, 
-    biome, 
+    ecoregion, 
     join = st_intersects, 
     left = F
   )
   
   
   species.dis<-readRDS("../Data/Tables/Final.Distribution.rda")
-  species.dis.geo<-merge(species.dis, cells.biome, by="global_id")
+  species.dis.geo<-merge(species.dis, cells.ecoregion, by="global_id")
   
   species.dis.geo$geometry<-NULL
   
@@ -58,10 +59,10 @@ if (F){
   species.dis.geo$type<-ifelse(species.dis.geo$continent==species.dis.geo$seed_continent, 
                                "Aborigines", "Invader")
   
-  saveRDS(species.dis.geo, "../Data/Tables/species.dis.biome.rda")
+  saveRDS(species.dis.geo, "../Data/Tables/species.dis.ecoregion.rda")
   
 }
-species.dis.geo<-readRDS("../Data/Tables/species.dis.biome.rda")
+species.dis.geo<-readRDS("../Data/Tables/species.dis.ecoregion.rda")
 #species.dis.geo[continent %in% c("bridge1", "bridge2"), 
 #                continent:="North America"]
 #species.dis.geo[global_id %in% c(9580, 9662,9744,9663,9745,9664), continent:="South America"]
@@ -77,14 +78,14 @@ for (rrrr in c(1:100)){
   seeds<-seeds.all[rep==rrrr]
   item<-species.dis.geo[seed_id %in% seeds$seed_id]
   type.N<-item[, .(N.species=length(unique(sp_id))),
-                          by=list(type, nb, da, BIOME_NAME, continent)]
+                          by=list(type, nb, da, ECO_NAME, continent)]
   
-  type.N<-type.N[!is.na(BIOME_NAME)]
-  type.N<-type.N[BIOME_NAME!="N/A"]
+  type.N<-type.N[!is.na(ECO_NAME)]
+  type.N<-type.N[ECO_NAME!="N/A"]
   type.N$rep<-rrrr
   rep.list[[rrrr]]<-type.N
   type.N.sum<-type.N[, .(N.species=sum(N.species)),
-                     by=list(type, BIOME_NAME, continent, rep)]
+                     by=list(type, ECO_NAME, continent, rep)]
   
   rep.list.all[[rrrr]]<-type.N.sum
     
@@ -98,8 +99,9 @@ Aborigines$type<-NULL
 Invader<-rep.df[type=="Invader"]
 colnames(Invader)[6]<-"N.Invader"
 Invader$type<-NULL
+
 N.merge<-merge(Aborigines, Invader, 
-               by=c("nb", "da", "BIOME_NAME", "rep", "continent"), all=T)
+               by=c("nb", "da", "ECO_NAME", "rep", "continent"), all=T)
 
 N.merge[is.na(N.Aborigines), N.Aborigines:=0]
 
@@ -109,11 +111,11 @@ N.merge$Invader_per<-N.merge$N.Invader/(N.merge$N.Invader+N.merge$N.Aborigines)
 N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.Aborigines),
                           N.Invader=mean(N.Invader), sd.N.Invader=sd(N.Invader),
                           Invader_per=mean(Invader_per), sd.Invader_per=sd(Invader_per)),
-                      by=list(nb, da, BIOME_NAME, continent)]
+                      by=list(nb, da, ECO_NAME, continent)]
 
 #N.merge.mean<-N.merge.mean[N.Invader>10]
-p<-ggplot(N.merge.mean)+geom_point(aes(x=BIOME_NAME, y=Invader_per))+
-  geom_errorbar(aes(x=BIOME_NAME, 
+p<-ggplot(N.merge.mean)+geom_point(aes(x=ECO_NAME, y=Invader_per))+
+  geom_errorbar(aes(x=ECO_NAME, 
                     ymin = Invader_per-sd.Invader_per, 
                     ymax=Invader_per+sd.Invader_per), width=0.5)+
   geom_hline(yintercept = 0.5, linetype=2)+
@@ -121,7 +123,7 @@ p<-ggplot(N.merge.mean)+geom_point(aes(x=BIOME_NAME, y=Invader_per))+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   facet_grid(nb+da~continent)
 p
-ggsave(p, filename="../Figures/biome_invader_da_nb.pdf", width=8, height=10)
+ggsave(p, filename="../Figures/ecoregion_invader_da_nb.pdf", width=8, height=10)
 
 Aborigines<-rep.list.all[type=="Aborigines"]
 colnames(Aborigines)[5]<-"N.Aborigines"
@@ -130,7 +132,7 @@ Invader<-rep.list.all[type=="Invader"]
 colnames(Invader)[5]<-"N.Invader"
 Invader$type<-NULL
 N.merge<-merge(Aborigines, Invader, 
-               by=c("BIOME_NAME", "rep", "continent"), all=T)
+               by=c("ECO_NAME", "rep", "continent"), all=T)
 
 N.merge[is.na(N.Aborigines), N.Aborigines:=0]
 
@@ -140,12 +142,33 @@ N.merge$Invader_per<-N.merge$N.Invader/(N.merge$N.Invader+N.merge$N.Aborigines)
 N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.Aborigines),
                           N.Invader=mean(N.Invader), sd.N.Invader=sd(N.Invader),
                           Invader_per=mean(Invader_per), sd.Invader_per=sd(Invader_per)),
-                      by=list(BIOME_NAME, continent)]
+                      by=list(ECO_NAME, continent)]
 
-N.merge.mean<-N.merge.mean[N.Invader>10]
-p<-ggplot(N.merge.mean[continent %in% c("North America", "South America")])+
-  geom_point(aes(x=BIOME_NAME, y=Invader_per))+
-  geom_errorbar(aes(x=BIOME_NAME, 
+#N.merge.mean<-N.merge.mean[N.Invader>10]
+
+ecoregion<-read_sf("../Shape/Ecoregions2017/ecoregion.simplify.shp")
+ecoregion<-ecoregion[which(ecoregion$REALM %in% c("Nearctic", "Neotropic")),]
+ecoregion$area<-st_area(ecoregion)
+
+ecoregion.n<-merge(ecoregion, N.merge.mean, by="ECO_NAME")
+source("Figures/common.r")
+p<-ggplot(ecoregion)+
+  geom_sf(fill="lightgrey", color="grey", linewidth=0.5)+
+  geom_sf(data=ecoregion.n[which(ecoregion.n$REALM %in% c("Nearctic", "Neotropic") &
+                                   ecoregion.n$continent %in% c("North America", "South America")),], 
+          aes(fill=Invader_per))+
+  scale_fill_gradient2(low=color_low,
+                       mid=color_mid,
+                       high=color_high,
+                       midpoint = 0.5,
+                       limits=c(0,1))+
+  coord_sf(crs=map_crs)+
+  map_theme
+p
+ggsave(p, filename="../Figures/ecoregion_invader_map.pdf", width=10, height=8)
+
+p<-ggplot(N.merge.mean)+geom_point(aes(x=ECO_NAME, y=Invader_per))+
+  geom_errorbar(aes(x=ECO_NAME, 
                     ymin = Invader_per-sd.Invader_per, 
                     ymax=Invader_per+sd.Invader_per), width=0.5)+
   geom_hline(yintercept = 0.5, linetype=2)+
@@ -153,5 +176,4 @@ p<-ggplot(N.merge.mean[continent %in% c("North America", "South America")])+
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   facet_wrap(~continent)
 p
-ggsave(p, filename="../Figures/biome_invader.pdf", width=8, height=6)
-
+ggsave(p, filename="../Figures/ecoregion_invader.pdf", width=8, height=6)

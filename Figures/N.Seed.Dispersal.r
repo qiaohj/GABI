@@ -42,6 +42,7 @@ target.nb<-c("BIG-BIG", "MODERATE-MODERATE")
 df<-df[NB %in% target.nb]
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
+
 cell.dist<-readRDS("../Data/cells.with.dist.rda")
 if (F){
   ggplot(cell.dist)+geom_sf()

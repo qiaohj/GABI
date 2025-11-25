@@ -173,8 +173,8 @@ if (F){
   cells<-data.table(seqnum=hexagon$seqnum, continent=hexagon$continent)
   sim.dis.geo.full<-merge(sim.dis.geo.full, cells, by.y="seqnum", by.x="global_id")
   
-  sim.dis.geo.full[continent %in% c("bridge1", "bridge2"), continent:="North America"]
-  sim.dis.geo.full[global_id %in% c(9580, 9662,9744,9663,9745,9664), continent:="South America"]
+  #sim.dis.geo.full[continent %in% c("bridge1", "bridge2"), continent:="North America"]
+  #sim.dis.geo.full[global_id %in% c(9580, 9662,9744,9663,9745,9664), continent:="South America"]
   coms<-data.table(expand.grid(nb=c("MODERATE-MODERATE", "BIG-BIG"),
                                da=c("POOR", "GOOD")))
   
@@ -250,8 +250,8 @@ if (F){
   cells<-data.table(seqnum=hexagon$seqnum, continent=hexagon$continent)
   sim.dis.geo.full<-merge(sim.dis.geo.full, cells, by.y="seqnum", by.x="global_id")
   
-  sim.dis.geo.full[continent %in% c("bridge1", "bridge2"), continent:="North America"]
-  sim.dis.geo.full[global_id %in% c(9580, 9662,9744,9663,9745,9664), continent:="South America"]
+  #sim.dis.geo.full[continent %in% c("bridge1", "bridge2"), continent:="North America"]
+  #sim.dis.geo.full[global_id %in% c(9580, 9662,9744,9663,9745,9664), continent:="South America"]
   coms<-data.table(expand.grid(nb=c("MODERATE-MODERATE", "BIG-BIG"),
                                da=c("POOR", "GOOD")))
   

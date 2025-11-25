@@ -38,6 +38,14 @@ df.detail$label<-sprintf("%d.%s", df.detail$seed_id, df.detail$nb)
 df_filtered_seeds<-df.detail[label %in% df_N_checked[N==2]$label]
 df.detail[,.(N=length(unique(seed_id))), by=list(nb)]
 
+df_N_checked_sf<-df[year==burn_in+1 & N_SPECIES>0, 
+                        .(N=.N), by=list(seed_id, nb)]
+
+df_N_checked_sf<-merge(seed.dist, df_N_checked_sf, by.x="seqnum", by.y="seed_id")
+ggplot(seed.dist)+geom_sf(fill=NA, color="lightgray")+
+  geom_sf(data=df_N_checked_sf, aes(fill=factor(N)))+
+  facet_wrap(~nb)
+
 df_filtered_seeds[,.(N=length(unique(seed_id))), by=list(nb)]
 
 
@@ -99,6 +107,9 @@ quantiles<-quantile(N_species$N_SPECIES, c(0, 1, 0.99, 0.95, 0.90, 0.999))
 
 N_species$seed_label<-paste(N_species$seed_id, N_species$nb, N_species$da)
 outliers<-unique(N_species[N_SPECIES>quantiles[3]])
+
+ggplot(seed.dist)+geom_sf(fill=NA, color="lightgray")+
+  geom_sf(data=seed.dist[which(seed.dist$seqnum %in% outliers$seed_id),], fill="red")
 #outliers<-unique(N_species[N_SPECIES>100])
 
 N_species_filter<-df_filtered_seeds[!seed_id %in% outliers$seed_id]
