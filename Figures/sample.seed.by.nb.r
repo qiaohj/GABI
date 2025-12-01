@@ -5,14 +5,10 @@ library(ggh4x)
 library(sf)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 
-threshold<-70
 seeds<-readRDS("../Data/Tables/seeds.rda")
 seed.dist<-readRDS("../Data/cells.with.dist.rda")
 selected.seeds<-data.table(seed.dist)
 selected.seeds$geometry<-NULL
-table(selected.seeds[between(min.dist, 1, threshold)]$continent)
-
-selected.seeds<-selected.seeds[between(min.dist, 1, threshold)]
 seeds<-seeds[global_id %in% selected.seeds$seqnum]
 ggplot(seeds)+geom_sf(data=seed.dist)+geom_point(aes(x=lon, y=lat, color=continent))
 
@@ -39,7 +35,7 @@ range(df.detail$lat)
 #burn in 3100/2
 burn_in<-3100/2
 unique(df.detail$nb)
-#df.detail<-df.detail[nb %in% c("BIG-BIG", "MODERATE-MODERATE")]
+df.detail<-df.detail[nb %in% c("BIG-BIG", "MODERATE-MODERATE")]
 
 df_N_checked<-df.detail[year==burn_in+1 & N_SPECIES>0, 
                  .(N=.N), by=list(seed_id, nb)]
@@ -50,14 +46,6 @@ df_filtered_seeds<-df.detail[label %in% df_N_checked[N==2]$label]
 df.detail[,.(N=length(unique(seed_id))), by=list(nb)]
 
 df_filtered_seeds[,.(N=length(unique(seed_id))), by=list(nb)]
-
-all.seeds<-list()
-for (nb.str in c("BIG-BIG", "MODERATE-MODERATE", "NARROW-NARROW")){
-  seeds.item<-seeds
-  seeds.item$nb<-nb.str
-  all.seeds[[nb.str]]<-seeds.item
-}
-all.seeds<-rbindlist(all.seeds)
 
 
 df_filtered_N<-df_filtered_seeds[, .(N_SPECIES=sum(N_SPECIES), 

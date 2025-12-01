@@ -7,21 +7,21 @@ setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 
 seeds<-readRDS("../Data/Tables/seeds.rda")
 seed.dist<-readRDS("../Data/cells.with.dist.rda")
-
+threshold<-70
 
 selected.seeds<-data.table(seed.dist)
 selected.seeds$geometry<-NULL
 selected.seeds[,.(max=max(min.dist)), by=list(continent)]
-selected.seeds<-selected.seeds[min.dist<=107]
+selected.seeds<-selected.seeds[between(min.dist, 1, threshold)]
 seeds<-seeds[global_id %in% selected.seeds$seqnum]
 ggplot(seeds)+geom_sf(data=seed.dist)+geom_point(aes(x=lon, y=lat, color=continent))
 
-df<-readRDS("../Data/Tables/N.Speciation.Extinction.All.NB.rda")
-df<-df[nb %in% c("BIG-BIG", "MODERATE-MODERATE")]
-table(df$nb)
-nrow(df)
-df$continent<-NULL
-df.detail<-merge(df, seeds, by.x="seed_id", by.y="global_id")
+df.v<-readRDS("../Data/Tables/N.Speciation.Extinction.All.NB.rda")
+df.v<-df.v[nb %in% c("BIG-BIG", "MODERATE-MODERATE")]
+table(df.v$nb)
+nrow(df.v)
+df.v$continent<-NULL
+df.detail<-merge(df.v, seeds, by.x="seed_id", by.y="global_id")
 
 #df<-df[between(lat, -35, 45)]
 range(df.detail$lat)
@@ -38,17 +38,19 @@ df.detail$label<-sprintf("%d.%s", df.detail$seed_id, df.detail$nb)
 df_filtered_seeds<-df.detail[label %in% df_N_checked[N==2]$label]
 df_filtered_seeds_dist<-merge(df_filtered_seeds, seed.dist[, c("min.dist", "seqnum")], 
                               by.x="seed_id", by.y="seqnum")
+
+
 x<-df_filtered_seeds_dist[,.(N=.N), by=list(nb, continent, min.dist)]
 x.N<-x[, .(N=.N), by=list(nb, min.dist)]
 effective.band<-x.N[N==2]
 df_filtered_seeds_dist$dist.label<-sprintf("%d.%s", df_filtered_seeds_dist$min.dist, 
                                            df_filtered_seeds_dist$nb)
 
-View(x[nb=="MODERATE-MODERATE"])
+#View(x[nb=="MODERATE-MODERATE"])
 df.detail[,.(N=length(unique(seed_id))), by=list(nb)]
 
-df_N_checked_sf<-df[year==burn_in+1 & N_SPECIES>0, 
-                        .(N=.N), by=list(seed_id, nb)]
+df_N_checked_sf<-df.v[year==burn_in+1 & N_SPECIES>0, 
+                    .(N=.N), by=list(seed_id, nb)]
 
 df_N_checked_sf<-merge(seed.dist, df_N_checked_sf, by.x="seqnum", by.y="seed_id")
 ggplot(seed.dist)+geom_sf(fill=NA, color="lightgray")+
@@ -113,9 +115,9 @@ if (F){
 }
 
 quantiles<-quantile(N_species$N_SPECIES, c(0, 1, 0.99, 0.95, 0.90, 0.999))
-quantile<-107.710
+
 N_species$seed_label<-paste(N_species$seed_id, N_species$nb, N_species$da)
-outliers<-unique(N_species[N_SPECIES>quantile])
+outliers<-unique(N_species[N_SPECIES>quantiles[3]])
 #outliers<-unique(N_species[N_SPECIES>107])
 
 ggplot(seed.dist)+geom_sf(fill=NA, color="lightgray")+
@@ -182,7 +184,7 @@ unique(N_species$nb)
 #random seeds
 seed_pool<-df_filtered_seeds[(year==0 & !(seed_id %in% outliers_ID)), 
                              .(N_SPECIES=sum(N_SPECIES)), 
-                             by=list(seed_id, continent, nb)]
+                             by=list(seed_id, continent, nb, da, label)]
 if (F){
   seed_pool.map<-merge(seed.dist, seed_pool[nb!="BROAD-BROAD"], by.y="seed_id", by.x="seqnum")
   seed_pool[, .(N=.N), by=list(nb, continent)]
@@ -202,16 +204,17 @@ if (F){
 seed_pool<-merge(seed_pool, seed.dist[, c("seqnum", "min.dist")], 
                  by.x="seed_id", by.y="seqnum")
 #seed_pool[nb=="MODERATE-MODERATE" & min.dist>86, min.dist:=86]
-seed_pool<-seed_pool[nb=="BIG-BIG" | min.dist<=80]
-n<-seed_pool[, .(N=.N), by=list(continent, min.dist, nb)]
+n<-seed_pool[, .(N=.N), by=list(continent, min.dist, nb, da)]
 n
 setorderv(n, "min.dist")
 
-coms<-unique(n[, c("nb", "min.dist")])
+seed_pool[,.(N=.N), by=list(nb, da, continent)]   
+
+coms<-unique(n[, c("nb", "da", "min.dist")])
 bins<-list()
 for (i in c(1:nrow(coms))){
   com<-coms[i]
-  item<-n[nb==com$nb & min.dist==com$min.dist]
+  item<-n[nb==com$nb & da==com$da & min.dist==com$min.dist]
   if (nrow(item)!=2){
     print(item)
     print("skip")
@@ -219,8 +222,9 @@ for (i in c(1:nrow(coms))){
   }
   min.N<-min(item$N)
   bins[[length(bins)+1]]<-data.table(min.dist=com$min.dist,
-                                   nb=com$nb,
-                                   N=min.N)
+                                     nb=com$nb,
+                                     da=com$da,
+                                     N=min.N)
 }
 bins<-rbindlist(bins)
 
@@ -240,7 +244,7 @@ for (rep in c(1:100)){
       facet_grid(nb~continent)
   }
   ramdom_seeds<-seed_pool.rand[,.SD[sample(.N, 100)],
-                               by = c("continent", "nb")]
+                               by = c("continent", "nb", "da")]
   
   if (F){
     ggplot(ramdom_seeds)+geom_histogram(aes(x=min.dist, fill=continent))+
@@ -257,16 +261,8 @@ for (rep in c(1:100)){
       facet_wrap(~nb)
   }
   ramdom_seeds$geometry<-NULL
-  all_seeds<-list()
-  for (da.str in c("GOOD", "POOR")){
-    ramdom_item<-ramdom_seeds
-    ramdom_item$rep<-rep
-    ramdom_item$da<-da.str
-    all_seeds[[length(all_seeds)+1]]<-ramdom_item
-  }
-  
-  
-  all_seeds<-rbindlist(all_seeds)
+  all_seeds<-ramdom_seeds
+  all_seeds$rep<-rep
   all_seeds$label<-sprintf("%d.%s.%s", all_seeds$seed_id, all_seeds$nb, all_seeds$da)
   #all_seeds<-all_seeds[!label %in% outliers]
   all_ramdom_seeds[[rep]]<-all_seeds
@@ -276,7 +272,7 @@ all_ramdom_seeds_df<-rbindlist(all_ramdom_seeds)
 
 unique(all_ramdom_seeds_df[, .(N=.N), by=list(continent, rep, nb, da)]$N)
 
-saveRDS(all_ramdom_seeds_df, "../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
+saveRDS(all_ramdom_seeds_df, "../Data/Tables/random.seeds.threshold.by.nb.distribution.threshold.rda")
 
 
 all_ramdom_seeds_df<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")

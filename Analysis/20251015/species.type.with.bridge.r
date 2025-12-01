@@ -9,7 +9,7 @@ library(phytools)
 library(ggtree)
 library(phangorn)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
-sp<-readRDS("../Data/Tables/100k.speciation.years/virtual.species.rda")
+sp<-readRDS("../Data/Tables/virtual.species.NULL.rda")
 sp_N<-sp[,.(N=.N), by=list(seed_id, nb, da)]
 sp$Parent<-sub("-[^-]*$", "", sp$sp_id)
 labels<-unique(sp$label)
@@ -31,7 +31,7 @@ labels<-labels[sample(length(labels), length(labels))]
 for (j in c(1:length(labels))){
   l<-labels[j]
   print(paste(j, length(labels), l))
-  target<-sprintf("../Data/temp.N.sp/%s.rda", l)
+  target<-sprintf("../Data/temp.N.sp.NULL/%s.rda", l)
   if (file.exists(target)){
     next()
   }
@@ -106,7 +106,7 @@ for (j in c(1:length(labels))){
   l<-labels[j]
   strs<-strsplit(l, "\\.")[[1]]
   print(paste(j, length(labels), l))
-  target<-sprintf("../Data/temp.N.sp/%s.rda", l)
+  target<-sprintf("../Data/temp.N.sp.NULL/%s.rda", l)
   df<-readRDS(target)
   df$NB<-strs[[2]]
   df$DA<-strs[[3]]
@@ -117,7 +117,7 @@ for (j in c(1:length(labels))){
 }
 all_N<-rbindlist(all_N)
 all_N[continent=="", continent:=all_N[continent==""]$origin_continent]
-saveRDS(all_N, "../Data/Tables/100k.speciation.years/species.type.N.rda")
+saveRDS(all_N, "../Data/Tables/species.type.N.NULL.rda")
 table(all_N$NB)
 all_N_gg<-all_N[NB %in% c("BROAD-BROAD", "BIG-BIG", "MODERATE-MODERATE", "NARROW-NARROW")]
 

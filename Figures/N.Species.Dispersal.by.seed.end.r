@@ -2,6 +2,8 @@ library(data.table)
 library(ggplot2)
 library(sf)
 library(stringr)
+library(flextable)
+library(officer)
 setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 if (F){
@@ -30,6 +32,31 @@ if (F){
   saveRDS(final.df, "../Data/Tables/100k.speciation.years/N.with.bridge.seed.continent.rda")
 }
 
+if (F){
+  sp.with.bridge<-readRDS("../Data/Tables/sp_full_continents.NULL.rda")
+  seeds<-sp.with.bridge[,.(N=.N), by=list(NB, DA, seed_id)]
+  final<-list()
+  for (i in c(1:nrow(seeds))){
+    print(paste(i, nrow(seeds)))
+    item<-seeds[i]
+    sp.items<-sp.with.bridge[NB==item$NB & DA==item$DA & seed_id==item$seed_id]
+    seed_continent<-sp.items[year== -1800]$seed_continent
+    target_continent<-ifelse(seed_continent=="South America", "North America", "South America")
+    target_continent<-c(target_continent, "Two continents")
+    source_continent<-c(seed_continent, "Two continents")
+    target_item<-sp.items[current_continent %in% target_continent & year==0]
+    source_item<-sp.items[current_continent %in% source_continent & year==0]
+    to_target_continent<-nrow(unique(target_item[,c("sp_id", "seed_id", "NB", "DA")]))
+    in_source_continent<-nrow(unique(source_item[,c("sp_id", "seed_id", "NB", "DA")]))
+    item$seed_continent<-seed_continent
+    item$to_target_continent<-to_target_continent
+    item$in_source_continent<-in_source_continent
+    
+    final[[i]]<-item
+  }
+  final.df<-rbindlist(final)
+  saveRDS(final.df, "../Data/Tables/N.with.bridge.seed.continent.NULL.rda")
+}
 
 
 df<-readRDS("../Data/Tables/N.with.bridge.seed.continent.rda")
@@ -40,7 +67,7 @@ df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
 table(df$label)
 
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.threshold.rda")
 if (F){
   cell.ll<-readRDS("../Data/cells.with.dist.rda")
   seeds.xy<-unique(seeds.all[, c("continent", "seed_id")])
@@ -59,7 +86,7 @@ for (rrrr in c(1:100)){
   print(rrrr)
   seeds<-seeds.all[rep==rrrr]
   item<-df[label %in% seeds$label]
-  rep.to_target_continent<-item[to_target_continent>0, 
+  rep.to_target_continent<-item[, 
                                 .(N.to_target_continent=sum(to_target_continent),
                                   N.in_source_continent=sum(in_source_continent)), 
                                 by=list(NB, DA, seed_continent)]
@@ -77,7 +104,7 @@ table(rep.df$NB)
 #                        levels=c("BROAD-BROAD", "BIG-BIG", "MODERATE-MODERATE", "NARROW-NARROW"),
 #                        labels=c( "BROAD", "BIG", "MODERATE", "NARROW"))
 
-saveRDS(rep.df, "../Data/Tables/N.Species.Dispersal.by.seed.end.rep.rda")
+saveRDS(rep.df, "../Data/Tables/N.Species.Dispersal.by.seed.end.rep.NULL.rda")
 ggplot(rep.df, 
        aes(x=NB, y=N.to_target_continent, color=seed_continent))+
   labs(y="Number of species to the other continent")+
@@ -106,6 +133,7 @@ ggplot(item.final,
        aes(x=final.continent, y=N, color=seed_continent))+
   geom_boxplot()+
   labs(title=str_c(unique(target.nb), collapse = "|"))
+
 
 summary_dt<-item.final[, .(mean=mean(N), sd=sd(N)),
                        by=list(seed_continent, type)]

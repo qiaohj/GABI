@@ -87,7 +87,7 @@ if (F){
   library(DBI)
   library(ggplot2)
   setwd("/media/huijieqiao/Butterfly/GABI/GABI")
-  target<-"/media/huijieqiao/Butterfly/GABI/Results"
+  target<-"/media/huijieqiao/Butterfly/GABI/Results.NULL"
   #merge data table
   conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
   simulations<-data.table(dbReadTable(conn, "simulations"))
@@ -103,10 +103,11 @@ if (F){
   div_df_da<-NULL
   div_df_nb_da<-NULL
   i=1
+  simulations_sub<-simulations_sub[nb %in% c("MODERATE-MODERATE", "BIG-BIG")]
   for (i in c(1:nrow(simulations_sub))){
     print(paste(i, nrow(simulations_sub)))
     item<-simulations_sub[i]
-    target<-sprintf("/media/huijieqiao/Butterfly/GABI/Results/%s/continent_n_cells.rda", 
+    target<-sprintf("/media/huijieqiao/Butterfly/GABI/Results.NULL/%s/continent_n_cells.rda", 
                     item$label)
     df<-readRDS(target)
     
@@ -132,7 +133,7 @@ if (F){
     all_df[[i]]<-df
     
     rm(list=c("target", "df", "init_df"))
-    target_div<-sprintf("/media/huijieqiao/Butterfly/GABI/Results/%s/species.richness.rda", 
+    target_div<-sprintf("/media/huijieqiao/Butterfly/GABI/Results.NULL/%s/species.richness.rda", 
                     item$label)
     if (file.exists(target_div)){
       df_div<-readRDS(target_div)
@@ -212,11 +213,11 @@ if (F){
   }
   all_dfx<-rbindlist(all_df)
   
-  saveRDS(all_dfx, "../Data/Tables/100k.speciation.years/virtual.species.rda")
-  saveRDS(div_df, "../Data/Tables/100k.speciation.years/virtual.species.richness.all.rda")
-  saveRDS(div_df_nb, "../Data/Tables/100k.speciation.years/virtual.species.richness.nb.rda")
-  saveRDS(div_df_da, "../Data/Tables/100k.speciation.years/virtual.species.richness.da.rda")
-  saveRDS(div_df_nb_da, "../Data/Tables/100k.speciation.years/virtual.species.richness.nb_da.rda")
+  saveRDS(all_dfx, "../Data/Tables/virtual.species.NULL.rda")
+  saveRDS(div_df, "../Data/Tables/virtual.species.richness.all.NULL.rda")
+  saveRDS(div_df_nb, "../Data/Tables/virtual.species.richness.nb.NULL.rda")
+  saveRDS(div_df_da, "../Data/Tables/virtual.species.richness.da.NULL.rda")
+  saveRDS(div_df_nb_da, "../Data/Tables/virtual.species.richness.nb_da.NULL.rda")
   
   
 }

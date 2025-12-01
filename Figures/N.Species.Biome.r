@@ -12,7 +12,7 @@ if (F){
   biome.sim.lat <- st_transform(biome.sim, crs = st_crs(biome))
   write_sf(biome.sim.lat, "../Shape/Ecoregions2017/Ecoregions2017.simpify.shp")
   biome_group <- biome_meter %>%
-    group_by(BIOME_NAME) %>%
+    group_by(BIOME_NAME, REALM) %>%
     summarise(
       geometry = st_union(geometry) 
     ) %>%
@@ -61,6 +61,46 @@ if (F){
   saveRDS(species.dis.geo, "../Data/Tables/species.dis.biome.rda")
   
 }
+
+
+if (F){
+  
+  
+  hexagon<-readRDS("../Data/cells.with.dist.rda")
+  cells<-data.table(global_id=as.numeric(hexagon$seqnum), continent=hexagon$continent,
+                    lon=hexagon$lon, lat=hexagon$lat)
+  biome<-read_sf("../Shape/Ecoregions2017/biome.simplify.shp")
+  
+  cells <- st_as_sf(
+    cells, 
+    coords = c("lon", "lat"), 
+    crs = 4326 
+  )
+  
+  cells.biome <- st_join(
+    cells, 
+    biome, 
+    join = st_intersects, 
+    left = F
+  )
+  
+  
+  species.dis<-readRDS("../Data/Tables/Final.Distribution.NULL.rda")
+  species.dis.geo<-merge(species.dis, cells.biome, by="global_id")
+  
+  species.dis.geo$geometry<-NULL
+  
+  seeds<-data.table(seed_id=as.numeric(hexagon$seqnum), seed_continent=hexagon$continent)
+  species.dis.geo<-merge(species.dis.geo, seeds, by="seed_id")
+  
+  
+  species.dis.geo$type<-ifelse(species.dis.geo$continent==species.dis.geo$seed_continent, 
+                               "Aborigines", "Invader")
+  
+  saveRDS(species.dis.geo, "../Data/Tables/species.dis.biome.NULL.rda")
+  
+}
+
 species.dis.geo<-readRDS("../Data/Tables/species.dis.biome.rda")
 #species.dis.geo[continent %in% c("bridge1", "bridge2"), 
 #                continent:="North America"]
@@ -68,7 +108,7 @@ species.dis.geo<-readRDS("../Data/Tables/species.dis.biome.rda")
 
 
 #species.dis.geo[global_id %in% sa.bridge2, continent:="South America"]
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.threshold.rda")
 
 rep.list<-list()
 rep.list.all<-list()
@@ -112,7 +152,9 @@ N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.
                       by=list(nb, da, BIOME_NAME, continent)]
 
 #N.merge.mean<-N.merge.mean[N.Invader>10]
-p<-ggplot(N.merge.mean)+geom_point(aes(x=BIOME_NAME, y=Invader_per))+
+
+p<-ggplot(N.merge.mean[continent %in% c("North America", "South America")])+
+  geom_point(aes(x=BIOME_NAME, y=Invader_per))+
   geom_errorbar(aes(x=BIOME_NAME, 
                     ymin = Invader_per-sd.Invader_per, 
                     ymax=Invader_per+sd.Invader_per), width=0.5)+
@@ -142,7 +184,7 @@ N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.
                           Invader_per=mean(Invader_per), sd.Invader_per=sd(Invader_per)),
                       by=list(BIOME_NAME, continent)]
 
-N.merge.mean<-N.merge.mean[N.Invader>10]
+#N.merge.mean<-N.merge.mean[N.Invader>10]
 p<-ggplot(N.merge.mean[continent %in% c("North America", "South America")])+
   geom_point(aes(x=BIOME_NAME, y=Invader_per))+
   geom_errorbar(aes(x=BIOME_NAME, 
@@ -154,4 +196,30 @@ p<-ggplot(N.merge.mean[continent %in% c("North America", "South America")])+
   facet_wrap(~continent)
 p
 ggsave(p, filename="../Figures/biome_invader.pdf", width=8, height=6)
+
+
+biome<-read_sf("../Shape/Ecoregions2017/biome.simplify.shp")
+biome<-biome[which(biome$REALM %in% c("Nearctic", "Neotropic")),]
+biome$area<-st_area(biome)
+biome$continent<-ifelse(biome$REALM=="Nearctic", "North America", "South America")
+
+biome.n<-merge(biome, N.merge.mean, by=c("BIOME_NAME", "continent"))
+write_sf(biome.n, "../Data/Shape/biome.n.NULL.shp")
+source("Figures/common.r")
+p<-ggplot(biome)+
+  geom_sf(fill="lightgrey", color="grey", linewidth=0.5)+
+  geom_sf(data=biome.n[which(biome.n$REALM %in% c("Nearctic", "Neotropic") &
+                                   biome.n$continent %in% c("North America", "South America")),], 
+          aes(fill=Invader_per))+
+  scale_fill_gradient2(low=color_low,
+                       mid=color_mid,
+                       high=color_high,
+                       midpoint = 0.5,
+                       limits=c(0,1))+
+  coord_sf(crs=map_crs)+
+  map_theme
+p
+N.merge.mean[Invader_per>0.5 & continent %in% c("South America", "North America")]
+
+ggsave(p, filename="../Figures/biome_invader_map.NULL.pdf", width=10, height=8)
 
