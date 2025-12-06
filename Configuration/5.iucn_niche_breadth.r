@@ -3,8 +3,7 @@ library(sf)
 library(RSQLite)
 library(DBI)
 library(ggplot2)
-
-setwd("/media/huijieqiao/WD22T_11/GABI/Script")
+setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 #for north and south america only.
 label<-"World"
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")

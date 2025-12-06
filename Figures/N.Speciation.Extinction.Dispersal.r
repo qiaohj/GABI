@@ -47,7 +47,7 @@ df<-df[NB %in% c("BIG-BIG", "MODERATE-MODERATE")]
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$type)
 
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.threshold.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
 if (F){
   seeds.allx<-seeds.all
   seeds.allx[nb=="BIG-BIG", nb:="NARROW-NARROW"]
@@ -88,7 +88,8 @@ extinction$other.continent<-ifelse(extinction$seed_continent=="South America",
 
 extinction[type=="Failed Invader", continent:=other.continent]
 
-ggplot(extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))
+ggplot(extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
+  labs(title="Extinction")
 
 extinction<-rep.df[type %in% c("Failed Invader", "Extinction")]
 extinction$continent<-extinction$seed_continent
@@ -98,7 +99,12 @@ extinction$other.continent<-ifelse(extinction$seed_continent=="South America",
 extinction[type=="Failed Invader", continent:=other.continent]
 
 ggplot(extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
-  facet_grid(NB~DA, scale="free")
+  facet_grid(NB~DA, scale="free")+
+  labs(title="Extinction")
+
+ggplot(extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
+  facet_wrap(~NB, scale="free")+
+  labs(title="Extinction")
 
 
 
@@ -109,7 +115,8 @@ speciation$other.continent<-ifelse(speciation$seed_continent=="South America",
 
 speciation[type=="Non-local Speciation", continent:=other.continent]
 
-ggplot(speciation)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))
+ggplot(speciation)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
+  labs(title="Speciation")
 
 speciation<-rep.df[type %in% c("Local Speciation", "Non-local Speciation")]
 speciation$continent<-speciation$seed_continent
@@ -119,9 +126,12 @@ speciation$other.continent<-ifelse(speciation$seed_continent=="South America",
 speciation[type=="Non-local Speciation", continent:=other.continent]
 
 ggplot(speciation)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
-  facet_grid(NB~DA, scale="free")
+  facet_grid(NB~DA, scale="free")+
+  labs(title="Speciation")
 
-
+ggplot(speciation)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
+  facet_wrap(~NB, scale="free")+
+  labs(title="Speciation")
 
 
 dispersal<-rep.df.all[type %in% c("Secondary Invader", "Primary Invader")]
@@ -131,7 +141,8 @@ dispersal$other.continent<-ifelse(dispersal$seed_continent=="South America",
 
 dispersal[type=="Primary Invader", continent:=other.continent]
 
-ggplot(dispersal)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))
+ggplot(dispersal)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
+  labs(title="Dispersal")
 
 dispersal<-rep.df[type %in% c("Secondary Invader", "Primary Invader")]
 dispersal$continent<-dispersal$seed_continent
@@ -141,9 +152,12 @@ dispersal$other.continent<-ifelse(dispersal$seed_continent=="South America",
 dispersal[type=="Primary Invader", continent:=other.continent]
 
 ggplot(dispersal)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
-  facet_grid(NB~DA, scale="free")
+  facet_grid(NB~DA, scale="free")+
+  labs(title="Dispersal")
 
-
+ggplot(dispersal)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
+  facet_wrap(~NB, scale="free")+
+  labs(title="Dispersal")
 
 
 local_extinction<-rep.df.all[type %in% c("Local Extinction", "Non-local Extinction")]

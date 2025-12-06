@@ -66,13 +66,17 @@ df<-df[NB %in% target.nb]
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
 table(df$label)
-
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
 seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.threshold.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.threshold.to_others.rda")
+
+
 if (F){
   cell.ll<-readRDS("../Data/cells.with.dist.rda")
-  seeds.xy<-unique(seeds.all[, c("continent", "seed_id")])
-  seeds.xy<-merge(seeds.xy, cell.ll, by.x="seed_id", by.y="seqnum")
-  ggplot(seeds.xy)+geom_point(aes(x=lon, y=lat, fill=continent.x))
+  seeds.xy<-unique(seeds.all[, c("seed_id", "nb", "da")])
+  seeds.xy<-merge(cell.ll, seeds.xy, by.y="seed_id", by.x="seqnum")
+  ggplot(seeds.xy)+geom_sf(aes(fill=continent))+
+    facet_grid(nb~da)
 }
 if (F){
   seeds.allx<-seeds.all

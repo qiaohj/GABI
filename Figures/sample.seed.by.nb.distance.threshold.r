@@ -180,11 +180,25 @@ if (F){
 }
 
 outliers_ID<-unique(outliers$seed_id)
+
+outliers[continent=="North America"]
 unique(N_species$nb)
 #random seeds
 seed_pool<-df_filtered_seeds[(year==0 & !(seed_id %in% outliers_ID)), 
                              .(N_SPECIES=sum(N_SPECIES)), 
                              by=list(seed_id, continent, nb, da, label)]
+seed_pool$label2<-sprintf("%s.%s", seed_pool$label, seed_pool$da)
+#seed_pool<-seed_pool[label2 %in% df[to_target_continent>0]$label]
+
+
+df[to_target_continent==0 & seed_continent=="South America", weight:=1/in_source_continent]
+seed_pool<-merge(seed_pool, df[, c("weight", "label", "to_target_continent")], 
+                 by.x="label2", by.y="label")
+seed_pool$is_to<-seed_pool$to_target_continent>0
+table(seed_pool$is_to)
+seed_pool$weight<-1
+#seed_pool[continent=="South America" & N_SPECIES>20 & 
+#            ((nb=="BIG-BIG" & da=="GOOD")|(nb=="MODERATE-MODERATE" & da=="POOR")), weight:=0.1]
 if (F){
   seed_pool.map<-merge(seed.dist, seed_pool[nb!="BROAD-BROAD"], by.y="seed_id", by.x="seqnum")
   seed_pool[, .(N=.N), by=list(nb, continent)]
@@ -192,6 +206,12 @@ if (F){
     geom_sf(fill="lightgrey", color=NA)+
     geom_sf(data=seed_pool.map, aes(fill=continent.x))+
     facet_wrap(~nb)+
+    map_theme
+  
+  ggplot(seed.dist)+
+    geom_sf(fill="lightgrey", color=NA)+
+    geom_sf(data=seed_pool.map, aes(fill=is_to))+
+    facet_grid(da~nb)+
     map_theme
 }
 df_filtered_seeds[, .(N=length(unique(seed_id))), by=list(nb, da, continent)]
@@ -204,11 +224,20 @@ if (F){
 seed_pool<-merge(seed_pool, seed.dist[, c("seqnum", "min.dist")], 
                  by.x="seed_id", by.y="seqnum")
 #seed_pool[nb=="MODERATE-MODERATE" & min.dist>86, min.dist:=86]
+seed_pool<-seed_pool[is_to==T]
 n<-seed_pool[, .(N=.N), by=list(continent, min.dist, nb, da)]
 n
 setorderv(n, "min.dist")
 
 seed_pool[,.(N=.N), by=list(nb, da, continent)]   
+ggplot(seed.dist[which(seed.dist$continent %in% c("South America", "North America")),])+
+  geom_histogram(aes(x=min.dist, fill=continent), binwidth = 1, position = "identity", 
+                 alpha = 0.5, color="white")+
+  geom_vline(xintercept = 70, linetype=2)+
+  theme_bw()
+seed_pool.df<-unique(seed_pool[, c("continent", "seed_id", "min.dist")])
+ggplot(seed_pool.df)+geom_histogram(aes(x=min.dist), binwidth = 1)+
+  facet_wrap(~continent)
 
 coms<-unique(n[, c("nb", "da", "min.dist")])
 bins<-list()
@@ -229,18 +258,19 @@ for (i in c(1:nrow(coms))){
 bins<-rbindlist(bins)
 
 all_ramdom_seeds<-list()
+
 for (rep in c(1:100)){
   print(rep)
   seed_pool.rand<-list()
   for (i in c(1:nrow(bins))){
     bin<-bins[i]
-    seed.item<-seed_pool[nb==bin$nb & min.dist==bin$min.dist]
-    seed.item<-seed.item[,.SD[sample(.N, bin$N)],by = "continent"]
+    seed.item<-seed_pool[nb==bin$nb & da==bin$da & min.dist==bin$min.dist]
+    seed.item<-seed.item[,.SD[sample(.N, bin$N, prob=weight)],by = "continent"]
     seed_pool.rand[[length(seed_pool.rand)+1]]<-seed.item
   }
   seed_pool.rand<-rbindlist(seed_pool.rand)
   if (F){
-    ggplot(seed_pool.rand)+geom_histogram(aes(x=min.dist, fill=continent))+
+    ggplot(seed_pool.rand)+geom_histogram(aes(x=min.dist, fill=continent), binwidth = 1)+
       facet_grid(nb~continent)
   }
   ramdom_seeds<-seed_pool.rand[,.SD[sample(.N, 100)],
@@ -272,7 +302,7 @@ all_ramdom_seeds_df<-rbindlist(all_ramdom_seeds)
 
 unique(all_ramdom_seeds_df[, .(N=.N), by=list(continent, rep, nb, da)]$N)
 
-saveRDS(all_ramdom_seeds_df, "../Data/Tables/random.seeds.threshold.by.nb.distribution.threshold.rda")
+saveRDS(all_ramdom_seeds_df, "../Data/Tables/random.seeds.threshold.by.nb.distribution.threshold.to_others.rda")
 
 
 all_ramdom_seeds_df<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")

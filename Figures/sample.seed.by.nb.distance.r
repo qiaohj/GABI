@@ -82,6 +82,7 @@ df_filtered_N[year==burn_in+1]
 
 table(df_N_checked$N)
 
+
 #define outliers
 N_species<-df_filtered_seeds[year==0 & N_SPECIES>0]
 
@@ -182,7 +183,25 @@ unique(N_species$nb)
 #random seeds
 seed_pool<-df_filtered_seeds[(year==0 & !(seed_id %in% outliers_ID)), 
                              .(N_SPECIES=sum(N_SPECIES)), 
-                             by=list(seed_id, continent, nb)]
+                             by=list(seed_id, continent, nb, da)]
+seed_pool$label2<-sprintf("%d.%s.%s", seed_pool$seed_id, seed_pool$nb, seed_pool$da)
+#seed_pool<-seed_pool[label2 %in% df[to_target_continent>0]$label]
+
+df<-readRDS("../Data/Tables/N.with.bridge.seed.continent.rda")
+target.nb<-c("BIG-BIG", "MODERATE-MODERATE")
+df<-df[NB %in% target.nb]
+df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
+df$weight<-1
+df.test<-df[label %in% seed_pool$label2]
+df.test$is_to<-df.test$to_target_continent>0
+ggplot(df.test)+
+  geom_point(aes(x=in_source_continent, y=to_target_continent, color=seed_continent, shape=is_to), size=0.8)+
+  geom_abline(linetype=2)+
+  coord_equal()+
+  facet_grid(NB~DA)+
+  theme_bw()
+
+
 if (F){
   seed_pool.map<-merge(seed.dist, seed_pool[nb!="BROAD-BROAD"], by.y="seed_id", by.x="seqnum")
   seed_pool[, .(N=.N), by=list(nb, continent)]
