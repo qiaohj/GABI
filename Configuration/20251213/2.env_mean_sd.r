@@ -1,8 +1,8 @@
 library(terra)
 library(ncdf4)
 library(data.table)
-setwd("/media/huijieqiao/Butterfly/GABI/GABI")
-all_age<-readRDS("../Data/3600Ma_simulations_info/meta_table.rda")
+setwd("/media/huijieqiao/WD22T_11/GABI/Script")
+all_age<-readRDS("../Data/meta_table.rda")
 variables<-unique(all_age[group=="variable", c("label", "name", "folder", "file", "age")])
 
 paste(unique(variables$name), collapse=", ")
@@ -55,4 +55,4 @@ for (i in c(1:nrow(files))){
   nc_close(nc)
 }
 all_v_df<-rbindlist(all_v)
-saveRDS(all_v_df, "../Data/3600Ma_simulations_info/env_fullstat.rda")
+saveRDS(all_v_df, "../Data/env_fullstat.rda")

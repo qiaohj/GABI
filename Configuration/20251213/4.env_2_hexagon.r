@@ -7,7 +7,7 @@ library(RSQLite)
 library(reshape2)
 library(data.table)
 library(ggplot2)
-sf_use_s2(F)
+
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 find_connected_hexagon <- function(hexagons){
   
@@ -32,11 +32,11 @@ if (F){
   neighbors<-find_connected_hexagon(earth)
   
 }
-shpfname = "../Shape/isea3h8/isea3h8_sf.shp"
+shpfname = "../Data/Shape/isea3h8/isea3h8_sf.shp"
 hexagon<-read_sf(shpfname)
 hexa_coords<-st_centroid(hexagon)
 
-continents<-read_sf("../Shape/continents/continent.shp")
+continents<-read_sf("../Data/Shape/continents/continent.shp")
 america<-continents[which(continents$id %in% c(2, 5)),]
 st_crs(america)<-st_crs(hexagon)
 america_items<-st_cast(america, "POLYGON")
@@ -66,11 +66,9 @@ for (i in c(1:length(n_index))){
 }
 hexagon_ns_raw<-hexagon_ns
 hexagon_ns_raw<-hexagon_ns_raw[which(hexagon_ns_raw$continent!="World"),]
-ggplot(hexagon_ns_raw)+geom_sf(aes(fill=continent))
-
 hexagon_ns_raw[which(hexagon_ns_raw$seqnum %in% c(9004, 9086, 9168)), ]$continent<-"South America"
 
-bridges<-read_sf("../Shape/bridges/bridges.shp")
+bridges<-read_sf("../Data/Shape/bridges/bridges.shp")
 plot(america_items$geometry)
 plot(bridges$geometry, fill="red", add=T)
 bridge_index<-st_intersects(bridges, hexagon_ns_raw)
@@ -84,14 +82,14 @@ hexagon_ns_raw[which(hexagon_ns_raw$seqnum %in% c(9004, 9086, 9168, 9416)), ]$co
 if (F){
   ggplot(hexagon_ns_raw)+geom_sf(aes(fill=continent))
   
-  write_sf(hexagon_ns_raw, "../Shape/isea3h8/N_S_America.shp")
+  write_sf(hexagon_ns_raw, "../Data/Shape/isea3h8/N_S_America.shp")
 }
 
 #plot(hexagon_ns$geometry)
 coords<-st_coordinates(st_centroid(hexagon_ns_raw))
 hexagon_ns_raw$lon<-coords[,1]
 hexagon_ns_raw$lat<-coords[,2]
-write_sf(hexagon_ns_raw, "../Shape/isea3h8/N_S_America.shp")
+write_sf(hexagon_ns_raw, "../Data/Shape/isea3h8/N_S_America.shp")
 table(hexagon_ns_raw$continent)
 
 hexagon_ns_raw<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")

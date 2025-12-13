@@ -1,7 +1,7 @@
 library(terra)
 library(ncdf4)
 library(data.table)
-setwd("/media/huijieqiao/Butterfly/GABI/GABI")
+setwd("/media/huijieqiao/WD22T_11/GABI/Script")
 source<-"../Data/3600Ma_simulations"
 folders<-list.dirs(source)
 folders<-folders[-1]
@@ -45,7 +45,7 @@ for (f in folders){
 }
 all<-rbindlist(all)
 
-year_labels<-fread("../Data/3600Ma_simulations_info/name_year.csv", header=T)
+year_labels<-fread("../Data/name_year.csv", header=T)
 year_labels$V3<-NULL
 year_labels$V4<-NULL
 colnames(year_labels)<-c("label", "age")
@@ -53,7 +53,9 @@ year_labels<-year_labels[label!=""]
 year_labels$age<-as.numeric(gsub("k", "", year_labels$age))
 all$label<-gsub("../Data/3600Ma_simulations/", "", all$folder)
 all_age<-merge(all, year_labels, by="label")
-fwrite(all_age, "../Data/3600Ma_simulations_info/meta_table.csv")
-saveRDS(all_age, "../Data/3600Ma_simulations_info/meta_table.rda")
+fwrite(all_age, "../Data/meta_table.csv")
+saveRDS(all_age, "../Data/meta_table.rda")
+all_age<-readRDS("../Data/meta_table.rda")
 
 
+all_age[att=="long_name" & age==1872]$comment
