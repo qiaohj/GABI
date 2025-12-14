@@ -7,7 +7,7 @@ library(RSQLite)
 library(reshape2)
 library(data.table)
 library(ggplot2)
-sf_use_s2(F)
+
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 find_connected_hexagon <- function(hexagons){
   
@@ -94,14 +94,16 @@ hexagon_ns_raw$lat<-coords[,2]
 write_sf(hexagon_ns_raw, "../Shape/isea3h8/N_S_America.shp")
 table(hexagon_ns_raw$continent)
 
-hexagon_ns_raw<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
+hexagon_ns_raw<-read_sf("../Shape/isea3h8/N_S_America.shp")
 hexagon_ns_raw<-hexagon_ns_raw[which(!hexagon_ns_raw$seqnum %in% 
                                        c(7292, 7946,8027,8026,8108,7942,33048,33292,33373,33454,
                                          33045,33126,33289,33452,33534)),]
-write_sf(hexagon_ns_raw, "../Data/Shape/isea3h8/N_S_America.shp")
+hexagon_ns_raw[which(hexagon_ns_raw$continent=="bridge3"), "continent"]<-"bridge2"
+ggplot(hexagon_ns_raw)+geom_sf(aes(fill=continent))
+write_sf(hexagon_ns_raw, "../Shape/isea3h8/N_S_America.shp")
 
 hexagon<-read_sf(shpfname)
-continents<-read_sf("../Data/Shape/continents/continent.shp")
+continents<-read_sf("../Shape/continents/continent.shp")
 st_crs(continents)<-st_crs(hexagon)
 n_index<-st_intersects(continents, hexagon)
 hexagon$continent<-0
@@ -113,7 +115,7 @@ ggplot(hexagon)+geom_sf(aes(color=factor(continent)))
 coords<-st_coordinates(st_centroid(hexagon))
 hexagon$lon<-coords[,1]
 hexagon$lat<-coords[,2]
-write_sf(hexagon, "../Data/Shape/isea3h8/Continent.shp")
+write_sf(hexagon, "../Shape/isea3h8/Continent.shp")
 
 if (F){
   xx<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
@@ -127,9 +129,9 @@ if (F){
   dbDisconnect(envdb)
 }
 
-vars<-c("pr", "tasmax", "tasmin")
-n_s_america<-read_sf("../Data/Shape/isea3h8/N_S_America.shp")
-continent<-read_sf("../Data/Shape/isea3h8/Continent.shp")
+vars<-c("pr", "tasmax", "tasmin", "tasmean")
+n_s_america<-read_sf("../Shape/isea3h8/N_S_America.shp")
+continent<-read_sf("../Shape/isea3h8/Continent.shp")
 conn_ns_america<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
 conn_continent<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration_continent.sqlite")
 for (v in vars){
@@ -145,11 +147,15 @@ for (v in vars){
     item<-template
     item$v<-values[, y]
     cyear<-as.integer(gsub("y", "", y))
-    item$year<-cyear
-    if (cyear>=3100){
+    item$year<-cyear/2
+    #for burn-in (3200 - 3300)
+    if (cyear>3300){
+      next()
+    }
+    if (cyear>3200){
       item<-item[which(item$global_id %in% 
                          n_s_america[which(n_s_america$continent %in% c("North America", "South America")),]$seqnum
-                       ),]
+      ),]
     }
     full_df[[length(full_df)+1]]<-item
   }
@@ -176,76 +182,89 @@ for (v in vars){
 dbDisconnect(conn_continent)
 dbDisconnect(conn_ns_america)
 
-
-
-hexagon_ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
-centroids<-st_centroid(hexagon_ns)
-plot(centroids$geometry)
-dist<-st_distance(centroids)
-colnames(dist)<-centroids$seqnum
-rownames(dist)<-centroids$seqnum
-dist_df<-as.data.frame(as.table(dist))
-dist_df$N<-round(as.numeric(dist_df$Freq)/100000)
-dist_df<-dist_df[which(dist_df$N==1),]
-dist_df$Freq<-NULL
-colnames(dist_df)<-c("i", "j", "dist")
-dist_df$i<-as.integer(as.character(dist_df$i))
-dist_df$j<-as.integer(as.character(dist_df$j))
-dist_df$dist<-as.integer(dist_df$dist)
-dist_df<-data.table(dist_df)
-id=3121
-all_dist<-list()
-for (id in unique(c(dist_df$i, dist_df$j))){
-  print(id)
-  dist_item<-dist_df[i==id]
-  for (distance in c(2:4)){
-    dist_item2<-dist_df[(i %in% dist_item[dist==(distance-1)]$j)]
-    dist_item2<-dist_item2[! j %in% c(id, dist_item$j)]
-    dist_item2$i<-id
-    dist_item2$dist<-distance
-    dist_item2<-unique(dist_item2)
-    dist_item<-rbind(dist_item, dist_item2)
+if (F){
   
+  
+  hexagon_ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
+  centroids<-st_centroid(hexagon_ns)
+  plot(centroids$geometry)
+  dist<-st_distance(centroids)
+  colnames(dist)<-centroids$seqnum
+  rownames(dist)<-centroids$seqnum
+  dist_df<-as.data.frame(as.table(dist))
+  dist_df$N<-round(as.numeric(dist_df$Freq)/100000)
+  dist_df<-dist_df[which(dist_df$N==1),]
+  dist_df$Freq<-NULL
+  colnames(dist_df)<-c("i", "j", "dist")
+  dist_df$i<-as.integer(as.character(dist_df$i))
+  dist_df$j<-as.integer(as.character(dist_df$j))
+  dist_df$dist<-as.integer(dist_df$dist)
+  dist_df<-data.table(dist_df)
+  id=3121
+  all_dist<-list()
+  for (id in unique(c(dist_df$i, dist_df$j))){
+    print(id)
+    dist_item<-dist_df[i==id]
+    for (distance in c(2:4)){
+      dist_item2<-dist_df[(i %in% dist_item[dist==(distance-1)]$j)]
+      dist_item2<-dist_item2[! j %in% c(id, dist_item$j)]
+      dist_item2$i<-id
+      dist_item2$dist<-distance
+      dist_item2<-unique(dist_item2)
+      dist_item<-rbind(dist_item, dist_item2)
+      
+    }
+    all_dist[[length(all_dist)+1]]<-dist_item
+    if (F){
+      neighbors<-dist_item
+      neighbors_po<-merge(hexagon_ns, neighbors, by.x="seqnum", by.y="j")
+      ggplot(hexagon_ns_pr)+geom_sf()+
+        geom_sf(data=neighbors_po, aes(fill=factor(dist)))
+      
+      ggplot()+
+        geom_sf(data=neighbors_po, aes(fill=factor(dist)))
+      
+    }
   }
-  all_dist[[length(all_dist)+1]]<-dist_item
-  if (F){
-    neighbors<-dist_item
-    neighbors_po<-merge(hexagon_ns, neighbors, by.x="seqnum", by.y="j")
-    ggplot(hexagon_ns_pr)+geom_sf()+
-      geom_sf(data=neighbors_po, aes(fill=factor(dist)))
-    
-    ggplot()+
-      geom_sf(data=neighbors_po, aes(fill=factor(dist)))
-    
-  }
+  all_dist<-rbindlist(all_dist)
+  all_dist$i<-as.integer(as.character(all_dist$i))
+  all_dist$j<-as.integer(as.character(all_dist$j))
+  all_dist$dist<-as.integer(all_dist$dist)
 }
-all_dist<-rbindlist(all_dist)
-all_dist$i<-as.integer(as.character(all_dist$i))
-all_dist$j<-as.integer(as.character(all_dist$j))
-all_dist$dist<-as.integer(all_dist$dist)
-
-conn<-dbConnect(RSQLite::SQLite(), "../Configuration/env_Hadley3D.sqlite")
+conn<-dbConnect(RSQLite::SQLite(), "../Configuration/20251213/env_Hadley3D.sqlite")
 dist<-data.table(dbReadTable(conn, "distances"))
 dbDisconnect(conn)
 hexagon_ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
 dist<-dist[i %in% hexagon_ns$seqnum | j %in% hexagon_ns$seqnum]
 dist[i==7130 & dist==2]
 
-conn<-dbConnect(RSQLite::SQLite(), "../Configuration/null.sqlite")
+conn<-dbConnect(RSQLite::SQLite(), "../Configuration/20251213/configuration.sqlite")
+mask<-data.table(dbReadTable(conn, "mask"))
+environments<-data.table(dbReadTable(conn, "environments"))
+environments<-environments[names %in% c("tasmin", "pr")]
+environments[names=="tasmin", names:="tasmean"]
+environments$begin_year<-3300/2
+dbDisconnect(conn)
+
+
+conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
 dbWriteTable(conn, "distances", dist, overwrite=T)
+dbWriteTable(conn, "environments", environments, overwrite=T)
+dbWriteTable(conn, "mask", mask, overwrite=T)
 dbDisconnect(conn)
 
 #check the data
-hexagon<-read_sf(shpfname)
+hexagon<-read_sf("../Shape/isea3h8/N_S_America.shp")
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
 pr<-data.table(dbReadTable(conn, "pr"))
-tasmax<-data.table(dbReadTable(conn, "tasmax"))
+tasmean<-data.table(dbReadTable(conn, "tasmean"))
 tasmin<-data.table(dbReadTable(conn, "tasmin"))
+tasmax<-data.table(dbReadTable(conn, "tasmax"))
 dist<-data.table(dbReadTable(conn, "distances"))
 dbDisconnect(conn)
 
-#before 3.1My 
-pr_item<-pr[year==1800]
+#before 3.2My 
+pr_item<-pr[year==3300/2]
 hexagon_pr<-merge(hexagon, pr_item, by.x="seqnum", by.y="global_id")
 ggplot(hexagon_pr)+
   geom_sf(aes(fill=v))
@@ -257,21 +276,30 @@ ggplot(hexagon_pr)+
 pr$var<-"pr"
 tasmax$var<-"tasmax"
 tasmin$var<-"tasmin"
-
+tasmean$var<-"tasmean"
 #check the overall pattern
-all_v<-rbindlist(list(pr, tasmax, tasmin))
+all_v<-rbindlist(list(pr, tasmax, tasmin, tasmean))
 all_v_se<-all_v[,.(v=mean(v)), by=list(year, var)]
 ggplot(all_v_se)+geom_line(aes(x=year * -1, y=v))+
-  facet_wrap(~var, nrow=3, scale="free")
+  facet_wrap(~var, nrow=4, scale="free")
 #check neighber
 dist[i>5000]
-id<-6585
-neighbors<-dist[i==id]
-table(neighbors$j)
+id<-8438
+neighbors1<-dist[i==id]
+neighbors2<-dist[j==id]
+
+
+colnames(neighbors2)<-c("j", "i", "dist")
+neighbors<-rbindlist(list(neighbors1, neighbors2), use.names=T)
+
+hexagon.all<-read_sf("../Shape/isea3h8/isea3h8_sf.shp")
 neighbors_po<-merge(hexagon, neighbors, by.x="seqnum", by.y="j")
-ggplot(hexagon_pr)+geom_sf()+
+neighbors_all<-merge(hexagon.all, neighbors, by.x="seqnum", by.y="j")
+
+
+ggplot(neighbors_po)+geom_sf()+
   geom_sf(data=neighbors_po, aes(fill=factor(dist)))
 
 ggplot()+
-  geom_sf(data=neighbors_po, aes(fill=factor(dist)))
+  geom_sf(data=neighbors_all, aes(fill=factor(dist)))
 
