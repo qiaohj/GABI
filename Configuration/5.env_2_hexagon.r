@@ -129,7 +129,7 @@ if (F){
   dbDisconnect(envdb)
 }
 
-vars<-c("pr", "tasmax", "tasmin", "tasmean")
+vars<-c("pr", "tasmean")
 n_s_america<-read_sf("../Shape/isea3h8/N_S_America.shp")
 continent<-read_sf("../Shape/isea3h8/Continent.shp")
 conn_ns_america<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
@@ -148,8 +148,8 @@ for (v in vars){
     item$v<-values[, y]
     cyear<-as.integer(gsub("y", "", y))
     item$year<-cyear/2
-    #for burn-in (3200 - 3300)
-    if (cyear>3300){
+    #for burn-in (3200 - 3210)
+    if (cyear>3210){
       next()
     }
     if (cyear>3200){
@@ -243,7 +243,7 @@ mask<-data.table(dbReadTable(conn, "mask"))
 environments<-data.table(dbReadTable(conn, "environments"))
 environments<-environments[names %in% c("tasmin", "pr")]
 environments[names=="tasmin", names:="tasmean"]
-environments$begin_year<-3300/2
+environments$begin_year<-3210/2
 dbDisconnect(conn)
 
 
@@ -258,13 +258,11 @@ hexagon<-read_sf("../Shape/isea3h8/N_S_America.shp")
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
 pr<-data.table(dbReadTable(conn, "pr"))
 tasmean<-data.table(dbReadTable(conn, "tasmean"))
-tasmin<-data.table(dbReadTable(conn, "tasmin"))
-tasmax<-data.table(dbReadTable(conn, "tasmax"))
 dist<-data.table(dbReadTable(conn, "distances"))
 dbDisconnect(conn)
 
 #before 3.2My 
-pr_item<-pr[year==3300/2]
+pr_item<-pr[year==3210/2]
 hexagon_pr<-merge(hexagon, pr_item, by.x="seqnum", by.y="global_id")
 ggplot(hexagon_pr)+
   geom_sf(aes(fill=v))
@@ -274,11 +272,9 @@ hexagon_pr<-merge(hexagon, pr_item, by.x="seqnum", by.y="global_id")
 ggplot(hexagon_pr)+
   geom_sf(aes(fill=v))
 pr$var<-"pr"
-tasmax$var<-"tasmax"
-tasmin$var<-"tasmin"
 tasmean$var<-"tasmean"
 #check the overall pattern
-all_v<-rbindlist(list(pr, tasmax, tasmin, tasmean))
+all_v<-rbindlist(list(pr, tasmean))
 all_v_se<-all_v[,.(v=mean(v)), by=list(year, var)]
 ggplot(all_v_se)+geom_line(aes(x=year * -1, y=v))+
   facet_wrap(~var, nrow=4, scale="free")
