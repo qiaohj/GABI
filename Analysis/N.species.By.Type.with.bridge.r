@@ -22,7 +22,7 @@ if (F){
   species.type.N[sp_id==Parent, Parent:=""]
   
   
-  colnames(species.type.N)[c(10, 14)]<-c("origin_continent", "seed_continent")
+  colnames(species.type.N)[c(8, 12)]<-c("origin_continent", "seed_continent")
   species.type.N[origin_continent!=seed_continent]
   
   species.type<-species.type.N[, c("sp_id", "NB", "DA", "from", "to", "type",
@@ -33,12 +33,14 @@ if (F){
   burn_in<-(-3200/2)
   
   sp_full<-merge(sp, species.type, by=c("sp_id", "NB", "DA"))
+  
   colnames(sp_full)[5]<-"current_continent"
   sp_full$year<-sp_full$year * -1
   
   sp_full.N<-sp_full[, .(N=uniqueN(current_continent)), 
                      by=.(year, sp_id, NB, DA, seed_id, Parent, 
                           from, to, origin_continent, seed_continent)]
+  
   sp_full$species.label.year<-sprintf("%s.%s.%s.%d", sp_full$sp_id,
                                       sp_full$NB, sp_full$DA, sp_full$year)
   sp_full.N$species.label.year<-sprintf("%s.%s.%s.%d", sp_full.N$sp_id,
@@ -134,8 +136,19 @@ if (F){
                                            loss.continent)]
   setorderv(combinations, c("previous_continent", "current_continent", "parent_continent"))
   if (F){
-    fwrite(combinations, 
-           "../Data/full.combination.csv")
+    
+    oldcombinations<-fread("/media/huijieqiao/Butterfly/GABI/Data/20251213/Tables/full.combination.csv")
+    combination.new<-merge(combinations[,c("parent_continent",
+                                           "previous_continent",
+                                           "current_continent", "N"
+    )], oldcombinations, 
+    by=c("parent_continent",
+         "previous_continent",
+         "current_continent"
+    ), all=T)
+    
+    fwrite(combination.new, 
+           "../Data/Tables/full.combination.csv")
   }
   
   ##Detect the type of species
@@ -355,7 +368,7 @@ sp_full_continents<-readRDS("../Data/Tables/sp_full_continents.rda")
 xxx<-sp_full_continents[, .(N=.N), by=list(NB, type, year)]
 View(xxx[type=="New.Immigrants"])
 
-seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.rda")
 rrrr<-1
 delta_Species.all<-list()
 type_N.all<-list()
@@ -368,7 +381,7 @@ for (rrrr in c(1:10)){
   #View(xxx[type=="New.Immigrants"])
   
   y=-500
-  for (y in c(-1800:0)){
+  for (y in c(-1605:0)){
     print(paste(rrrr, y))
     item<-sp_filter[year==y]
     
@@ -420,3 +433,4 @@ delta_Species.origin.df<-rbindlist(delta_Species.origin)
 type_N.origin.df<-rbindlist(type_N.origin)
 saveRDS(delta_Species.origin.df, "../Data/Tables/delta_Species.origin.rda")
 saveRDS(type_N.origin.df, "../Data/Tables/type_N.origin.rda")
+

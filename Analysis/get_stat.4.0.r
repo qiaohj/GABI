@@ -8,7 +8,7 @@ setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
 simulations<-data.table(dbReadTable(conn, "simulations"))
 dbDisconnect(conn)
-
+simulations[global_id==11945]
 simulations<-simulations[continent_id<=100]
 
 result_folder<-"/media/huijieqiao/WD22T_50/ES.R/Results"

@@ -6,7 +6,7 @@ library(ggplot2)
 library(ggh4x)
 library(ape)
 library(phytools)
-library(ggtree)
+#library(ggtree)
 library(phangorn)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 sp<-readRDS("../Data/Tables/virtual.species.rda")
@@ -27,6 +27,7 @@ assign_named_row <- function(dt, row, vals) {
   }
 }
 labels<-labels[sample(length(labels), length(labels))]
+j=1
 
 for (j in c(1:length(labels))){
   l<-labels[j]
@@ -97,41 +98,43 @@ for (j in c(1:length(labels))){
     n<-table(species$type)
     assign_named_row(species, 1, n)
   }
-  species$origin_continent<-d[year==-1605]$continent
+  species$origin_continent<-d[year==-1604]$continent
   
   saveRDS(species, target)
 }
 
-all_N<-list()
-for (j in c(1:length(labels))){
-  l<-labels[j]
-  strs<-strsplit(l, "\\.")[[1]]
-  print(paste(j, length(labels), l))
-  target<-sprintf("../Data/temp.N.sp/%s.rda", l)
-  df<-readRDS(target)
-  df$NB<-strs[[2]]
-  df$DA<-strs[[3]]
-  if (is.null(df)){
-    asdf
+if (F){
+  all_N<-list()
+  for (j in c(1:length(labels))){
+    l<-labels[j]
+    strs<-strsplit(l, "\\.")[[1]]
+    print(paste(j, length(labels), l))
+    target<-sprintf("../Data/temp.N.sp/%s.rda", l)
+    df<-readRDS(target)
+    df$NB<-strs[[2]]
+    df$DA<-strs[[3]]
+    if (is.null(df)){
+      asdf
+    }
+    all_N[[length(all_N)+1]]<-df
   }
-  all_N[[length(all_N)+1]]<-df
+  all_N<-rbindlist(all_N, fill=T)
+  all_N[continent=="", continent:=all_N[continent==""]$origin_continent]
+  all_N<-all_N[!is.na(sp_id)]
+  saveRDS(all_N, "../Data/Tables/species.type.N.rda")
+  table(all_N$NB)
+  all_N_gg<-all_N
+  p<-ggplot(all_N_gg[Speciation<450])+geom_point(aes(x=Extinction, y=Speciation))+
+    facet_grid(origin_continent+NB~continent)+
+    scale_x_sqrt()+scale_y_sqrt()
+  p
+  ggsave(p, filename="../Figures/N.Speciation.Extinction.by.species.type.png",
+         width=10, height=12)
+  
+  p<-ggplot(all_N_gg)+geom_violin(aes(x=continent, color=origin_continent, y=Speciation))+
+    facet_wrap(~NB)+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))+scale_y_sqrt()
+  p
+  ggsave(p, filename="../Figures/N.Speciation.boxplot.by.species.type.png",
+         width=8, height=6)
 }
-all_N<-rbindlist(all_N, fill=T)
-all_N[continent=="", continent:=all_N[continent==""]$origin_continent]
-all_N<-all_N[!is.na(sp_id)]
-saveRDS(all_N, "../Data/Tables/species.type.N.rda")
-table(all_N$NB)
-all_N_gg<-all_N
-p<-ggplot(all_N_gg)+geom_point(aes(x=Extinction, y=Speciation))+
-  facet_grid(origin_continent+NB~continent)+
-  scale_x_sqrt()+scale_y_sqrt()
-p
-ggsave(p, filename="../Figures/N.Speciation.Extinction.by.species.type.png",
-       width=10, height=12)
-
-p<-ggplot(all_N_gg)+geom_violin(aes(x=continent, color=origin_continent, y=Speciation))+
-  facet_wrap(~NB)+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+scale_y_sqrt()
-p
-ggsave(p, filename="../Figures/N.Speciation.boxplot.by.species.type.png",
-       width=8, height=6)
