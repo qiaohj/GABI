@@ -134,6 +134,7 @@ if (F){
                                    by=list(parent_continent, previous_continent,
                                            current_continent, type, gain.continent,
                                            loss.continent)]
+  dim(combinations)
   setorderv(combinations, c("previous_continent", "current_continent", "parent_continent"))
   if (F){
     
@@ -153,6 +154,7 @@ if (F){
   
   ##Detect the type of species
   combinations<-fread( "../Data/Tables/full.combination.csv")
+  dim(combinations)
   i=1
   for (i in c(1:nrow(combinations))){
     com<-combinations[i]

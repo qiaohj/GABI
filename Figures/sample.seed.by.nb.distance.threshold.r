@@ -49,7 +49,6 @@ effective.band<-x.N[N==2]
 df_filtered_seeds_dist$dist.label<-sprintf("%d.%s", df_filtered_seeds_dist$min.dist, 
                                            df_filtered_seeds_dist$nb)
 
-#View(x[nb=="MODERATE-MODERATE"])
 df.detail[,.(N=length(unique(seed_id))), by=list(nb)]
 
 df_N_checked_sf<-df.v[year==burn_in+1 & N_SPECIES>0, 
@@ -81,7 +80,7 @@ df_filtered_N_detals<-df_filtered_seeds[, .(N_SPECIES=sum(N_SPECIES),
                                             N_ALL_SPECIES=sum(N_ALL_SPECIES),
                                             N_SEED=length(unique(seed_id))),
                                         by=list(continent, year, nb, da)]
-df_filtered_N_detals[year==burn_in+1 & nb!="HUGE-HUGE", 
+df_filtered_N_detals[year==burn_in+1, 
                      c("N_SEED", "continent", "nb", "da")]
 df_filtered_N[year==burn_in+1]
 
@@ -90,32 +89,6 @@ table(df_N_checked$N)
 #define outliers
 N_species<-df_filtered_seeds[year==0 & N_SPECIES>0]
 
-
-if (F){
-  ggplot(N_species[N_SPECIES<113])+
-    geom_histogram(aes(x=N_SPECIES))+
-    scale_x_sqrt()+
-    facet_grid(nb+da~continent)
-  
-  seed.end<-N_species[N_SPECIES<113, .(N=.N), by=list(seed_id, continent)]
-  seed.end<-seed.end[N==4]
-  table(seed.end$continent)
-  
-  seed.na<-seed.end[continent=="North America"]
-  random.seed.na<-seed.na[sample(nrow(seed.na), 1000)]
-  
-  seed.sa<-seed.end[continent=="South America"]
-  random.seed.sa<-seed.sa[sample(nrow(seed.sa), 1000)]
-  
-  ramdom.N_species<-N_species[seed_id %in% c(random.seed.sa$seed_id, random.seed.na$seed_id)]
-  ggplot(ramdom.N_species)+
-    geom_histogram(aes(x=N_SPECIES))+
-    scale_x_sqrt()+
-    facet_grid(nb+da~continent)
-  
-  xxx<-ramdom.N_species[,.(N=sum(N_SPECIES)), by=list(continent, nb, da)]
-  setorderv(xxx, c("nb", "da", "continent"))
-}
 
 quantiles<-quantile(N_species$N_SPECIES, c(0, 1, 0.99, 0.95, 0.90, 0.999))
 N_species[between(N_SPECIES, 380, 2000)]

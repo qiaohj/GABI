@@ -21,8 +21,13 @@ mydb <- dbConnect(RSQLite::SQLite(), base_db)
 simulations<-dbReadTable(mydb, "simulations")
 dbDisconnect(mydb)
 simulations<-data.table(simulations)
-simulations<-simulations[continent_id<=100]
-
+if (F){
+  sp<-readRDS("../Data/Tables/sp_full_continents.rda")
+  ids<-unique(sp$seed_id)
+  simulations<-simulations[global_id %in% ids]
+  saveRDS(simulations, "../Data/xxx.rda")
+}
+simulations<-readRDS("../Data/xxx.rda")
 i=233
 
 

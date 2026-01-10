@@ -14,8 +14,9 @@ if [[ "$CONFIRM" != "Y" && "$CONFIRM" != "y" ]]; then
 fi
 echo "Confirmed. Starting $X processes in the background..."
 for i in $(seq 1 $X); do
-  #nohup Rscript Analysis/N.Speciation.Extinction.r > "../running.log/output_$i.log" 2>&1 &
-  nohup Rscript Analysis/species.type.with.bridge.r > "../running.log/output_$i.log" 2>&1 &
+  nohup Rscript Analysis/get_stat.3.x.r > "../running.log/R_$i.log" 2>&1 &
+  #nohup Rscript Analysis/N.Speciation.Extinction.r > "../running.log/R_$i.log" 2>&1 &
+  #nohup Rscript Analysis/species.type.with.bridge.r > "../running.log/output_$i.log" 2>&1 &
 done
 echo "Successfully launched $X background tasks."
 

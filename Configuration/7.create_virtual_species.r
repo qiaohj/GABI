@@ -14,14 +14,17 @@ all_v<-rbindlist(list(pr, tasmean))
 all_v_first<-all_v[year==1605]
 if (F) {
   tb<-readRDS("../Data/Tables/nb_range_mammals_iucn.rda")
-  pr_percentile<-quantile(tb[var=="pr"]$range, c(0.5, 0.75, 0.9))
-  tasmean_percentile<-quantile(tb[var=="tasmean"]$range, c(0.5, 0.75, 0.9))
+  pr_percentile<-quantile(tb[var=="pr"]$range, 
+                          c(0.25, 0.5, 0.75, 0.9))
+  tasmean_percentile<-quantile(tb[var=="tasmean"]$range, 
+                               c(0.25, 0.5, 0.75, 0.9))
   nb<-list(pr=ceiling(pr_percentile),
            t=ceiling(tasmean_percentile))
   
   saveRDS(nb, "../Data/nb.rda")
 }
 
+#-12.44,-2.44|119.47,768.47
 
 nb<-readRDS("../Data/nb.rda")
 
@@ -67,7 +70,7 @@ seeds_v<-merge(seeds_v, tasmean, by=c("global_id"))
 
 
 i=1
-nb_labels<-c("NARROW", "MODERATE", "BROAD")
+nb_labels<-c("TINY", "NARROW", "MODERATE")
 
 nb_list<-data.table(x=c(1:3), y=c(1:3))
 
@@ -173,6 +176,7 @@ mydb <- dbConnect(RSQLite::SQLite(), base_db)
 dbWriteTable(mydb, "simulations", simulations, overwrite=T)
 dbWriteTable(mydb, "timeline", timeline, overwrite=T)
 dbDisconnect(mydb)
+
 
 
 hexagon[which(hexagon$seqnum==11945),]

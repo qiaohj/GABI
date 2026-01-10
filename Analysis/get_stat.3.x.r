@@ -8,15 +8,26 @@ target<-"/media/huijieqiao/Butterfly/GABI/Results"
 folders<-list.dirs(target, full.names=T)
 length(folders)
 folders<-folders[2:length(folders)]
+folders<-folders[!grepl("BROAD", folders)]
+length(folders)
 ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
 ns<-data.table(ns)
 ns$geometry<-NULL
 f<-folders[1]
 folders<-folders[sample(length(folders), length(folders))]
-
+if (F){
+  #seed_100<-readRDS("../Data/Tables/sp_full_continents.rda")
+  ids<-unique(seed_100$seed_id)
+  fids<-strsplit(gsub("/media/huijieqiao/Butterfly/GABI/Results/", "", folders), "\\.")
+  first_items <- as.numeric(sapply(fids, "[[", 1))
+  folders<-folders[first_items %in% ids]
+}
 for (i in c(1:length(folders))){
   f<-folders[i]
   files<-list.files(f)
+  if (length(files[grepl("too", files)])>0){
+    next()
+  }
   #print(length(files))
   if (length(files)>=4){
     print(paste(f, i, length(folders)))
@@ -63,7 +74,9 @@ if (F){
   conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
   simulations<-data.table(dbReadTable(conn, "simulations"))
   dbDisconnect(conn)
-  simulations_sub<-simulations[continent_id<=100]
+  
+  
+  simulations_sub<-simulations[global_id %in% ids]
   #simulations_sub<-simulations
   ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
   ns<-data.table(ns)

@@ -42,12 +42,11 @@ if (F){
 
 
 df<-readRDS("../Data/Tables/N.with.bridge.seed.continent.rda")
-target.nb<-c("BROAD", "MODERATE", "NARROW")
-df<-df[NB %in% target.nb]
+table(df$NB)
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
 table(df$label)
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
 
 
 if (F){

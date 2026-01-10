@@ -87,19 +87,26 @@ nb_full_df<-rbindlist(nb_full)
 
 saveRDS(nb_full_df, sprintf("../Data/IUCN_NB/Mammals.%s.rda", label))
 
+nb_full_df<-readRDS(sprintf("../Data/IUCN_NB/Mammals.%s.rda", label))
+
+
 ggplot(nb_full_df)+geom_histogram(aes(x=range))+
   facet_wrap(~var, scale="free")
 
 ggplot(nb_full_df)+geom_histogram(aes(x=range))+
   facet_grid(continent~var, scale="free")
 
-quantile(round(nb_full_df[range>1 & var=="tasmean"]$range, 2), c(0, 0.5, 0.75, 0.9, 0.99, 1))
+quantile(round(nb_full_df[range>1 & var=="tasmean"]$range, 2), 
+         c(0, 0.25, 0.5, 0.75, 0.9, 0.99, 1))
 
-quantile(round(nb_full_df[range>1 & var=="pr"]$range, 2), c(0, 0.5, 0.75, 0.9, 0.99, 1))
+quantile(round(nb_full_df[range>1 & var=="pr"]$range, 2), 
+         c(0, 0.25, 0.5, 0.75, 0.9, 0.99, 1))
 
-quantile(round(nb_full_df[continent=="America" & range>1 & var=="tasmean"]$range, 2), c(0, 0.5, 0.75, 0.9, 0.99, 1))
+quantile(round(nb_full_df[continent=="America" & range>1 & var=="tasmean"]$range, 2), 
+         c(0, 0.25, 0.5, 0.75, 0.9, 0.99, 1))
 
-quantile(round(nb_full_df[continent=="America" & range>1 & var=="pr"]$range, 2), c(0, 0.5, 0.75, 0.9, 0.99, 1))
+quantile(round(nb_full_df[continent=="America" & range>1 & var=="pr"]$range, 2), 
+         c(0, 0.25, 0.5, 0.75, 0.9, 0.99, 1))
 
 nb_full_df_sub<-nb_full_df[continent=="America"]
 sp1<-nb_full_df_sub[var=="pr" & range>=1129.680]$species
@@ -109,3 +116,5 @@ dddd<-data.table(all_v_last)
 range(dddd[var=="pr"]$v)
 range(pr$v)
 saveRDS(nb_full_df_sub, "../Data/Tables/nb_range_mammals_iucn.rda")
+
+

@@ -42,12 +42,40 @@ for (j in c(1:length(labels))){
   d$year<-d$year * -1
   
   species<-d[, .(from=min(year), to=max(year)), by=list(sp_id, Parent)]
-  species$sp_id<-as.factor(species$sp_id)
-  species$Parent<-as.factor(species$Parent)
-  species[Parent==""]$Parent<-"Seed"
   
-  tree <- as.phylo(species)
-  tree$edge.length <- species$to - species$from
+  species[sp_id==Parent, Parent:="Seed"]
+  root_id <- "Seed"
+  edges_dt <- species[sp_id != Parent]
+  all_ids <- unique(c(species$sp_id, species$Parent))
+  
+  
+  parent_ids <- unique(species$Parent)
+  tip_labels <- setdiff(all_ids, setdiff(parent_ids, root_id))
+  tip_labels<-tip_labels[tip_labels!=root_id]
+  
+  all_nodes_except_root <- setdiff(all_ids, c(tip_labels, root_id))
+  node_labels <- c(root_id, all_nodes_except_root)
+  
+  tip_map <- setNames(seq_along(tip_labels), tip_labels)
+  node_map <- setNames(seq_along(node_labels) + length(tip_labels), node_labels)
+  id_map <- c(tip_map, node_map)
+  edge_matrix <- matrix(c(id_map[edges_dt$Parent], id_map[edges_dt$sp_id]), ncol = 2)
+  
+  tree <- list(
+    edge = edge_matrix,
+    tip.label = tip_labels,
+    node.label = node_labels,
+    Nnode = length(node_labels),
+    edge.length = edges_dt$to - edges_dt$from
+  )
+  class(tree) <- "phylo"
+  if (F){
+    ggtree(tree) + 
+      geom_tiplab() +
+      theme_tree2()
+  }
+  
+  
   
   species$is_leaf<-!(species$sp_id %in% species$Parent)
   if (nrow(species)==1){
@@ -62,7 +90,7 @@ for (j in c(1:length(labels))){
   species$Extinction<-0
   species$Speciation<-0
   species$Species<-0
-  if (nrow(species)>1){
+  if (nrow(species)>=1){
     for (i in c(1:nrow(species))){
       sp.id<-species[i]$sp_id
       item<-d[sp_id==sp.id]
