@@ -22,8 +22,39 @@ dbDisconnect(conn)
 table(simulations$is_run)
 setorderv(simulations, c("nb", "da", "is_run"))
 simulations[, .(N=.N), by=list(nb, is_run)]
+all.df<-simulations
+all.list<-list()
+for (i in c(1:nrow(all.df))){
+  f<-sprintf(sprintf("/media/huijieqiao/Butterfly/GABI/Results/%s",
+                     simulations[i]$label))
+  n<-length(list.files(f))
+  
+  if (n<=2){
+    print(i)
+    xx<-data.table(file.info(f))
+    xx$f<-f
+    all.list[[length(all.list)+1]]<-xx
+  }
+}
+all.df<-rbindlist(all.list)
+dim(all.df)
 
-
+all.list<-list()
+for (i in c(1:nrow(all.df))){
+  f<-sprintf(all.df[i]$f)
+  n<-length(list.files(f))
+  
+  if (n<=2){
+    print(i)
+    xx<-data.table(file.info(f))
+    xx$f<-f
+    all.list[[length(all.list)+1]]<-xx
+  }
+}
+all.df<-rbindlist(all.list)
+dim(all.df)
+setorderv(all.df, "ctime")
+View(all.df)
 
 if (F){
   conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")

@@ -61,6 +61,50 @@ for (i in c(1:length(folders))){
     saveRDS(log.div, sprintf("%s/species.richness.rda", f))
   }
 }
+if (F){
+  for (i in c(1:length(folders))){
+    f<-folders[i]
+    files<-list.files(f)
+    if (length(files[grepl("too", files)])>0){
+      next()
+    }
+    target<-sprintf("%s/continent_n_cells.rda", f)
+    if (file.exists(target)){
+      xx<-readRDS(target)
+      xx.length<-length(unique(xx[year==min(xx$year)]$sp_id))
+      if (xx.length>500){
+        print(paste(i, length(folders)))
+        saveRDS(NULL, sprintf("%s/too.many.species", f))
+      }
+    }
+  }
+}
+if (F){
+  ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
+  ids<-c()
+  listxx<-list()
+  for (i in c(1:length(folders))){
+    f<-folders[i]
+    files<-list.files(f)
+    if (length(files[grepl("too", files)])>0){
+      seed_id<-strsplit(gsub("/media/huijieqiao/Butterfly/GABI/Results/", "", f), 
+                        "\\.")[[1]][1]
+      nb<-strsplit(gsub("/media/huijieqiao/Butterfly/GABI/Results/", "", f), 
+                        "\\.")[[1]][2]
+      da<-strsplit(gsub("/media/huijieqiao/Butterfly/GABI/Results/", "", f), 
+                        "\\.")[[1]][3]
+      ids<-c(ids, seed_id)
+      listxx[[length(listxx)+1]]<-data.table(seed_id=seed_id, nb=nb, da=da)
+      
+    }
+  }
+  ids<-unique(ids)
+  listxx<-rbindlist(listxx)
+  ns$color<-ns$seqnum %in% ids
+  ggplot(ns)+geom_sf(aes(fill=color), color=NA)
+  xxx<-data.table(ns)
+  xxx[,.(N=.N), by=list(continent, color)]
+}
 
 if (F){
   library(data.table)
@@ -76,8 +120,9 @@ if (F){
   dbDisconnect(conn)
   
   
-  simulations_sub<-simulations[global_id %in% ids]
-  #simulations_sub<-simulations
+  #simulations_sub<-simulations[global_id %in% ids]
+  simulations_sub<-simulations
+  table(simulations_sub$nb)
   ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
   ns<-data.table(ns)
   ns$geometry<-NULL

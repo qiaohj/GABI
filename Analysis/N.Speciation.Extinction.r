@@ -26,8 +26,9 @@ if (F){
   ids<-unique(sp$seed_id)
   simulations<-simulations[global_id %in% ids]
   saveRDS(simulations, "../Data/xxx.rda")
+  simulations<-readRDS("../Data/xxx.rda")
 }
-simulations<-readRDS("../Data/xxx.rda")
+#
 i=233
 
 
@@ -46,7 +47,7 @@ all_df<-all_df[which(all_df$species_evo_level==0),]
 table(all_df$species_evo_type)
 table(all_df$species_evo_level)
 
-#all_df<-all_df[label=="9979.MODERATE-MODERATE.GOOD"]
+#all_df<-all_df[label=="6529.MODERATE.POOR"]
 for (i in c(1:nrow(all_df))){
   
   
@@ -73,32 +74,42 @@ for (i in c(1:nrow(all_df))){
     print("redo")
     #next()
   }
-  
-  
-  log<-sprintf("%s/%s/%s.sqlite", base, sp, sp)
-  if (!file.exists(log)){
-    next()
-  }
-  if (F){
-    ddd<-sprintf("%s/%s/%s.log", base, sp, sp)
-    dff<-fread(ddd)
-    colnames(dff)<-c("year", "global_id", "group_id", "n", "sp_id", "suitable")
-    dff<-dff[suitable==1]
-    unique(dff$sp_id)
-  }
-  
-  saveRDS(NULL, ttt)
-  
-  mydb <- dbConnect(RSQLite::SQLite(), log)
-  trees<-dbReadTable(mydb, "trees")
-  dbDisconnect(mydb)
-  if (nrow(trees)==0){
-    text.string<-sprintf("SP%d @ 1604-0:1604;", item$global_id)
-  }else{
-    text.string<-trees[1,2]
+  tree.f<-sprintf("%s/%s/tree.rda", base, sp)
+  if (file.exists(tree.f)){
+    
+    saveRDS(NULL, ttt)
+    text.string<-readRDS(tree.f)
     text.string<-gsub("\\]", "#", gsub("\\[", "#", text.string))
     if (!grepl("\\(", text.string)){
       text.string<-sprintf("(a:0)%s", text.string)
+    }
+  }else{
+    log<-sprintf("%s/%s/%s.sqlite", base, sp, sp)
+    if (!file.exists(log)){
+      next()
+    }
+    if (F){
+      ddd<-sprintf("%s/%s/%s.log", base, sp, sp)
+      dff<-fread(ddd)
+      colnames(dff)<-c("year", "global_id", "group_id", "n", "sp_id", "suitable")
+      dff<-dff[suitable==1]
+      unique(dff$sp_id)
+    }
+    
+    saveRDS(NULL, ttt)
+    
+    mydb <- dbConnect(RSQLite::SQLite(), log)
+    trees<-dbReadTable(mydb, "trees")
+    dbDisconnect(mydb)
+    if (nrow(trees)==0){
+      text.string<-sprintf("SP%d @ 1604-0:1604;", item$global_id)
+    }else{
+      
+      text.string<-trees[1,2]
+      text.string<-gsub("\\]", "#", gsub("\\[", "#", text.string))
+      if (!grepl("\\(", text.string)){
+        text.string<-sprintf("(a:0)%s", text.string)
+      }
     }
   }
   vert.tree<-read.tree(text=text.string)
