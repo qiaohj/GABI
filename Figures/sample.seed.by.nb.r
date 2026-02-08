@@ -4,13 +4,19 @@ library(ggrepel)
 library(ggh4x)
 library(sf)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
-
+source("Figures/common.r")
 seeds<-readRDS("../Data/Tables/seeds.rda")
-seed.dist<-readRDS("../Data/Tables/cells.with.dist.rda")
-seeds<-seeds[global_id %in% all_dfx$seed_id]
-ggplot(seeds)+geom_sf(data=seed.dist)+geom_point(aes(x=lon, y=lat, color=continent))
 
+#conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
+#simulations<-data.table(dbReadTable(conn, "simulations"))
+#dbDisconnect(conn)
+#target.seeds<-simulations[continent_id<=100]$global_id
+#seeds<-seeds[global_id %in% target.seeds]
+#ggplot(seeds)+geom_sf(data=seed.dist)+geom_point(aes(x=lon, y=lat, color=continent))
+
+seed.dist<-readRDS("../Data/Tables/cells.with.dist.rda")
 df<-readRDS("../Data/Tables/N.Speciation.Extinction.All.NB.rda")
+
 if (F){
   test<-df[year==burn_in+1 & N_SPECIES>0]
   test[, .(N=.N), by=list(nb, da)]
@@ -73,11 +79,16 @@ table(df_N_checked$N)
 N_species<-df_filtered_seeds[year==0 & N_SPECIES>0]
 
 
-quantiles<-quantile(N_species$N_SPECIES, c(0, 1, 0.99, 0.95, 0.90, 0.999))
+quantiles<-quantile(N_species$N_SPECIES, c(0, 1, 0.99, 0.98, 0.95, 0.90, 0.999))
 
 N_species$seed_label<-paste(N_species$seed_id, N_species$nb, N_species$da)
-outliers<-unique(N_species[N_SPECIES>quantiles[3]])
-outliers<-unique(N_species[N_SPECIES>500])
+outliers<-unique(N_species[(N_SPECIES>quantiles[3] & continent=="North America") |
+                             (N_SPECIES>quantiles[4] & continent=="South America")])
+
+range(N_species$N_SPECIES)
+ggplot(outliers)+geom_histogram(aes(x=N_SPECIES), bins=100)+
+  facet_grid(nb~continent)
+
 
 N_species_filter<-df_filtered_seeds[!seed_id %in% outliers$seed_id]
 df_filtered_N_filter<-N_species_filter[, .(N_SPECIES=sum(N_SPECIES), 
@@ -93,11 +104,11 @@ ggplot(df_filtered_N_filter)+
   geom_line(aes(y=N_SPECIES, x=year * -1, color=continent))+
   geom_vline(xintercept = burn_in * -1, linetype=2)+
   geom_text(data=df_filtered_N[year==1504], 
-            aes(x=-1100, y=c(2e3, 2.5e3), 
+            aes(x=-1100, y=c(2e3, 6e4), 
                 label=paste(continent, N_SEED, sep=": ")),
             hjust = 0)+
   geom_text(data=df_filtered_N[year==burn_in+1], 
-            aes(x=burn_in * -1 + 10, y=c(1.7e3, 1.9e3), 
+            aes(x=burn_in * -1 + 10, y=c(1.7e3, 5.5e4), 
                 label=paste(continent, N_SEED, sep=": ")),
             hjust = 0)
 
@@ -108,16 +119,12 @@ unique(N_species$nb)
 no.outliers<-df_filtered_seeds[(year==0 & !(seed_id %in% outliers_ID))]
 
 
-xx<-no.outliers[order(-N_SPECIES), head(.SD, 8), by = list(nb, da)]
-setorderv(xx, c("nb", "da", "N_SPECIES"), c(1, 1, -1))
-xx
 seed_pool<-no.outliers[, .(N_SPECIES=sum(N_SPECIES)), 
                        by=list(seed_id, continent, nb, da, label)]
 seed_pool[,.(N=.N), by=list(nb, da)]
 seed_pool$label2<-sprintf("%s.%s", seed_pool$label, seed_pool$da)
 seed_pool$weight<-1
-#seed_pool[continent=="South America" & N_SPECIES>20 & 
-#            ((nb=="BIG-BIG" & da=="GOOD")|(nb=="MODERATE-MODERATE" & da=="POOR")), weight:=0.1]
+
 if (F){
   seed_pool.map<-merge(seed.dist, seed_pool, by.y="seed_id", by.x="seqnum")
   seed_pool[, .(N=.N), by=list(nb, continent)]
@@ -177,11 +184,12 @@ bins<-rbindlist(bins)
 
 all_ramdom_seeds<-list()
 
-for (rep in c(1:10)){
+for (rep in c(1:100)){
   print(rep)
   seed_pool.rand<-list()
   for (i in c(1:nrow(bins))){
     bin<-bins[i]
+    
     seed.item<-seed_pool[nb==bin$nb & da==bin$da & min.dist==bin$min.dist]
     seed.item<-seed.item[,.SD[sample(.N, bin$N, prob=weight)],by = "continent"]
     seed_pool.rand[[length(seed_pool.rand)+1]]<-seed.item
@@ -190,8 +198,14 @@ for (rep in c(1:10)){
   if (F){
     ggplot(seed_pool.rand)+geom_histogram(aes(x=min.dist, fill=continent), binwidth = 1)+
       facet_grid(nb~continent)
+    
+    seed_pool.rand[,.(N=.N), by=c("continent", "nb", "da")]
+    ggplot(seed_pool.rand)+geom_boxplot(aes(x=continent, y=N_SPECIES))+
+      facet_grid(nb~da)
+    seed_pool.rand[,.(N=sum(N_SPECIES)), by=list(nb, continent)]
   }
-  ramdom_seeds<-seed_pool.rand[,.SD[sample(.N, 20)],
+  seed_pool.rand[, .(N=.N), by=c("continent", "nb", "da")]
+  ramdom_seeds<-seed_pool.rand[,.SD[sample(.N, 100)],
                                by = c("continent", "nb", "da")]
   
   if (F){

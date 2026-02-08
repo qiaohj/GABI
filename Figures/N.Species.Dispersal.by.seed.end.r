@@ -4,6 +4,8 @@ library(sf)
 library(stringr)
 library(flextable)
 library(officer)
+library(RSQLite)
+library(DBI)
 setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 if (F){
@@ -11,10 +13,17 @@ if (F){
   seeds<-sp.with.bridge[,.(N=.N), by=list(NB, DA, seed_id)]
   final<-list()
   for (i in c(1:nrow(seeds))){
-    print(paste(i, nrow(seeds)))
+    #print(paste(i, nrow(seeds)))
     item<-seeds[i]
+    
     sp.items<-sp.with.bridge[NB==item$NB & DA==item$DA & seed_id==item$seed_id]
-    seed_continent<-sp.items[year== -1604]$seed_continent
+    sp.items<-unique(sp.items)
+    
+    seed_continent<-sp.items[year==-1604]$seed_continent
+    if (length(seed_continent)>1){
+      print(paste(i, nrow(seeds)))
+      next()
+    }
     target_continent<-ifelse(seed_continent=="South America", "North America", "South America")
     target_continent<-c(target_continent, "Two continents")
     source_continent<-c(seed_continent, "Two continents")
@@ -34,7 +43,7 @@ if (F){
       scale_y_sqrt()+
       scale_y_sqrt()+
       facet_grid(NB~DA, scale="free")
-      
+    
   }
   
   saveRDS(final.df, "../Data/Tables/N.with.bridge.seed.continent.rda")
@@ -42,6 +51,7 @@ if (F){
 
 
 df<-readRDS("../Data/Tables/N.with.bridge.seed.continent.rda")
+
 table(df$NB)
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
@@ -58,7 +68,7 @@ if (F){
 }
 
 rep.list<-list()
-for (rrrr in c(1:10)){
+for (rrrr in c(1:100)){
   print(rrrr)
   seeds<-seeds.all[rep==rrrr]
   item<-df[label %in% seeds$label]
@@ -108,19 +118,18 @@ item.final[type=="in_source_continent", final.continent:=seed_continent]
 
 ggplot(item.final, 
        aes(x=final.continent, y=N, color=seed_continent))+
-  geom_boxplot()+
-  labs(title=str_c(unique(target.nb), collapse = "|"))
+  geom_boxplot()
 
 if (F){
-summary_dt<-item.final[, .(mean=mean(N), sd=sd(N)),
-                       by=list(seed_continent, type)]
-colnames(summary_dt)<-c("Original continent", "Type", "mean", "sd")
-summary_dt$Value<-sprintf("%.2f±%.2f", summary_dt$mean, summary_dt$sd)
-summary_dt$mean<-NULL
-summary_dt$sd<-NULL
-to.doc(summary_dt, 
-       "Number of species stay in the original continent and dispersal to the other continent", 
-       "../Table.Doc/species.2.other.continent.full.docx")
+  summary_dt<-item.final[, .(mean=mean(N), sd=sd(N)),
+                         by=list(seed_continent, type)]
+  colnames(summary_dt)<-c("Original continent", "Type", "mean", "sd")
+  summary_dt$Value<-sprintf("%.2f±%.2f", summary_dt$mean, summary_dt$sd)
+  summary_dt$mean<-NULL
+  summary_dt$sd<-NULL
+  to.doc(summary_dt, 
+         "Number of species stay in the original continent and dispersal to the other continent", 
+         "../Table.Doc/species.2.other.continent.full.docx")
 }
 
 item1<-rep.df[,c("seed_continent",   "rep", "N.to_target_continent", "NB", "DA")]
@@ -141,13 +150,14 @@ ggplot(item.final,
   labs(title=str_c(unique(item.final$NB), collapse = "|"))+
   geom_boxplot()+facet_grid(NB~DA, scale="free")
 
-
-summary_dt<-item.final[, .(mean=mean(N), sd=sd(N)),
-                       by=list(seed_continent, type, NB.label, DA)]
-colnames(summary_dt)<-c("Original continent", "Type", "Niche Breadth", "Dispersal Ability", "mean", "sd")
-summary_dt$Value<-sprintf("%.2f±%.2f", summary_dt$mean, summary_dt$sd)
-summary_dt$mean<-NULL
-summary_dt$sd<-NULL
-to.doc(summary_dt, 
-       "Number of species stay in the original continent and dispersal to the other continent", 
-       "../Table.Doc/species.2.other.continent.detail.docx")
+if (F){
+  summary_dt<-item.final[, .(mean=mean(N), sd=sd(N)),
+                         by=list(seed_continent, type, NB.label, DA)]
+  colnames(summary_dt)<-c("Original continent", "Type", "Niche Breadth", "Dispersal Ability", "mean", "sd")
+  summary_dt$Value<-sprintf("%.2f±%.2f", summary_dt$mean, summary_dt$sd)
+  summary_dt$mean<-NULL
+  summary_dt$sd<-NULL
+  to.doc(summary_dt, 
+         "Number of species stay in the original continent and dispersal to the other continent", 
+         "../Table.Doc/species.2.other.continent.detail.docx")
+}

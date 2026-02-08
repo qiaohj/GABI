@@ -13,6 +13,7 @@ if (F){
   sp<-readRDS("../Data/Tables/virtual.species.rda")
   table(sp$continent)
   sp$Parent<-sub("-[^-]*$", "", sp$sp_id)
+  sp$year<-as.numeric(sp$year)
   sp[sp_id==Parent, Parent:=""]
   head(sp)
   
@@ -190,6 +191,9 @@ if (F){
   sp_full_continents[south.america==1 & north.america==1]
   
   saveRDS(sp_full_continents, "../Data/Tables/sp_full_continents.rda")
+  
+  #sp[year==1604 & seed_id==12 & NB=="TINY" & DA=="POOR"]
+  sp_full_continents[year==-1604 & seed_id==12 & NB=="TINY" & DA=="POOR"]
 }
 
 if (F){
@@ -364,75 +368,3 @@ if (F){
   
   saveRDS(sp_full_continents, "../Data/Tables/sp_full_continents.NULL.rda")
 }
-
-
-sp_full_continents<-readRDS("../Data/Tables/sp_full_continents.rda")
-xxx<-sp_full_continents[, .(N=.N), by=list(NB, type, year)]
-View(xxx[type=="New.Immigrants"])
-
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.rda")
-rrrr<-1
-delta_Species.all<-list()
-type_N.all<-list()
-for (rrrr in c(1:10)){
-  print(rrrr)
-  seeds<-seeds.all[rep==rrrr]
-  sp_filter<-sp_full_continents[label %in% seeds$label]
-  #xxx<-sp_filter[, .(N=.N), by=list(NB, type, year, origin_continent)]
-  #setorderv(xxx, c("NB", "year"))
-  #View(xxx[type=="New.Immigrants"])
-  
-  y=-500
-  for (y in c(-1605:0)){
-    print(paste(rrrr, y))
-    item<-sp_filter[year==y]
-    
-    delta_Species<-item[, .(south.america=sum(south.america),
-                            north.america=sum(north.america),
-                            year=y, rep=rrrr), 
-                        by=list(NB, seed_continent)]
-    
-    type_N<-item[, .(south.america=sum(south.america),
-                     north.america=sum(north.america),
-                     year=y, rep=rrrr), 
-                 by=list(NB, type, seed_continent)]
-    delta_Species.all[[length(delta_Species.all)+1]]<-delta_Species
-    type_N.all[[length(type_N.all)+1]]<-type_N
-  }
-}
-delta_Species.df<-rbindlist(delta_Species.all)
-type_N.df<-rbindlist(type_N.all)
-saveRDS(delta_Species.df, "../Data/Tables/delta_Species.rda")
-saveRDS(type_N.df, "../Data/Tables/type_N.rda")
-
-
-delta_Species.origin<-list()
-type_N.origin<-list()
-for (rrrr in c(1:10)){
-  print(rrrr)
-  seeds<-seeds.all[rep==rrrr]
-  sp_filter<-sp_full_continents[label %in% seeds$label]
-  
-  y=-500
-  for (y in c(-1800:0)){
-    print(paste(rrrr, y))
-    item<-sp_filter[year==y]
-    
-    delta_Species<-item[, .(south.america=sum(south.america),
-                            north.america=sum(north.america),
-                            year=y, rep=rrrr), 
-                        by=list(NB, origin_continent)]
-    
-    type_N<-item[, .(south.america=sum(south.america),
-                     north.america=sum(north.america),
-                     year=y, rep=rrrr), 
-                 by=list(NB, type, origin_continent)]
-    delta_Species.origin[[length(delta_Species.origin)+1]]<-delta_Species
-    type_N.origin[[length(type_N.origin)+1]]<-type_N
-  }
-}
-delta_Species.origin.df<-rbindlist(delta_Species.origin)
-type_N.origin.df<-rbindlist(type_N.origin)
-saveRDS(delta_Species.origin.df, "../Data/Tables/delta_Species.origin.rda")
-saveRDS(type_N.origin.df, "../Data/Tables/type_N.origin.rda")
-

@@ -8,11 +8,13 @@ library(ape)
 library(phytools)
 #library(ggtree)
 library(phangorn)
+setDTthreads(20)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 sp<-readRDS("../Data/Tables/virtual.species.rda")
 sp_N<-sp[,.(N=.N), by=list(seed_id, nb, da)]
 sp$Parent<-sub("-[^-]*$", "", sp$sp_id)
 labels<-unique(sp$label)
+sp$year<-as.numeric(sp$year)
 #sp_clean<-sp[continent %in% c("North America", "South America")]
 
 #l<-labels[6]
@@ -28,6 +30,7 @@ assign_named_row <- function(dt, row, vals) {
 }
 labels<-labels[sample(length(labels), length(labels))]
 j=1
+
 
 for (j in c(1:length(labels))){
   l<-labels[j]
