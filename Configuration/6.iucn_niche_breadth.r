@@ -8,11 +8,17 @@ setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 label<-"World"
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration_continent.sqlite")
 pr<-data.table(dbReadTable(conn, "pr"))
+tasmax<-data.table(dbReadTable(conn, "tasmax"))
 tasmean<-data.table(dbReadTable(conn, "tasmean"))
+tasmin<-data.table(dbReadTable(conn, "tasmin"))
 dbDisconnect(conn)
 pr$var<-"pr"
 tasmean$var<-"tasmean"
-all_v<-rbindlist(list(pr, tasmean))
+tasmax$var<-"tasmax"
+tasmin$var<-"tasmin"
+
+
+all_v<-rbindlist(list(pr, tasmean, tasmin, tasmax))
 all_v_last<-all_v[year==0]
 shpfname = "../Shape/isea3h8/isea3h8_sf.shp"
 hexagon<-read_sf(shpfname)
@@ -70,11 +76,19 @@ for (i in c(1:length(species))){
                      by=list(var)]
     vlist<-list()
     for (vv in unique(v_items$var)){
+      if (F){
+        hist(v_items[var=="tasmin"]$v)
+      }
       range<-item_df[var==vv]
       range<-c(range$mean - range$sd * 3, range$mean + range$sd * 3)
       v_items_sub<-v_items[var==vv & between(v, range[1], range[2])]
-      nb<-data.table(species=sp, min=min(v_items_sub$v), max=max(v_items_sub$v))
+      nb<-data.table(species=sp, 
+                     min_3sd=min(v_items_sub$v), 
+                     max_3sd=max(v_items_sub$v),
+                     min=min(v_items[var==vv]$v),
+                     max=max(v_items[var==vv ]$v))
       nb$range<-nb$max-nb$min
+      nb$range_3sd<-nb$max_3sd-nb$min_3sd
       nb$var<-vv
       vlist[[length(vlist)+1]]<-nb
     }
@@ -87,34 +101,34 @@ nb_full_df<-rbindlist(nb_full)
 
 saveRDS(nb_full_df, sprintf("../Data/IUCN_NB/Mammals.%s.rda", label))
 
+table(nb_full_df$continent)/4
+
 nb_full_df<-readRDS(sprintf("../Data/IUCN_NB/Mammals.%s.rda", label))
 
+max.temp<-nb_full_df[var=="tasmax"]
+min.temp<-nb_full_df[var=="tasmin"]
+min.temp<-min.temp[, c("species", "min", "continent")]
+max.temp<-max.temp[, c("species", "max", "continent")]
+temp<-merge(max.temp, min.temp, by=c("species", "continent"))
+temp$range<-temp$max-temp$min
+hist(temp[continent=="America" & range>1]$range)
 
-ggplot(nb_full_df)+geom_histogram(aes(x=range))+
-  facet_wrap(~var, scale="free")
 
-ggplot(nb_full_df)+geom_histogram(aes(x=range))+
-  facet_grid(continent~var, scale="free")
+quantile(round(temp[species %in% nb_full_df[continent=="America" & range>0 & var=="pr"]$species]$range, 2), 
+         c(0, 0.2, 0.4, 0.6, 0.8, 1))
 
-quantile(round(nb_full_df[range>1 & var=="tasmean"]$range, 2), 
-         c(0, 0.25, 0.5, 0.75, 0.9, 0.99, 1))
+quantile(round(nb_full_df[continent=="America" & range>0 & var=="pr"]$range, 2), 
+         c(0, 0.2, 0.4, 0.6, 0.8, 1))
 
-quantile(round(nb_full_df[range>1 & var=="pr"]$range, 2), 
-         c(0, 0.25, 0.5, 0.75, 0.9, 0.99, 1))
 
-quantile(round(nb_full_df[continent=="America" & range>1 & var=="tasmean"]$range, 2), 
-         c(0, 0.25, 0.5, 0.75, 0.9, 0.99, 1))
 
-quantile(round(nb_full_df[continent=="America" & range>1 & var=="pr"]$range, 2), 
-         c(0, 0.25, 0.5, 0.75, 0.9, 0.99, 1))
 
-nb_full_df_sub<-nb_full_df[continent=="America"]
-sp1<-nb_full_df_sub[var=="pr" & range>=1129.680]$species
-sp2<-nb_full_df_sub[var=="tasmean" & range>=17.2900]$species
-sp_american_large<-unique(c(sp1, sp2))
-dddd<-data.table(all_v_last)
-range(dddd[var=="pr"]$v)
-range(pr$v)
+nb_full_df_sub<-nb_full_df[continent=="America"& range>0 & var=="pr"]
+nb_full_df_sub<-nb_full_df_sub[, c("species", "continent", "max", "min", "range", "var")]
+nb_full_df_sub2<-temp[species %in% nb_full_df_sub$species]
+nb_full_df_sub2$var<-"tas"
+
+nb_full_df_sub<-rbindlist(list(nb_full_df_sub, nb_full_df_sub2), fill=T)
 saveRDS(nb_full_df_sub, "../Data/Tables/nb_range_mammals_iucn.rda")
 
 

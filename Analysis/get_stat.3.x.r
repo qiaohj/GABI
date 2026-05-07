@@ -8,7 +8,6 @@ target<-"/media/huijieqiao/Butterfly/GABI/Results"
 folders<-list.dirs(target, full.names=T)
 length(folders)
 folders<-folders[2:length(folders)]
-folders<-folders[!grepl("BROAD", folders)]
 length(folders)
 ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
 ns<-data.table(ns)
@@ -22,10 +21,29 @@ if (F){
   first_items <- as.numeric(sapply(fids, "[[", 1))
   folders<-folders[first_items %in% ids]
 }
+if (F){
+  for (i in c(1:length(folders))){
+    f<-folders[i]
+    target<-sprintf("%s/continent_n_cells.rda", f)
+    if (!file.exists(target)){
+      next()
+    }
+    if (file.size(target)<100){
+      print(f)
+      
+      unlink(target)
+      
+    }
+  }
+}
+
 for (i in c(1:length(folders))){
   f<-folders[i]
   files<-list.files(f)
   if (length(files[grepl("too", files)])>0){
+    next()
+  }
+  if (length(files[grepl("unfinished", files)])>0){
     next()
   }
   #print(length(files))
@@ -174,7 +192,7 @@ if (F){
     }
     
     df_div<-df_div[, c("year", "continent", "global_id", "nb", "da", "N_SP")]
-    df_div<-df_div[year %in% seq(0, 1800, by=100)]
+    df_div<-df_div[year %in% seq(0, 1900, by=100)]
     
     if (is.null(div_df)){
       temp_div_df<-df_div

@@ -13,6 +13,12 @@ setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 sp<-readRDS("../Data/Tables/virtual.species.rda")
 sp_N<-sp[,.(N=.N), by=list(seed_id, nb, da)]
 sp$Parent<-sub("-[^-]*$", "", sp$sp_id)
+
+if (F){
+  ff<-gsub("/media/huijieqiao/Butterfly/GABI/Results/", "", folders)
+  
+  ff[!ff %in% labels]
+}
 labels<-unique(sp$label)
 sp$year<-as.numeric(sp$year)
 #sp_clean<-sp[continent %in% c("North America", "South America")]
@@ -129,7 +135,7 @@ for (j in c(1:length(labels))){
     n<-table(species$type)
     assign_named_row(species, 1, n)
   }
-  species$origin_continent<-d[year==-1604]$continent
+  species$origin_continent<-d[year==-1899]$continent
   
   saveRDS(species, target)
 }
@@ -155,7 +161,7 @@ if (F){
   saveRDS(all_N, "../Data/Tables/species.type.N.rda")
   table(all_N$NB)
   all_N_gg<-all_N
-  p<-ggplot(all_N_gg[Speciation<450])+geom_point(aes(x=Extinction, y=Speciation))+
+  p<-ggplot(all_N_gg[Speciation<500])+geom_point(aes(x=Extinction, y=Speciation))+
     facet_grid(origin_continent+NB~continent)+
     scale_x_sqrt()+scale_y_sqrt()
   p

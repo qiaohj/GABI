@@ -61,7 +61,10 @@ for (i in c(1:nrow(all_df))){
   #base<-"/media/huijieqiao/Butterfly/GABI/Results.NULL"
   
   ttt<-sprintf("%s/%s/%s.N.speciation.extinction.rda", base, sp, sp)
-  
+  check<-sprintf("%s/%s/unfinished.txt", base, sp)
+  if (file.exists(check)){
+    next()
+  }
   if (file.exists(ttt)){
     print("skip")
     next()
@@ -102,7 +105,7 @@ for (i in c(1:nrow(all_df))){
     trees<-dbReadTable(mydb, "trees")
     dbDisconnect(mydb)
     if (nrow(trees)==0){
-      text.string<-sprintf("SP%d @ 1604-0:1604;", item$global_id)
+      text.string<-sprintf("SP%d @ 1899-0:1899;", item$global_id)
     }else{
       
       text.string<-trees[1,2]
@@ -132,7 +135,7 @@ for (i in c(1:nrow(all_df))){
   nodes[(type=="leaf")&(to==0), "event"]<-"NONE"
   nodes[(type=="leaf")&(to!=0), "event"]<-"EXTINCTION"
   
-  event_df<-data.table(year=c(0:1604),
+  event_df<-data.table(year=c(0:1899),
                        N_SPECIES=0,
                        N_SPECIATION=0,
                        N_EXTINCTION=0,
@@ -141,8 +144,8 @@ for (i in c(1:nrow(all_df))){
                        N_ALL_SPECIES=0)
   
   
-  event_df[year==1604]$N_SPECIES<-1
-  for (j in c(1603:0)){
+  event_df[year==1899]$N_SPECIES<-1
+  for (j in c(1898:0)){
     #sub_df<-df[(year==j),]
     event_df[year==j]$N_SPECIES<-nrow(nodes[from>=j&to<=j])
     

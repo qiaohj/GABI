@@ -24,15 +24,15 @@ df.detail<-merge(df.v, seeds, by.x="seed_id", by.y="global_id")
 
 #df<-df[between(lat, -35, 45)]
 range(df.detail$lat)
-#burn in 3200/2
-burn_in<-3200/2
+#burn in 3800/2
+burn_in<-3602/2
 unique(df.detail$nb)
 #df.detail<-df.detail[nb %in% c("BIG-BIG", "MODERATE-MODERATE")]
 
 df_N_checked_finished<-df.detail[year==burn_in+1 & N_SPECIES>0, 
                                  .(N=.N), by=list(seed_id)]
 table(df_N_checked_finished$N)
-df.detail<-df.detail[seed_id %in% df_N_checked_finished[N==6]$seed_id]
+df.detail<-df.detail[seed_id %in% df_N_checked_finished[N==8]$seed_id]
 df_N_checked<-df.detail[year==burn_in+1 & N_SPECIES>0, 
                         .(N=.N), by=list(seed_id, nb)]
 

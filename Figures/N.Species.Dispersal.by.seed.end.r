@@ -19,7 +19,7 @@ if (F){
     sp.items<-sp.with.bridge[NB==item$NB & DA==item$DA & seed_id==item$seed_id]
     sp.items<-unique(sp.items)
     
-    seed_continent<-sp.items[year==-1604]$seed_continent
+    seed_continent<-sp.items[year==-1899]$seed_continent
     if (length(seed_continent)>1){
       print(paste(i, nrow(seeds)))
       next()

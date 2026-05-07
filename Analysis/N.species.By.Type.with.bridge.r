@@ -31,8 +31,6 @@ if (F){
   colnames(sp)[c(6,7)]<-c("NB", "DA")
   colnames(species.type)
   
-  burn_in<-(-3200/2)
-  
   sp_full<-merge(sp, species.type, by=c("sp_id", "NB", "DA"))
   
   colnames(sp_full)[5]<-"current_continent"
