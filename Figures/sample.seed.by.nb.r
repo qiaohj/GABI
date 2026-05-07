@@ -36,7 +36,7 @@ df.detail<-merge(df, seeds, by.x="seed_id", by.y="global_id")
 
 #df<-df[between(lat, -35, 45)]
 range(df.detail$lat)
-#burn in 3100/2
+
 burn_in<-3200/2
 unique(df.detail$nb)
 
@@ -46,6 +46,7 @@ df_N_checked<-df.detail[year==burn_in+1 & N_SPECIES>0,
 df_N_checked$label<-sprintf("%d.%s", df_N_checked$seed_id, df_N_checked$nb)
 df.detail$label<-sprintf("%d.%s", df.detail$seed_id, df.detail$nb)
 df_filtered_seeds<-df.detail[label %in% df_N_checked[N==2]$label]
+table(df_N_checked$N)
 df.detail[,.(N=length(unique(seed_id))), by=list(nb)]
 
 df_filtered_seeds[,.(N=length(unique(seed_id))), by=list(nb)]
@@ -70,7 +71,7 @@ df_filtered_N_detals<-df_filtered_seeds[, .(N_SPECIES=sum(N_SPECIES),
                                         by=list(continent, year, nb, da)]
 df_filtered_N_detals[year==burn_in+1, 
                      c("N_SEED", "continent", "nb", "da")]
-df_filtered_N[year==burn_in+1]
+df_filtered_N[year==burn_in]
 
 table(df_N_checked$N)
 
@@ -181,10 +182,10 @@ for (i in c(1:nrow(coms))){
                                      N=min.N)
 }
 bins<-rbindlist(bins)
-
+hist(bins$N)
 all_ramdom_seeds<-list()
 
-for (rep in c(1:100)){
+for (rep in c(1:10)){
   print(rep)
   seed_pool.rand<-list()
   for (i in c(1:nrow(bins))){
@@ -205,9 +206,10 @@ for (rep in c(1:100)){
     seed_pool.rand[,.(N=sum(N_SPECIES)), by=list(nb, continent)]
   }
   seed_pool.rand[, .(N=.N), by=c("continent", "nb", "da")]
-  ramdom_seeds<-seed_pool.rand[,.SD[sample(.N, 100)],
-                               by = c("continent", "nb", "da")]
+  #ramdom_seeds<-seed_pool.rand[,.SD[sample(.N, 100)],
+  #                             by = c("continent", "nb", "da")]
   
+  ramdom_seeds<-seed_pool.rand
   if (F){
     ggplot(ramdom_seeds)+geom_histogram(aes(x=min.dist, fill=continent))+
       facet_grid(nb~continent)
