@@ -21,6 +21,17 @@ mydb <- dbConnect(RSQLite::SQLite(), base_db)
 simulations<-dbReadTable(mydb, "simulations")
 dbDisconnect(mydb)
 simulations<-data.table(simulations)
+if (F){
+  library(sf)
+  
+  map<-read_sf("../Shape/isea3h8/N_S_America.shp")
+  
+  map<-map[which(map$seqnum %in% simulations[which(is_run==1)]$global_id),]
+  ggplot(map)+geom_sf()
+  table(simulations[which(is_run==1)]$is_run)
+  table(simulations[which(is_run==1)]$continent)/8
+  table(simulations[which(random_index<=2103)]$continent)/8
+}
 #simulations<-simulations[continent_id<=100]
 
 i=233
