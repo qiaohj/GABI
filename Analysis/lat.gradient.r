@@ -72,55 +72,6 @@ for (i in c(1:length(folders))){
 
 
 if (F){
-  base_db<-"../Configuration/conf.sqlite"
-  mydb <- dbConnect(RSQLite::SQLite(), base_db)
-  simulations<-dbReadTable(mydb, "simulations")
-  dbDisconnect(mydb)
-  simulations<-data.table(simulations)
-  
-  ll<-readRDS("../Data/Tables/cells.with.dist.rda")
-  local<-data.table(global_id=as.numeric(ll$seqnum), lon=ll$lon, lat=ll$lat)
-  local$lat_bin<-floor((local$lat+2.5)/5)*5
-  
-  yearlist<-list()
-  yearsx<-c(seq(0, 1600, by=100), 1605)
-  yearsx<-as.character(yearsx)
-  for (year in yearsx){
-    yearlist[[year]]<-list()
-  }
-  for (i in c(1:nrow(simulations))){
-    
-    item<-simulations[i]
-    
-    source<-sprintf("../Results/%d.%s.%s/species.richness.rda",
-                    item$global_id, item$nb, item$da)
-    print(paste(i, nrow(simulations), source))
-    
-    if (!file.exists(source)){
-      next()
-    }
-    first<-data.table(year=1605, continent=item$continent, global_id=item$global_id,
-                      N_SP=1, seed_id=item$global_id, nb=item$nb, da=item$da)
-    richness<-readRDS(source)
-    
-    if (nrow(richness)==0){
-      richness<-first
-    }else{
-      richness<-rbindlist(list(first, richness))
-    }
-    richness<-merge(richness, local, by="global_id")
-    
-    years<-split(richness, by="year")
-    for (y in yearsx){
-      yearlist[[y]][[length(yearlist[[y]])+1]]<-years[[y]]
-    }
-  }
-  
-  for (y in yearsx){
-    print(y)
-    year.df<-rbindlist(yearlist[[y]])
-    saveRDS(year.df, sprintf("../Data/Tables/Yearly.Richness/%s.rda", y))
-  }
   
   
 }

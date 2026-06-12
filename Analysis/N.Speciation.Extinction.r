@@ -13,7 +13,7 @@ library(tidyverse)
 
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 #source("commons/functions.r")
-setDTthreads(1)
+setDTthreads(10)
 print(sprintf("Number of core(s) is(are) %d.", getDTthreads()))
 
 base_db<-"../Configuration/conf.sqlite"
@@ -61,18 +61,15 @@ for (i in c(1:nrow(all_df))){
   #base<-"/media/huijieqiao/Butterfly/GABI/Results.NULL"
   
   ttt<-sprintf("%s/%s/%s.N.speciation.extinction.rda", base, sp, sp)
-  check<-sprintf("%s/%s/unfinished.txt", base, sp)
-  if (file.exists(check)){
-    next()
-  }
+  
   if (file.exists(ttt)){
     print("skip")
     next()
     size<-file.size(ttt)
     if (size>100){
       
-      #print(sprintf("rm -rf %s", ttt))
-      #next()
+      print(sprintf("rm -rf %s", ttt))
+      next()
     }
     print("redo")
     #next()

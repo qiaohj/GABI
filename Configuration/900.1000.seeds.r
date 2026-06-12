@@ -18,6 +18,8 @@ dt<-merge(dt, seeds, by="Seed_ID")
 broad<-dt[NB=="BROAD" & DA=="GOOD"]
 table(broad$Continent)
 
+
+
 N<-dt[, .(N=.N), by=list(Seed_ID)]
 N[Seed_ID %in% broad$Seed_ID & N==8]
 

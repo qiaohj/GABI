@@ -4,19 +4,26 @@ library(RSQLite)
 library(DBI)
 library(ggplot2)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
-conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
-simulations<-data.table(dbReadTable(conn, "simulations"))
-simulations$is_run<-ifelse(file.exists(sprintf("/media/huijieqiao/Butterfly/GABI/Results/%s",
-                                               simulations$label)),
-                           0, 1)
+if (F){
+  conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
+  simulations<-data.table(dbReadTable(conn, "simulations"))
+  simulations$is_run<-ifelse(file.exists(sprintf("/media/huijieqiao/Butterfly/GABI/Results/%s",
+                                                 simulations$label)),
+                             0, 1)
+  #simulations[nb!="NARROW", is_run:=0]
+  dbWriteTable(conn, "simulations", simulations, overwrite=T)
+  dbDisconnect(conn)
+}
 if (F){
   #seed_100<-readRDS("../Data/Tables/sp_full_continents.rda")
   length(unique(seed_100$seed_id))
   simulations$is_run<-0
   simulations[global_id %in%unique(seed_100$seed_id) & nb=="TINY", is_run:=1]
+  
 }
-#simulations[nb!="NARROW", is_run:=0]
-dbWriteTable(conn, "simulations", simulations, overwrite=T)
+
+conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
+simulations<-data.table(dbReadTable(conn, "simulations"))
 dbDisconnect(conn)
 
 table(simulations$is_run)
@@ -25,16 +32,20 @@ simulations[, .(N=.N), by=list(nb, is_run)]
 all.df<-simulations
 all.list<-list()
 for (i in c(1:nrow(all.df))){
+  print(paste(i, nrow(all.df)))
   f<-sprintf(sprintf("/media/huijieqiao/Butterfly/GABI/Results/%s",
                      simulations[i]$label))
-  n<-length(list.files(f))
+  continent<-sprintf("%s/continent_n_cells.rda", f)
   
-  if (n<=2){
-    print(i)
-    xx<-data.table(file.info(f))
-    xx$f<-f
-    all.list[[length(all.list)+1]]<-xx
+  if (file.size(continent)<100){
+    log<-fread(sprintf("/media/huijieqiao/Butterfly/GABI/Results/%s/%s.log",
+                       simulations[i]$label, simulations[i]$label))
+    log<-log[V6!=0]
+    if (nrow(log)>0){
+      asdf
+    }
   }
+  
 }
 all.df<-rbindlist(all.list)
 dim(all.df)

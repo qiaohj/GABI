@@ -4,7 +4,9 @@ library(RSQLite)
 library(DBI)
 library(ggplot2)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
+target<-"/media/huijieqiao/Butterfly/GABI/Results_NULL"
 target<-"/media/huijieqiao/Butterfly/GABI/Results"
+
 folders<-list.dirs(target, full.names=T)
 length(folders)
 folders<-folders[2:length(folders)]
@@ -141,6 +143,8 @@ if (F){
   #simulations_sub<-simulations[global_id %in% ids]
   simulations_sub<-simulations
   table(simulations_sub$nb)
+  simulations_sub[, .(N=.N), by=list(nb, da, continent)]
+  
   ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
   ns<-data.table(ns)
   ns$geometry<-NULL
@@ -162,6 +166,7 @@ if (F){
     
     
     if (is.null(df)){
+      
       next()
     }else{
       

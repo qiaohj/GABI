@@ -7,19 +7,15 @@ sf::sf_use_s2(FALSE)
 
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 
-#Skip the following script until the next comment. It is useless now.
 if (F){
-  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
-  if (F){
-    seeds.all<-seeds.all[nb %in% c("MODERATE-MODERATE", "BIG-BIG")]
-    saveRDS(seeds.all, "../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
-  }
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+  
   unique(seeds.all$nb)
   seeds.all$rep<-NULL
   seeds.all$N_SPECIES<-NULL
   seeds.all<-unique(seeds.all)
   xx<-list()
-  for (y in c(1799:0)){
+  for (y in c(1899:0)){
     xx[[as.character(y)]]<-list()
   }
   for (i in c(1:nrow(seeds.all))){
@@ -28,14 +24,14 @@ if (F){
     f<-sprintf("../Results/%s/species.richness.rda", item$label)
     log<-readRDS(f)
     list_of_data_tables <- split(log, by = "year")
-    for (y in c(1799:0)){
+    for (y in c(1899:0)){
       y_item<-list_of_data_tables[[as.character(y)]]
       if (nrow(y_item)>0){
         xx[[as.character(y)]][[length(xx[[as.character(y)]])+1]]<-y_item
       }
     }
   }
-  for (y in c(0:1799)){
+  for (y in c(0:1899)){
     print(y)
     ddd<-rbindlist(xx[[as.character(y)]])
     saveRDS(ddd, sprintf("../Data/Richness/%d.rda", y))

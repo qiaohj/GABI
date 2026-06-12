@@ -13,7 +13,7 @@ if (F){
   seeds<-sp.with.bridge[,.(N=.N), by=list(NB, DA, seed_id)]
   final<-list()
   for (i in c(1:nrow(seeds))){
-    #print(paste(i, nrow(seeds)))
+    print(paste(i, nrow(seeds)))
     item<-seeds[i]
     
     sp.items<-sp.with.bridge[NB==item$NB & DA==item$DA & seed_id==item$seed_id]

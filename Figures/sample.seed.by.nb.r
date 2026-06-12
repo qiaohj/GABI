@@ -83,14 +83,13 @@ N_species<-df_filtered_seeds[year==0 & N_SPECIES>0]
 quantiles<-quantile(N_species$N_SPECIES, c(0, 1, 0.99, 0.98, 0.95, 0.90, 0.999))
 
 N_species$seed_label<-paste(N_species$seed_id, N_species$nb, N_species$da)
-outliers<-unique(N_species[(N_SPECIES>quantiles[3] & continent=="North America") |
-                             (N_SPECIES>quantiles[4] & continent=="South America")])
+outliers<-unique(N_species[(N_SPECIES>quantiles[3])])
 
 range(N_species$N_SPECIES)
 ggplot(outliers)+geom_histogram(aes(x=N_SPECIES), bins=100)+
   facet_grid(nb~continent)
 
-
+table(outliers$continent)
 N_species_filter<-df_filtered_seeds[!seed_id %in% outliers$seed_id]
 df_filtered_N_filter<-N_species_filter[, .(N_SPECIES=sum(N_SPECIES), 
                                            N_SPECIATION=sum(N_SPECIATION),

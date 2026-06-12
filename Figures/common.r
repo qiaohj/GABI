@@ -1,3 +1,6 @@
+x_label<-"Years before present (kyr)"
+crs_america<-"+proj=laea +lat_0=30 +lon_0=-90 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs"
+
 map_crs<-st_crs("+proj=robin +lon_0=-90 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
 map_theme<-theme(
   axis.line = element_blank(),
