@@ -68,7 +68,7 @@ if (F){
 }
 
 rep.list<-list()
-for (rrrr in c(1:10)){
+for (rrrr in c(1:100)){
   print(rrrr)
   seeds<-seeds.all[rep==rrrr]
   item<-df[label %in% seeds$label]

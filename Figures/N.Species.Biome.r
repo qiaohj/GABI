@@ -27,7 +27,7 @@ if (F){
   write_sf(biome.lat, "../Shape/Ecoregions2017/biome.simplify.shp")
   
   
-  hexagon<-readRDS("../Data/cells.with.dist.rda")
+  hexagon<-readRDS("../Data/Tables/cells.with.dist.rda")
   cells<-data.table(global_id=as.numeric(hexagon$seqnum), continent=hexagon$continent,
                     lon=hexagon$lon, lat=hexagon$lat)
   biome<-read_sf("../Shape/Ecoregions2017/biome.simplify.shp")
@@ -46,8 +46,11 @@ if (F){
   )
   
   
-  species.dis<-readRDS("../Data/Tables/Final.Distribution.rda")
-  species.dis.geo<-merge(species.dis, cells.biome, by="global_id")
+  species.dis<-readRDS("../Data/Tables/Final.Distribution.Unique.rda")
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+  species.dis.sub<-species.dis[seed_id %in% unique(seeds.all$seed_id)]
+  
+  species.dis.geo<-merge(species.dis.sub, cells.biome, by="global_id")
   
   species.dis.geo$geometry<-NULL
   
@@ -102,13 +105,8 @@ if (F){
 }
 
 species.dis.geo<-readRDS("../Data/Tables/species.dis.biome.rda")
-#species.dis.geo[continent %in% c("bridge1", "bridge2"), 
-#                continent:="North America"]
-#species.dis.geo[global_id %in% c(9580, 9662,9744,9663,9745,9664), continent:="South America"]
 
-
-#species.dis.geo[global_id %in% sa.bridge2, continent:="South America"]
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.threshold.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
 
 rep.list<-list()
 rep.list.all<-list()

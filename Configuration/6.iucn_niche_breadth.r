@@ -59,12 +59,14 @@ for (i in c(1:length(species))){
     plot(all_v_last[index,]$geometry, add=T)
   }
   v_items<-data.table(all_v_last[index,])
-  continent<-ifelse(nrow(v_items[continent %in% c("North America", "South America ")])>0,
+  continent<-ifelse(nrow(v_items[continent %in% c("North America", "South America")])>0,
                     "America", "None")
+  v_items_america<-v_items[continent %in% c("North America", "South America")]
   
   if (nrow(v_items)>0){
     item_df<-v_items[, .(species=sp,
-                         N_CELLS=length(unique(seqnum)),
+                         N_CELLS=length(unique(v_items_america$seqnum)),
+                         N_CELLS_ALL=length(unique(seqnum)),
                          min=min(v),
                          max=max(v),
                          sd=sd(v),
@@ -83,6 +85,8 @@ for (i in c(1:length(species))){
       range<-c(range$mean - range$sd * 3, range$mean + range$sd * 3)
       v_items_sub<-v_items[var==vv & between(v, range[1], range[2])]
       nb<-data.table(species=sp, 
+                     N_CELLS=item_df$N_CELLS,
+                     N_CELLS_ALL=item_df$N_CELLS_ALL,
                      min_3sd=min(v_items_sub$v), 
                      max_3sd=max(v_items_sub$v),
                      min=min(v_items[var==vv]$v),
@@ -130,5 +134,9 @@ nb_full_df_sub2$var<-"tas"
 
 nb_full_df_sub<-rbindlist(list(nb_full_df_sub, nb_full_df_sub2), fill=T)
 saveRDS(nb_full_df_sub, "../Data/Tables/nb_range_mammals_iucn.rda")
+nb_full_df_sub<-readRDS("../Data/Tables/nb_range_mammals_iucn.rda")
+length(unique(nb_full_df_sub$species))
+
+
 
 

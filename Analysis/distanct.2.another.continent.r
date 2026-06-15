@@ -86,10 +86,17 @@ table(polygon$continent)
 NA.target<-c(33434,33515,33514,33595,33676,33757)
 SA.target<-c(9076, 9157, 9238)
 polygon$min.dist<-0
+
+exist<-readRDS("../Data/Tables/cells.with.dist.rda")
 for (i in c(1:nrow(polygon))){
   print(paste(i, nrow(polygon)))
   item<-polygon[i,]
   if (item$min.dist>0){
+    next()
+  }
+  exist_item<-exist[which(exist$seqnum==item$seqnum),]
+  if (nrow(exist_item)==1){
+    polygon[i, "min.dist"]<-exist_item$min.dist
     next()
   }
   target<-NULL
@@ -109,7 +116,7 @@ for (i in c(1:nrow(polygon))){
   }
   polygon[i, "min.dist"]<-min.dist
 }
-saveRDS(polygon, "../Data/cells.with.dist.rda")
+saveRDS(polygon, "../Data/Tables/cells.with.dist.rda")
 ggplot(polygon)+geom_sf(aes(fill=min.dist))+
   scale_fill_continuous(low="blue", high="red")
 

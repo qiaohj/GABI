@@ -5,6 +5,7 @@ library(DBI)
 library(ggplot2)
 library(ggh4x)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
+#target<-"/media/huijieqiao/Butterfly/GABI/Results"
 target<-"/media/huijieqiao/Butterfly/GABI/Results"
 folders<-list.dirs(target, full.names=T)
 length(folders)
@@ -76,7 +77,7 @@ if (F){
   folders<-list.dirs(target, full.names=T)
   nblist<-list()
   for (i in c(2:length(folders))){
-    print(i)
+    print(paste(i, length(folders)))
     f<-folders[i]
     files<-list.files(f)
 
@@ -99,7 +100,7 @@ if (F){
     nblist[[length(nblist)+1]]<-ddd
   }
   nbdf<-rbindlist(nblist)
-  saveRDS(nbdf, "../Data/Tables/100k.speciation.years/nb.rda")
+  saveRDS(nbdf, "../Data/Tables/nb.rda")
   if (F){
     nbdfxx<-nbdf[year==0 & nb!="HUGE-HUGE"]
     iucn_quantile<-readRDS("../Data/nb_range_mammals_iucn.rda")

@@ -6,7 +6,7 @@ library(sf)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 source("Figures/common.r")
 seeds<-readRDS("../Data/Tables/seeds.rda")
-
+seeds[global_id==9745]
 #conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
 #simulations<-data.table(dbReadTable(conn, "simulations"))
 #dbDisconnect(conn)
@@ -15,7 +15,10 @@ seeds<-readRDS("../Data/Tables/seeds.rda")
 #ggplot(seeds)+geom_sf(data=seed.dist)+geom_point(aes(x=lon, y=lat, color=continent))
 
 seed.dist<-readRDS("../Data/Tables/cells.with.dist.rda")
+seed.dist[which(seed.dist$seqnum==9745),]
 df<-readRDS("../Data/Tables/N.Speciation.Extinction.All.NB.rda")
+df[seed_id==9745]
+
 
 if (F){
   test<-df[year==burn_in+1 & N_SPECIES>0]
@@ -30,9 +33,12 @@ if (F){
   xxx<-readRDS("/media/huijieqiao/Butterfly/GABI/Results/1163.NARROW-NARROW.POOR/1163.NARROW-NARROW.POOR.N.speciation.extinction.rda")
 }
 table(df$nb)
+df[,(N=length(unique(seed_id))), by="continent"]
 nrow(df)
 df$continent<-NULL
 df.detail<-merge(df, seeds, by.x="seed_id", by.y="global_id")
+df.detail[,.(N=length(unique(seed_id))), by=list(continent)]
+df[!seed_id %in% df.detail$seed_id]
 
 #df<-df[between(lat, -35, 45)]
 range(df.detail$lat)
@@ -40,7 +46,7 @@ range(df.detail$lat)
 burn_in<-3200/2
 unique(df.detail$nb)
 
-df_N_checked<-df.detail[year==burn_in+1 & N_SPECIES>0, 
+df_N_checked<-df.detail[year==burn_in & N_SPECIES>0, 
                         .(N=.N), by=list(seed_id, nb)]
 
 df_N_checked$label<-sprintf("%d.%s", df_N_checked$seed_id, df_N_checked$nb)
@@ -79,6 +85,13 @@ table(df_N_checked$N)
 #define outliers
 N_species<-df_filtered_seeds[year==0 & N_SPECIES>0]
 
+df_filtered_seeds[,.(N=length(unique(seed_id))), by="continent"]
+
+
+length(unique(df.detail[! seed_id %in% df_filtered_seeds[continent=="South America"]$seed_id 
+                        & continent=="South America"]$seed_id))
+
+table(seeds$continent)
 
 quantiles<-quantile(N_species$N_SPECIES, c(0, 1, 0.99, 0.98, 0.95, 0.90, 0.999))
 
@@ -166,6 +179,7 @@ ggplot(seed_pool.df)+geom_histogram(aes(x=min.dist), binwidth = 1)+
 
 coms<-unique(n[, c("nb", "da", "min.dist")])
 bins<-list()
+max_seeds<-5
 for (i in c(1:nrow(coms))){
   com<-coms[i]
   item<-n[nb==com$nb & da==com$da & min.dist==com$min.dist]
@@ -174,17 +188,17 @@ for (i in c(1:nrow(coms))){
     print("skip")
     next()
   }
-  min.N<-min(item$N)
+  min.N<-min(item$N, max_seeds)
   bins[[length(bins)+1]]<-data.table(min.dist=com$min.dist,
                                      nb=com$nb,
                                      da=com$da,
                                      N=min.N)
 }
 bins<-rbindlist(bins)
-hist(bins$N)
+table(bins$N)
 all_ramdom_seeds<-list()
-
-for (rep in c(1:10)){
+set.seed(1024)
+for (rep in c(1:100)){
   print(rep)
   seed_pool.rand<-list()
   for (i in c(1:nrow(bins))){

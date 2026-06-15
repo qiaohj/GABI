@@ -15,6 +15,7 @@ local<-data.table(global_id=as.numeric(ll$seqnum), lon=ll$lon, lat=ll$lat)
 local$lat_bin<-floor((local$lat+0.5)/1)*1
 folders<-list.dirs(target, full.names=T)
 folders<-folders[sample(length(folders), length(folders))]
+folders<-folders[2:length(folders)]
 f<-folders[1]
 for (i in c(1:length(folders))){
   f<-folders[i]
@@ -56,7 +57,7 @@ for (i in c(1:length(folders))){
     for (i in c(1:length(folders))){
       f<-folders[i]
       
-      source<-sprintf("%s/lat.N.rda", f)
+      source<-sprintf("%s/lat.N.1degree.rda", f)
       if (file.exists(source)){
         print(paste(f, i, length(folders)))
         item<-readRDS(source)
@@ -76,7 +77,7 @@ if (F){
   
 }
 if (F){
-  yearsx<-c(seq(0, 1600, by=100), 1605)
+  yearsx<-c(seq(0, 1800, by=100), 1900)
   y=0
   all_df<-readRDS("../Data/Tables/Lat.N.1defree.rda")
   all_df$seed_id<-as.numeric(all_df$seed_id)
