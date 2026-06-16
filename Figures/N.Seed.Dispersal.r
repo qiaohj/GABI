@@ -15,7 +15,7 @@ if (F){
     print(paste(i, nrow(seeds)))
     item<-seeds[i]
     sp.items<-sp.with.bridge[NB==item$NB & DA==item$DA & seed_id==item$seed_id]
-    seed_continent<-sp.items[year== -1800]$seed_continent
+    seed_continent<-unique(sp.items[year== -1899]$seed_continent)
     target_continent<-ifelse(seed_continent=="South America", "North America", "South America")
     target_continent<-c(target_continent, "Two continents")
     target_item<-sp.items[current_continent %in% target_continent]

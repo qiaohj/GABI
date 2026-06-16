@@ -19,7 +19,6 @@ seed.dist[which(seed.dist$seqnum==9745),]
 df<-readRDS("../Data/Tables/N.Speciation.Extinction.All.NB.rda")
 df[seed_id==9745]
 
-
 if (F){
   test<-df[year==burn_in+1 & N_SPECIES>0]
   test[, .(N=.N), by=list(nb, da)]

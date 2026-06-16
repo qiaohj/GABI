@@ -43,18 +43,10 @@ if (F){
 
 df<-readRDS("../Data/Tables/N.Speciation.Extinction.Dispersal.rda")
 table(df$NB)
-df<-df[NB %in% c("BIG-BIG", "MODERATE-MODERATE")]
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$type)
 
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
-if (F){
-  seeds.allx<-seeds.all
-  seeds.allx[nb=="BIG-BIG", nb:="NARROW-NARROW"]
-  seeds.allx[nb=="MODERATE-MODERATE", nb:="BROAD-BROAD"]
-  seeds.allx$label<-sprintf("%d.%s.%s", seeds.allx$seed_id, seeds.allx$nb, seeds.allx$da)
-  seeds.all<-rbindlist(list(seeds.allx, seeds.all))
-}
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
 rep.list<-list()
 rep.list.all<-list()
 for (rrrr in c(1:100)){
