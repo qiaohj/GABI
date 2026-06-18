@@ -20,6 +20,27 @@ if (F){
   sp.with.bridge.N[type=="Local.Extinction" & loss.continent==seed_continent, type:="Local Extinction"]
   sp.with.bridge.N[type=="Local.Extinction" & loss.continent!=seed_continent, type:="Non-local Extinction"]
   saveRDS(sp.with.bridge.N, "../Data/Tables/N.Speciation.Extinction.Dispersal.rda")
+  
+  sp.with.bridge.final<-sp.with.bridge[year==0]
+  sp.with.bridge.final<-sp.with.bridge.final[N>0]
+  sp.with.bridge.final.2continents<-sp.with.bridge.final[current_continent=="Two continents"]
+  sp.with.bridge.final.2continents1<-sp.with.bridge.final.2continents
+  sp.with.bridge.final.2continents1$current_continent<-"South America"
+  sp.with.bridge.final.2continents2<-sp.with.bridge.final.2continents
+  sp.with.bridge.final.2continents2$current_continent<-"North America"
+  sp.with.bridge.final<-sp.with.bridge.final[current_continent %in% c("South America", "North America")]
+  sp.with.bridge.final<-rbindlist(list(sp.with.bridge.final, 
+                                       sp.with.bridge.final.2continents1, 
+                                       sp.with.bridge.final.2continents2))
+  sp.with.bridge.final.N<-sp.with.bridge.final[,.(N.SP=length(unique(species.label))),
+                                               by=list(seed_id, NB, DA, seed_continent, current_continent)]
+  
+  sp.with.bridge.final.N$type<-ifelse(sp.with.bridge.final.N$seed_continent==sp.with.bridge.final.N$current_continent,
+                                      "Native", "Immigrant")
+  table(sp.with.bridge.final.N$type)
+  
+  saveRDS(sp.with.bridge.final.N, "../Data/Tables/N.Richness.rda")
+  
 }
 
 if (F){
@@ -42,6 +63,10 @@ if (F){
 }
 
 df<-readRDS("../Data/Tables/N.Speciation.Extinction.Dispersal.rda")
+richness.df<-readRDS("../Data/Tables/N.with.bridge.seed.continent.rda")
+richness.df$label<-sprintf("%d.%s.%s", richness.df$seed_id, richness.df$NB, richness.df$DA)
+
+
 table(df$NB)
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$type)
@@ -49,6 +74,10 @@ table(df$type)
 seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
 rep.list<-list()
 rep.list.all<-list()
+
+rep.richness.list<-list()
+rep.richness.list.all<-list()
+
 for (rrrr in c(1:100)){
   print(rrrr)
   seeds<-seeds.all[rep==rrrr]
@@ -61,9 +90,27 @@ for (rrrr in c(1:100)){
                  by=list(seed_continent, type)]
   item.rep$rep<-rrrr
   rep.list.all[[rrrr]]<-item.rep
+  
+  item<-richness.df[label %in% seeds$label]
+  rep.to_target_continent<-item[, 
+                                .(N.to_target_continent=sum(to_target_continent),
+                                  N.in_source_continent=sum(in_source_continent)), 
+                                by=list(NB, DA, seed_continent)]
+  rep.to_target_continent$rep<-rrrr
+  rep.richness.list[[rrrr]]<-rep.to_target_continent
+  
+  rep.to_target_continent_all<-item[, 
+                                .(N.to_target_continent=sum(to_target_continent),
+                                  N.in_source_continent=sum(in_source_continent)), 
+                                by=list(seed_continent)]
+  rep.to_target_continent_all$rep<-rrrr
+  rep.richness.list.all[[rrrr]]<-rep.to_target_continent_all
 }
 rep.df<-rbindlist(rep.list)
 rep.df.all<-rbindlist(rep.list.all)
+
+rep.richness.df<-rbindlist(rep.richness.list)
+rep.richness.df.all<-rbindlist(rep.richness.list.all)
 
 #rep.df$NB.label<-factor(rep.df$NB, 
 #                        levels=c("BROAD-BROAD", "BIG-BIG", "MODERATE-MODERATE", "NARROW-NARROW"),
@@ -77,9 +124,75 @@ extinction<-rep.df.all[type %in% c("Failed Invader", "Extinction")]
 extinction$continent<-extinction$seed_continent
 extinction$other.continent<-ifelse(extinction$seed_continent=="South America",
                                    "North America", "South America")
-
 extinction[type=="Failed Invader", continent:=other.continent]
 
+extinction.all<-extinction
+extinction.all$event<-"Extinction"
+extinction.all$type<-ifelse(extinction.all$seed_continent==extinction.all$continent, 
+                            "Native", "Immigrant")
+extinction.all$other.continent<-NULL
+
+ggplot(extinction.all)+geom_boxplot(aes(x=continent, y=N, color=type))
+
+speciation<-rep.df.all[type %in% c("Local Speciation", "Non-local Speciation")]
+speciation$continent<-speciation$seed_continent
+speciation$other.continent<-ifelse(speciation$seed_continent=="South America",
+                                   "North America", "South America")
+
+speciation[type=="Non-local Speciation", continent:=other.continent]
+speciation.all<-speciation
+speciation.all$event<-"Speciation"
+speciation.all$type<-ifelse(speciation.all$seed_continent==speciation.all$continent, 
+                            "Native", "Immigrant")
+speciation.all$other.continent<-NULL
+ggplot(speciation.all)+geom_boxplot(aes(x=continent, y=N, color=type))
+
+dispersal<-rep.df.all[type %in% c("Secondary Invader", "Primary Invader")]
+dispersal$continent<-dispersal$seed_continent
+dispersal$other.continent<-ifelse(dispersal$seed_continent=="South America",
+                                  "North America", "South America")
+
+dispersal[type=="Primary Invader", continent:=other.continent]
+
+dispersal.all<-dispersal
+dispersal.all$event<-"Dispersal"
+dispersal.all$type<-ifelse(dispersal.all$seed_continent==dispersal.all$continent, 
+                            "Native", "Immigrant")
+dispersal.all$other.continent<-NULL
+ggplot(dispersal.all)+geom_boxplot(aes(x=continent, y=N, color=type))
+
+item1<-rep.richness.df.all[,c("seed_continent",   "rep", "N.to_target_continent")]
+colnames(item1)[3]<-"N"
+item1$type<-"to_target_continent"
+
+item2<-rep.richness.df.all[,c("seed_continent",   "rep", "N.in_source_continent")]
+colnames(item2)[3]<-"N"
+item2$type<-"in_source_continent"
+
+item.final<-rbindlist(list(item1, item2))
+
+item.final$final.continent<-ifelse(item.final$seed_continent=="North America", "South America", "North America")
+item.final[type=="in_source_continent", final.continent:=seed_continent]
+
+richness<-item.final
+richness$continent<-richness$final.continent
+richness$type<-ifelse(richness$type=="in_source_continent", "Native", "Immigrant")
+ggplot(richness)+geom_boxplot(aes(x=continent, y=N, color=type))
+
+richness.all<-richness[, c("seed_continent", "type", "N", "rep", "continent")]
+richness.all$event<-"Richness"
+all.df<-rbindlist(list(richness.all, dispersal.all, speciation.all, extinction.all))
+table(all.df$type)
+ggplot(all.df)+geom_boxplot(aes(x=continent, y=N, color=type))+
+  facet_wrap(~event, nrow=2, scale="free")
+
+richness<-rep.richness.df
+richness$continent<-richness$current_continent
+ggplot(richness)+geom_boxplot(aes(x=continent, y=N.SP, color=type))+
+  facet_grid(NB~DA, scale="free")
+
+
+###For analysis only
 ggplot(extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
   labs(title="Extinction")
 
@@ -100,12 +213,7 @@ ggplot(extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
 
 
 
-speciation<-rep.df.all[type %in% c("Local Speciation", "Non-local Speciation")]
-speciation$continent<-speciation$seed_continent
-speciation$other.continent<-ifelse(speciation$seed_continent=="South America",
-                                   "North America", "South America")
 
-speciation[type=="Non-local Speciation", continent:=other.continent]
 
 ggplot(speciation)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
   labs(title="Speciation")
@@ -126,12 +234,7 @@ ggplot(speciation)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
   labs(title="Speciation")
 
 
-dispersal<-rep.df.all[type %in% c("Secondary Invader", "Primary Invader")]
-dispersal$continent<-dispersal$seed_continent
-dispersal$other.continent<-ifelse(dispersal$seed_continent=="South America",
-                                   "North America", "South America")
 
-dispersal[type=="Primary Invader", continent:=other.continent]
 
 ggplot(dispersal)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
   labs(title="Dispersal")
