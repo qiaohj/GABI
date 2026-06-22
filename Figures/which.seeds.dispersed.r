@@ -7,19 +7,21 @@ library(ggeffects)
 setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 df<-readRDS("../Data/Tables/N.with.bridge.simulation.rda")
-df<-df[NB %in% c("BIG-BIG", "MODERATE-MODERATE")]
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
-cells<-readRDS("../Data/cells.with.dist.rda")
+cells<-readRDS("../Data/Tables/cells.with.dist.rda")
 cells<-data.table(seed_id=cells$seqnum, min.dist=cells$min.dist)
 
 df<-merge(df, cells, by="seed_id")
 df$to_target_continent_final_factor<-as.factor(df$to_target_continent_final)
 df$NB_factor<-as.factor(df$NB)
 df$DA_factor<-as.factor(df$DA)
-
+df<-df[seed_id!="9745"]
+#model<-glm(to_target_continent_final_factor~seed_continent +min.dist+NB_factor+DA_factor, 
+#           data=df, family = binomial)
 model<-glm(to_target_continent_final_factor~min.dist+NB_factor+DA_factor, 
            data=df, family = binomial)
+
 summary(model)
 
 

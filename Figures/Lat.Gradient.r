@@ -19,10 +19,16 @@ if (F){
   df$label<-sprintf("%d.%s.%s", df$seed_id, df$nb, df$da)
   rep.list<-list()
   rep.list.all<-list()
+  rep.list.full<-list()
   
   for (rrrr in c(1:100)){
     print(rrrr)
     seeds<-seeds.all[rep==rrrr]
+    
+    item<-df[label %in% seeds$label]
+    item<-item[,.(N_SP=sum(N_SP), rep=rrrr), by=list(lat_bin)]
+    rep.list.full[[rrrr]]<-item
+    
     item<-df[label %in% seeds$label]
     item<-item[,.(N_SP=sum(N_SP), rep=rrrr), by=list(seed_continent, continent, lat_bin, nb, da)]
     item$type<-"Native"
@@ -37,7 +43,8 @@ if (F){
   }
   rep.df<-rbindlist(rep.list)
   rep.df.all<-rbindlist(rep.list.all)
-  
+  rep.df.full<-rbindlist(rep.list.full)
+  saveRDS(rep.df.full, "../Data/Tables/N.Sp.Lat.full.rep.rda")
   saveRDS(rep.df, "../Data/Tables/N.Sp.Lat.rep.rda")
   saveRDS(rep.df.all, "../Data/Tables/N.Sp.Lat.all.rep.rda")
 }

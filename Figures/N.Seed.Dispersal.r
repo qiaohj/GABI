@@ -38,12 +38,10 @@ if (F){
 }
 source("Figures/common.r")
 df<-readRDS("../Data/Tables/N.with.bridge.simulation.rda")
-target.nb<-c("BIG-BIG", "MODERATE-MODERATE")
-df<-df[NB %in% target.nb]
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
 
-cell.dist<-readRDS("../Data/cells.with.dist.rda")
+cell.dist<-readRDS("../Data/Tables/cells.with.dist.rda")
 if (F){
   ggplot(cell.dist)+geom_sf()
 }
@@ -58,12 +56,13 @@ p<-ggplot()+
   coord_sf(crs=map_crs)+
   scale_fill_manual(values=c("Y"=color_high, "N"=color_low))+
   labs(fill="Dispersal to the other continent")+
-  facet_grid(NB~DA)+map_theme
+  facet_grid(DA~NB)+map_theme
 
 p
-ggsave(p, filename="../Figures/Seed.Dispersal.Map.pdf", width=10, height=8)
+ggsave(p, filename="../Figures/Seed.Dispersal/Seed.Dispersal.Map.pdf", width=15, height=8)
+ggsave(p, filename="../Figures/Seed.Dispersal/Seed.Dispersal.Map.png", width=15, height=8, bg="white")
 
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distribution.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
 seeds.all[seed_id=="5412"]
 
 rep.list<-list()
@@ -130,8 +129,7 @@ p2<-ggplot(rep.df.all.seed,
           aes(x=seed_continent, y=N.to_target_continent_final, 
               color=seed_continent))+
   labs(color="Original continent", 
-       y="Number of seeds to the other continent",
-       title=str_c(target.nb, collapse = "|"))+
+       y="Number of seeds to the other continent")+
   scale_color_manual(values=custom_colors)+
   #geom_point()+
   geom_boxplot()+
@@ -142,7 +140,7 @@ p2
 
 summary_dt<-rep.df.seed[, .(mean=mean(N.to_target_continent_final),
                sd=sd(N.to_target_continent_final)),
-            by=list(seed_continent, NB.label, DA)]
+            by=list(seed_continent, NB, DA)]
 
 colnames(summary_dt)<-c("Original continent", "Niche Breadth", "Dispersal Ability", "Mean", "SD")
 summary_dt$Value<-sprintf("%.2f±%.2f", summary_dt$Mean, summary_dt$SD)
@@ -150,7 +148,7 @@ summary_dt$Mean<-NULL
 summary_dt$SD<-NULL
 to.doc(summary_dt, 
        "Mean seeds to the other continent", 
-       "../Table.Doc/seed.2.other.continent.docx")
+       "../Figures/Seed.Dispersal/seed.2.other.continent.docx")
 to.doc<-function(summary_dt, title, output_file){
   ft_booktabs <- flextable(summary_dt) %>%
     theme_booktabs() %>%

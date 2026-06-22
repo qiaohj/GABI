@@ -148,6 +148,7 @@ speciation.all$other.continent<-NULL
 ggplot(speciation.all)+geom_boxplot(aes(x=continent, y=N, color=type))
 
 dispersal<-rep.df.all[type %in% c("Secondary Invader", "Primary Invader")]
+#dispersal$type2<-dispersal$type
 dispersal$continent<-dispersal$seed_continent
 dispersal$other.continent<-ifelse(dispersal$seed_continent=="South America",
                                   "North America", "South America")
@@ -156,8 +157,8 @@ dispersal[type=="Primary Invader", continent:=other.continent]
 
 dispersal.all<-dispersal
 dispersal.all$event<-"Dispersal"
-dispersal.all$type<-ifelse(dispersal.all$seed_continent==dispersal.all$continent, 
-                            "Native", "Immigrant")
+#dispersal.all$type<-ifelse(dispersal.all$seed_continent==dispersal.all$continent, 
+#                            "Native", "Immigrant")
 dispersal.all$other.continent<-NULL
 ggplot(dispersal.all)+geom_boxplot(aes(x=continent, y=N, color=type))
 
@@ -186,11 +187,82 @@ table(all.df$type)
 ggplot(all.df)+geom_boxplot(aes(x=continent, y=N, color=type))+
   facet_wrap(~event, nrow=2, scale="free")
 
-richness<-rep.richness.df
-richness$continent<-richness$current_continent
-ggplot(richness)+geom_boxplot(aes(x=continent, y=N.SP, color=type))+
-  facet_grid(NB~DA, scale="free")
+#By NB & DA
 
+extinction<-rep.df[type %in% c("Failed Invader", "Extinction")]
+extinction$continent<-extinction$seed_continent
+extinction$other.continent<-ifelse(extinction$seed_continent=="South America",
+                                   "North America", "South America")
+extinction[type=="Failed Invader", continent:=other.continent]
+
+extinction.all<-extinction
+extinction.all$event<-"Extinction"
+extinction.all$type<-ifelse(extinction.all$seed_continent==extinction.all$continent, 
+                            "Native", "Immigrant")
+extinction.all$other.continent<-NULL
+
+ggplot(extinction.all)+geom_boxplot(aes(x=continent, y=N, color=type))+
+  facet_grid(NB~DA)
+
+speciation<-rep.df[type %in% c("Local Speciation", "Non-local Speciation")]
+speciation$continent<-speciation$seed_continent
+speciation$other.continent<-ifelse(speciation$seed_continent=="South America",
+                                   "North America", "South America")
+
+speciation[type=="Non-local Speciation", continent:=other.continent]
+speciation.all<-speciation
+speciation.all$event<-"Speciation"
+speciation.all$type<-ifelse(speciation.all$seed_continent==speciation.all$continent, 
+                            "Native", "Immigrant")
+speciation.all$other.continent<-NULL
+ggplot(speciation.all)+geom_boxplot(aes(x=continent, y=N, color=type))+
+  facet_grid(NB~DA)
+
+dispersal<-rep.df[type %in% c("Secondary Invader", "Primary Invader")]
+#dispersal$type2<-dispersal$type
+dispersal$continent<-dispersal$seed_continent
+dispersal$other.continent<-ifelse(dispersal$seed_continent=="South America",
+                                  "North America", "South America")
+
+dispersal[type=="Primary Invader", continent:=other.continent]
+
+dispersal.all<-dispersal
+dispersal.all$event<-"Dispersal"
+#dispersal.all$type<-ifelse(dispersal.all$seed_continent==dispersal.all$continent, 
+#                            "Native", "Immigrant")
+dispersal.all$other.continent<-NULL
+ggplot(dispersal.all)+geom_boxplot(aes(x=continent, y=N, color=type))+
+  facet_grid(NB~DA)
+
+item1<-rep.richness.df[,c("seed_continent",   "rep", "N.to_target_continent", "NB", "DA")]
+colnames(item1)[3]<-"N"
+item1$type<-"to_target_continent"
+
+item2<-rep.richness.df[,c("seed_continent",   "rep", "N.in_source_continent", "NB", "DA")]
+colnames(item2)[3]<-"N"
+item2$type<-"in_source_continent"
+
+item.final<-rbindlist(list(item1, item2))
+
+item.final$final.continent<-ifelse(item.final$seed_continent=="North America", "South America", "North America")
+item.final[type=="in_source_continent", final.continent:=seed_continent]
+
+richness<-item.final
+richness$continent<-richness$final.continent
+richness$type<-ifelse(richness$type=="in_source_continent", "Native", "Immigrant")
+ggplot(richness)+geom_boxplot(aes(x=continent, y=N, color=type))+
+  facet_grid(NB~DA)
+
+richness.all<-richness[, c("seed_continent", "type", "N", "rep", "continent", "NB", "DA")]
+richness.all$event<-"Richness"
+all.df<-rbindlist(list(richness.all, dispersal.all, speciation.all, extinction.all), use.names=T)
+table(all.df$type)
+p<-ggplot(all.df)+geom_boxplot(aes(x=continent, y=N, color=type))+
+  facet_grid(NB+DA~event, scale="free")+
+  theme(legend.position = "bottom")
+
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Dispersal.png",
+       width=6, height=10)
 
 ###For analysis only
 ggplot(extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
