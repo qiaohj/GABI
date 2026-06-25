@@ -6,10 +6,10 @@ library(ggplot2)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
 distances<-data.table(dbReadTable(conn, "distances"))
+distances[i==9580 | j==9580]
+distances[i==9580]
 mask<-data.table(dbReadTable(conn, "mask"))
 dbDisconnect(conn)
-
-
 distances<-distances[dist==1]
 build_adjacency_list <- function(dt) {
   adj_list <- list()
@@ -18,9 +18,12 @@ build_adjacency_list <- function(dt) {
     adj_list[[as.character(node)]] <- integer(0)
   }
   for (k in 1:nrow(dt)) {
+    
     i_node <- as.character(dt$i[k])
     j_node <- as.character(dt$j[k])
     adj_list[[i_node]] <- c(adj_list[[i_node]], dt$j[k])
+    adj_list[[j_node]] <- c(adj_list[[j_node]], dt$i[k])
+    
   }
   for (node in names(adj_list)) {
     adj_list[[node]] <- unique(adj_list[[node]])
@@ -28,7 +31,7 @@ build_adjacency_list <- function(dt) {
   return(adj_list)
 }
 adj_list <- build_adjacency_list(distances)
-
+adj_list$`9580`
 shortest_distance_bfs <- function(start_node, end_node, adj_list) {
   if (start_node == end_node) {
     return(0)
@@ -88,16 +91,20 @@ SA.target<-c(9076, 9157, 9238)
 polygon$min.dist<-0
 
 exist<-readRDS("../Data/Tables/cells.with.dist.rda")
+polygon[which(polygon$seqnum %in% c(9580, 9662,9744,9663,9745,9664)),]
 for (i in c(1:nrow(polygon))){
   print(paste(i, nrow(polygon)))
   item<-polygon[i,]
   if (item$min.dist>0){
     next()
   }
+ 
   exist_item<-exist[which(exist$seqnum==item$seqnum),]
   if (nrow(exist_item)==1){
-    polygon[i, "min.dist"]<-exist_item$min.dist
-    next()
+    if (exist_item$min.dist!=-1){
+      polygon[i, "min.dist"]<-exist_item$min.dist
+      next()
+    }
   }
   target<-NULL
   if (item$continent=="North America"){

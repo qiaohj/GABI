@@ -175,6 +175,7 @@ if (F){
         
       }
     }
+    
     all_df[[i]]<-df
     
     rm(list=c("target", "df"))
@@ -241,6 +242,7 @@ if (F){
       div_df<-div_df[, .(N_SP=sum(N_SP)), by=list(year, continent, global_id)]
       
     }
+    
     
     
   }

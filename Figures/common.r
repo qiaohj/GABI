@@ -1,3 +1,7 @@
+library(flextable)
+library(officer)
+library(ggsci)
+
 x_label<-"Years before present (kyr)"
 crs_america<-"+proj=laea +lat_0=30 +lon_0=-90 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs"
 
@@ -24,10 +28,54 @@ guide_legend_top<-guides(fill = guide_legend(
   nrow = 1,
   byrow = TRUE
 ))
-color_low<-"#2166AC"
-color_high<-"#B2182B"
+color_low<-"#3C5488"
+color_high<-"#E64B35"
+color_mid2<-"#00A087"
 color_mid<-"#F7F7F7"
 
 color_1<-"#A8DE1C"
 color_2<-"#FFC300"
 
+to.doc<-function(summary_dt, title, output_file, digits = 3, in_place = F){
+  summary_dt<-format_sigfigs_dt(summary_dt, digits=digits, in_place=in_place)
+    
+  ft_booktabs <- flextable(summary_dt) %>%
+    theme_booktabs() %>%
+    autofit() %>%
+    set_caption(caption = title)
+  
+  doc <- read_docx()
+  
+  
+  doc <- doc %>%
+    body_add_flextable(value = ft_booktabs)
+  
+  print(doc, target = output_file)
+  
+  cat(paste("Saved the document to", output_file, "\n"))
+}
+
+format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {
+  
+  if (!is.data.table(dt)) stop("Must input a data.table")
+  
+  if (!in_place) {
+    dt <- copy(dt)
+  }
+  
+  num_cols <- names(dt)[vapply(dt, is.numeric, FUN.VALUE = logical(1))]
+  
+  if (length(num_cols) > 0) {
+    #dt[, (num_cols) := lapply(.SD, signif, digits = digits), .SDcols = num_cols]
+    dt[, (num_cols) := lapply(.SD, function(x) sprintf(paste0("%.", digits, "f"), x)), .SDcols = num_cols]
+    
+  }
+  
+  return(dt)
+}
+
+if (F){
+  df$NB_factor<-factor(df$NB, 
+                       levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                       labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+}

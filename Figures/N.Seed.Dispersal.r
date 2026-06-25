@@ -1,12 +1,11 @@
 library(data.table)
-library(flextable)
-library(officer)
 library(ggplot2)
 library(sf)
+library(stringr)
 setDTthreads(30)
 
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
-
+source("Figures/common.r")
 if (F){
   sp.with.bridge<-readRDS("../Data/Tables/sp_full_continents.rda")
   seeds<-sp.with.bridge[,.(N=.N), by=list(NB, DA, seed_id)]
@@ -38,6 +37,10 @@ if (F){
 }
 source("Figures/common.r")
 df<-readRDS("../Data/Tables/N.with.bridge.simulation.rda")
+seeds<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+
+
+
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
 
@@ -45,22 +48,51 @@ cell.dist<-readRDS("../Data/Tables/cells.with.dist.rda")
 if (F){
   ggplot(cell.dist)+geom_sf()
 }
+
+unique.seeds<-unique(seeds[, c("continent", "seed_id")])
+unique.seeds<-merge(cell.dist, unique.seeds, by.x="seqnum",
+                    by.y="seed_id")
+
+
 df_map<-merge(cell.dist, df, by.x="seqnum",
               by.y="seed_id")
+
 df_map$to_target_continent_final_label<-ifelse(df_map$to_target_continent_final,
-                                               "Y", "N")
+                                               "Yes", "No")
+df_map$to_target_continent_final_label<-factor(df_map$to_target_continent_final_label, 
+                                               levels = c("Yes", "No"), 
+                                               labels = c("Yes", "No"))
+
+
+df_map$NB<- factor(df_map$NB, 
+                   levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                   labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+df_map[is.na(df_map$DA),]
+
 p<-ggplot()+
-  geom_sf(data=cell.dist, fill=NA, color="lightgrey")+
+  geom_sf(data=cell.dist, fill=NA, color="lightgrey", alpha=0.3)+
+  geom_sf(data=unique.seeds, 
+          aes(fill = "Extinct during burn-in"),
+           alpha=1, color=NA)+
   geom_sf(data=df_map, 
-          aes(fill=to_target_continent_final_label), alpha=0.5, color=NA)+
-  coord_sf(crs=map_crs)+
-  scale_fill_manual(values=c("Y"=color_high, "N"=color_low))+
+          aes(fill=to_target_continent_final_label), alpha=1, color=NA)+
+  scale_fill_manual(values = c("Yes" = color_high, 
+             "No" = color_low, 
+             "Extinct during burn-in" = color_mid2))+
   labs(fill="Dispersal to the other continent")+
-  facet_grid(DA~NB)+map_theme
+  scale_x_continuous(guide = guide_axis(check.overlap = TRUE)) +
+  facet_grid(DA~NB)+
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    #panel.grid = element_blank(),
+    #axis.text = element_blank(),  
+    axis.title = element_blank()
+  )
 
 p
-ggsave(p, filename="../Figures/Seed.Dispersal/Seed.Dispersal.Map.pdf", width=15, height=8)
-ggsave(p, filename="../Figures/Seed.Dispersal/Seed.Dispersal.Map.png", width=15, height=8, bg="white")
+ggsave(p, filename="../Figures/Seed.Dispersal/Seed.Dispersal.Map.pdf", width=10, height=5)
+ggsave(p, filename="../Figures/Seed.Dispersal/Seed.Dispersal.Map.png", width=10, height=5, bg="white")
 
 seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
 seeds.all[seed_id=="5412"]
@@ -91,77 +123,74 @@ for (rrrr in c(1:100)){
   rep.all.list[[rrrr]]<-rep
 }
 rep.df.seed<-rbindlist(rep.list)
-#rep.df.seed$NB.label<-factor(rep.df.seed$NB, 
-#                        levels=c("BIG-BIG", "MODERATE-MODERATE"),
-#                        labels=c("BROAD", "NARROW"))
 
 rep.df.all.seed<-rbindlist(rep.all.list)
-#rep.df.all.seed$NB.label<-factor(rep.df.all.seed$NB, 
-#                             levels=c("BIG-BIG", "MODERATE-MODERATE"),
-#                             labels=c("BROAD", "NARROW"))
-
+rep.df.seed<-rbindlist(list(rep.df.seed,
+                            data.table(expand.grid(NB="NARROW", DA=c("GOOD", "POOR"),
+                                                   seed_continent =c("North America", "South America"),
+                                                   N.to_target_continent_final=0,
+                                                   N.to_target_continent=0,
+                                                   rep=c(1:100))),
+                            data.table(expand.grid(NB="MODERATE", DA=c("POOR"),
+                                                   seed_continent =c("North America", "South America"),
+                                                   N.to_target_continent_final=0,
+                                                   N.to_target_continent=0,
+                                                   rep=c(1:100))),
+                            data.table(expand.grid(NB="BIG", DA=c("POOR"),
+                                                   seed_continent =c("North America"),
+                                                   N.to_target_continent_final=0,
+                                                   N.to_target_continent=0,
+                                                   rep=c(1:100)))))
 saveRDS(rep.df.seed, "../Data/Tables/N.Seed.Dispersal.rep.rda")
 saveRDS(rep.df.all.seed, "../Data/Tables/N.Seed.Dispersal.all.rep.rda")
 rep.df.seed$label<-sprintf("%s.%s", rep.df.seed$NB, rep.df.seed$DA)
+rep.df.seed
 custom_colors <- c(
-  "North America" = "#B2182B",
-  "South America" = "#2166AC"
+  "N to S" = color_high,
+  "S to N" = color_low
 )
 
+rep.df.seed$type<-ifelse(rep.df.seed$seed_continent=="North America", "N to S", "S to N")
+rep.df.seed$NB<-factor(rep.df.seed$NB, 
+                     levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                     labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+
 p1<-ggplot(rep.df.seed, 
-       aes(x=label, y=N.to_target_continent_final, color=seed_continent))+
-  labs(color="Original continent", y="Number of seeds to the other continent",
-       title=str_c(unique(rep.df.seed$NB), collapse = "|"))+
-  scale_color_manual(values=custom_colors)+
+       aes(x=type, y=N.to_target_continent_final))+
+  labs(y="Number of seeds to the other continent")+
+  #scale_color_manual(values=custom_colors)+
   #geom_point()+
   geom_boxplot()+
+  facet_grid(DA~NB, scale="free")+
   theme_bw()+
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_text(
-          angle = 45,
-          hjust = 1,
-          vjust = 1
-        ))
+  theme(axis.title.x = element_blank())
 p1
+ggsave(p1, filename="../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.pdf", width=10, height=5)
+ggsave(p1, filename="../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.png", width=10, height=5, bg="white")
 
+fwrite(rep.df.seed, "../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.csv")
+rep.df.all.seed$type<-ifelse(rep.df.all.seed$seed_continent=="North America", "N to S", "S to N")
 
 p2<-ggplot(rep.df.all.seed, 
-          aes(x=seed_continent, y=N.to_target_continent_final, 
-              color=seed_continent))+
-  labs(color="Original continent", 
-       y="Number of seeds to the other continent")+
-  scale_color_manual(values=custom_colors)+
-  #geom_point()+
+          aes(x=type, y=N.to_target_continent_final))+
+  labs(y="Number of seeds to the other continent")+
   geom_boxplot()+
   theme_bw()+
   theme(axis.title.x = element_blank())
 p2
+ggsave(p2, filename="../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.all.pdf", width=5, height=4)
+ggsave(p2, filename="../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.all.png", width=5, height=4, bg="white")
 
-
+p2+p1
 summary_dt<-rep.df.seed[, .(mean=mean(N.to_target_continent_final),
                sd=sd(N.to_target_continent_final)),
-            by=list(seed_continent, NB, DA)]
+            by=list(type, NB, DA)]
 
-colnames(summary_dt)<-c("Original continent", "Niche Breadth", "Dispersal Ability", "Mean", "SD")
+colnames(summary_dt)<-c("Type", "Niche Breadth", "Dispersal Ability", "Mean", "SD")
 summary_dt$Value<-sprintf("%.2f±%.2f", summary_dt$Mean, summary_dt$SD)
 summary_dt$Mean<-NULL
 summary_dt$SD<-NULL
+setorderv(summary_dt, c("Niche Breadth", "Dispersal Ability", "Type"))
 to.doc(summary_dt, 
        "Mean seeds to the other continent", 
        "../Figures/Seed.Dispersal/seed.2.other.continent.docx")
-to.doc<-function(summary_dt, title, output_file){
-  ft_booktabs <- flextable(summary_dt) %>%
-    theme_booktabs() %>%
-    autofit() %>%
-    set_caption(caption = title)
-  
-  doc <- read_docx()
-  
-  
-  doc <- doc %>%
-    body_add_flextable(value = ft_booktabs)
-  
-  print(doc, target = output_file)
-  
-  cat(paste("Saved the document to", output_file, "\n"))
-}

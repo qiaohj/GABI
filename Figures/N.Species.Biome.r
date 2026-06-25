@@ -9,9 +9,8 @@ library(scales)
 
 sf_use_s2(FALSE)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
-if (F){
-  
-}
+source("Figures/common.r")
+
 if (F){
   biome<-read_sf("../Shape/Ecoregions2017/Ecoregions2017.shp")
   biome_meter <- st_transform(biome, crs = 3035)
@@ -292,6 +291,7 @@ pp
 ggsave(pp, filename="../Figures/Figure.Biome/Invader.by.biome.png", width=15, height=12,
        bg="white")
 
+sf_data<-biome.per
 sf_data$plot_fill <- ifelse(
   sf_data$continent %in% c("bridge1", "bridge2"), 
   "Bridge (100% Invader)", 
@@ -354,81 +354,120 @@ dt_aborigine[, `:=`(start_angle = Invader_per * 2 * pi, end_angle = 2 * pi, pie_
 dt_pie <- rbindlist(list(dt_invader, dt_aborigine))
 
 biome_names <- unique(sf_data$BIOME_NAME)
-color_palette <- setNames(viridis(length(biome_names), option = "turbo"), biome_names)
-color_palette["Native (Aborigines)"] <- "#E0E0E0"          
-color_palette["Bridge (100% Invader)"] <- "grey50"         
 
-pp2<-ggplot() +
-  geom_sf(data = sf_data, aes(fill = plot_fill), 
-          color = "white", linewidth = 0.2, alpha = 0.4) +
-  
-  geom_segment(data = dt_pies_base[placement != "INSIDE"],
-               aes(x = X, y = Y, xend = pie_X, yend = pie_Y),
-               color = "grey40", linewidth = 0.4, linetype = "dotted") +
-  
-  geom_arc_bar(data = dt_pie,
-               aes(x0 = pie_X, y0 = pie_Y, r0 = 0, r = radius, 
-                   start = start_angle, end = end_angle, fill = pie_category),
-               color = "white", linewidth = 0.3) +
-  
-  geom_text(data = dt_pies_base,
-            aes(x = pie_X, y = pie_Y, label = percent(Invader_per, accuracy = 0.1)),
-            size = 3, fontface = "bold", color = "black") +
-  
-  geom_text(data = dt_pies_base,
-            aes(x = pie_X, y = pie_Y + radius, label = label_invader),
-            size = 2.5, vjust = -0.5, color = "black", fontface = "italic") +
-  
-  geom_text(data = dt_pies_base,
-            aes(x = pie_X, y = pie_Y - radius, label = label_aborigines),
-            size = 2.5, vjust = 1.5, color = "grey30", fontface = "italic") +
-  
-  scale_fill_manual(values = color_palette) +
-  theme_minimal() +
-  labs(
-    title = "Proportion of Invaders across Biomes",
-    #subtitle = "Pie area proportional to Total Population",
-    fill = "Biome / Status"
-  ) +
-  theme(
-    panel.grid = element_blank(),
-    axis.text = element_blank(),  
-    axis.title = element_blank()
-  )       
-
-ggsave(pp2, filename="../Figures/Figure.Biome/N.nvader.by.biome.pie2.pdf", width=15, height=10)
-ggsave(pp2, filename="../Figures/Figure.Biome/N.nvader.by.biome.pie2.png", width=15, height=10, bg="white")
-
-ppp<-ggplot() +
-  geom_sf(data = sf_data, aes(fill = plot_fill), 
-          color = "white", linewidth = 0.2, alpha = 0.4) +
-  geom_segment(data = dt_pies_base[placement != "INSIDE"],
-               aes(x = X, y = Y, xend = pie_X, yend = pie_Y),
-               color = "grey40", linewidth = 0.4, linetype = "dotted") +
-  geom_arc_bar(data = dt_pie,
-               aes(x0 = pie_X, y0 = pie_Y, r0 = 0, r = radius, 
-                   start = start_angle, end = end_angle, 
-                   fill = pie_category),
-               color = "white", linewidth = 0.3) +
-  geom_text(data = dt_pies_base,
-            aes(x = pie_X, y = pie_Y, label = percent(Invader_per, accuracy = 0.1)),
-            size = 3, fontface = "bold", color = "black") +
-  scale_fill_manual(values = color_palette) +
-  theme_minimal() +
-  labs(
-    title = "Proportion of Invaders across Biomes",
-    #subtitle = "Pie area proportional to Total Population",
-    fill = "Biome / Status"
-  ) +
-  theme(
-    panel.grid = element_blank(),
-    axis.text = element_blank(),  
-    axis.title = element_blank()
+for (op in c("magma", "inferno", "plasma", "viridis", "cividis", "rocket", "mako", "turbo",
+             "user.defined", "user.defined.blind.friendly")){
+  if (op %in% c("user.defined", "user.defined.blind.friendly")){
+    if (op=="user.defined"){
+      sunny_days_colors <- c(
+        "#FB3618", "#F88022", "#FDD616", "#FBB91B", 
+        "#ACD055", "#709D0D", "#078A48", "#05E1A8", 
+        "#68D3C8", "#025174", "#587C8F", "#F84B8E", 
+        "#F6B1D5", "#F8A8A1"
+      )
+    }
+    if (op=="user.defined.blind.friendly"){
+      sunny_days_colors<-c(
+        "#D55E00", "#E69F00", "#F0E442", "#DDCC77", 
+        "#CC6677", "#CC79A7", "#882255", "#56B4E9", 
+        "#88CCEE", "#009E73", "#44AA99", "#0072B2", 
+        "#332288", "#AA4499"
+      )
+    }
+    color_palette <- setNames(sunny_days_colors, biome_names)
+    
+  }else{
+    color_palette <- setNames(viridis(length(biome_names), option = op), biome_names)
+  }
+  color_palette["Native (Aborigines)"] <- "#E0E0E0"          
+  color_palette["Bridge (100% Invader)"] <- "grey50"         
+  legend_breaks <- setdiff(
+    names(color_palette), 
+    c("Native (Aborigines)", "Bridge (100% Invader)")
   )
+  
+  pp2<-ggplot() +
+    geom_sf(data = sf_data, aes(fill = plot_fill), 
+            color = "white", linewidth = 0.2, alpha = 0.4) +
+    
+    geom_segment(data = dt_pies_base[placement != "INSIDE"],
+                 aes(x = X, y = Y, xend = pie_X, yend = pie_Y),
+                 color = "grey40", linewidth = 0.4, linetype = "dotted") +
+    
+    geom_arc_bar(data = dt_pie,
+                 aes(x0 = pie_X, y0 = pie_Y, r0 = 0, r = radius, 
+                     start = start_angle, end = end_angle, fill = pie_category),
+                 color = "white", linewidth = 0.3) +
+    
+    geom_text(data = dt_pies_base,
+              aes(x = pie_X, y = pie_Y, label = percent(Invader_per, accuracy = 0.1)),
+              size = 3, fontface = "bold", color = "black") +
+    
+    geom_text(data = dt_pies_base,
+              aes(x = pie_X, y = pie_Y + radius, label = label_invader),
+              size = 2.5, vjust = -0.5, color = "black", fontface = "italic") +
+    
+    geom_text(data = dt_pies_base,
+              aes(x = pie_X, y = pie_Y - radius, label = label_aborigines),
+              size = 2.5, vjust = 1.5, color = "grey30", fontface = "italic") +
+    
+    scale_fill_manual(values = color_palette, breaks = legend_breaks) +
+    theme_minimal() +
+    labs(
+      title = "Proportion of Invaders across Biomes",
+      #subtitle = "Pie area proportional to Total Population",
+      fill = "Biome / Status"
+    ) +
+    theme(
+      panel.grid = element_blank(),
+      axis.text = element_blank(),  
+      axis.title = element_blank()
+    )       
+  #pp2
+  #ggsave(pp2, filename="../Figures/Figure.Biome/N.nvader.by.biome.pie2.pdf", width=15, height=10)
+  #ggsave(pp2, filename="../Figures/Figure.Biome/N.nvader.by.biome.pie2.png", width=15, height=10, bg="white")
+  
+  ppp<-ggplot() +
+    geom_sf(data = sf_data, aes(fill = plot_fill), 
+            color = "white", linewidth = 0.2, alpha = 0.7) +
+    geom_segment(data = dt_pies_base[placement != "INSIDE"],
+                 aes(x = X, y = Y, xend = pie_X, yend = pie_Y),
+                 color = "grey40", linewidth = 0.4, linetype = "dotted") +
+    geom_arc_bar(data = dt_pie,
+                 aes(x0 = pie_X, y0 = pie_Y, r0 = 0, r = radius, 
+                     start = start_angle, end = end_angle, 
+                     fill = pie_category),
+                 color = "white", linewidth = 0.3) +
+    geom_text(data = dt_pies_base,
+              aes(x = pie_X, y = pie_Y, label = percent(Invader_per, accuracy = 0.1)),
+              size = 3, fontface = "bold", color = "black") +
+    scale_fill_manual(values = color_palette, breaks = legend_breaks) +
+    theme_minimal() +
+    labs(
+      title = "Proportion of Invaders across Biomes",
+      #subtitle = "Pie area proportional to Total Population",
+      fill = "Biome"
+    ) +
+    theme(
+      panel.grid = element_blank(),
+      axis.text = element_blank(),  
+      axis.title = element_blank()
+    )
+  #ppp
+  ggsave(ppp, filename=sprintf("../Figures/Figure.Biome/Biome.theme/N.nvader.by.biome.pie.%s.pdf", op), width=12, height=7)
+  ggsave(ppp, filename=sprintf("../Figures/Figure.Biome/Biome.theme/N.nvader.by.biome.pie.%s.png", op), width=12, height=7, bg="white")
+}
 
-ggsave(ppp, filename="../Figures/Figure.Biome/N.nvader.by.biome.pie.pdf", width=12, height=7)
-ggsave(ppp, filename="../Figures/Figure.Biome/N.nvader.by.biome.pie.png", width=12, height=7, bg="white")
 
+dt<-data.table(sf_data[, c("BIOME_NAME","continent",
+                           "N.Aborigines","sd.N.Aborigines",
+                           "N.Invader","sd.N.Invader",
+                           "Invader_per","sd.Invader_per")])
+dt$geometry<-NULL
+dt<-dt[continent %in% c("North America", "South America")]
+to.doc(dt, "Number of invaders per biome", 
+       "../Figures/Figure.Biome/N.nvader.by.biome.pie.docx",
+       digits=2, in_place=F)
 #-------OLD CODE--------------
 Aborigines<-rep.df[type=="Aborigines"]
 colnames(Aborigines)[6]<-"N.Aborigines"
