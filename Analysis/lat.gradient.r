@@ -21,8 +21,9 @@ local2.N<-local2[,.(N=.N), by=list(lat_bin)]
 local.N<-local[,.(N=.N), by=list(lat_bin)]
 
 folders<-list.dirs(target, full.names=T)
-folders<-folders[sample(length(folders), length(folders))]
 folders<-folders[2:length(folders)]
+folders<-folders[sample(length(folders), length(folders))]
+
 f<-folders[1]
 for (i in c(1:length(folders))){
   f<-folders[i]
@@ -75,7 +76,7 @@ for (i in c(1:length(folders))){
     for (i in c(1:length(folders))){
       f<-folders[i]
       
-      source<-sprintf("%s/lat.N.1degree.rda", f)
+      source<-sprintf("%s/lat.N.1degree.without.bridges.rda", f)
       if (file.exists(source)){
         print(paste(f, i, length(folders)))
         item<-readRDS(source)
@@ -84,7 +85,7 @@ for (i in c(1:length(folders))){
     }
     all_df<-rbindlist(all)
     
-    saveRDS(all_df, "../Data/Tables/Lat.N.1defree.rda")
+    saveRDS(all_df, "../Data/Tables/Lat.N.1defree.without.bridges.rda")
   }
   
 }
@@ -97,7 +98,7 @@ if (F){
 if (F){
   yearsx<-c(seq(0, 1800, by=100), 1900)
   y=0
-  all_df<-readRDS("../Data/Tables/Lat.N.1defree.rda")
+  all_df<-readRDS("../Data/Tables/Lat.N.1defree.without.bridges.rda")
   all_df$seed_id<-as.numeric(all_df$seed_id)
   all_df$label<-sprintf("%d.%s.%s", all_df$seed_id, all_df$nb, all_df$da)
   ll<-readRDS("../Data/Tables/cells.with.dist.rda")

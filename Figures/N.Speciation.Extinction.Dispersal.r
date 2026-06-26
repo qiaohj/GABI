@@ -50,6 +50,34 @@ if (F){
   
   saveRDS(sp.with.bridge.final.N, "../Data/Tables/N.Richness.rda")
   
+  
+  sp.with.bridge[DA=="GOOD" & NB=="MODERATE" & seed_id=="11871"]
+  table(sp.with.bridge$type)
+  Extinction<-sp.with.bridge[type %in% c("Extinction", "Local.Extinction")]
+  Extinction.N<-Extinction[, .(N=.N), by=list(year, seed_id, NB, DA, seed_continent, current_continent, previous_continent,
+                                              type, gain.continent, loss.continent)]
+  
+  saveRDS(Extinction.N, "../Data/Tables/N.Extinction.rda")
+  
+  
+  Speciation<-sp.with.bridge[type %in% c("Speciation")]
+  Speciation.N<-Speciation[, .(N=.N), by=list(year, seed_id, NB, DA, seed_continent, current_continent, previous_continent,
+                                              type, gain.continent, loss.continent)]
+  if (F){
+    Speciation.N1<-Speciation.N[current_continent=="Two continents"]
+    Speciation.SA<-Speciation.N1
+    Speciation.SA$current_continent<-"South America"
+    Speciation.SA$gain.continent<-"South America"
+    Speciation.NA<-Speciation.N1
+    Speciation.NA$current_continent<-"North America"
+    Speciation.NA$gain.continent<-"North America"
+    
+    Speciation.N2<-Speciation.N[current_continent!="Two continents"]
+    Speciation.N<-rbindlist(list(Speciation.NA, Speciation.SA, Speciation.N2))
+    Speciation.N<-Speciation.N[, .(N=sum(N)), by=list(year, seed_id, NB, DA, seed_continent, current_continent, previous_continent,
+                                                      type, gain.continent, loss.continent)]
+  }
+  saveRDS(Speciation.N, "../Data/Tables/N.Speciation.rda")
 }
 
 if (F){

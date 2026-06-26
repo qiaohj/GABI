@@ -1,12 +1,16 @@
 library(data.table)
 library(ggplot2)
 library(sf)
+library(ggh4x)
+library(dplyr)
 setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
+source("Figures/common.r")
 if (F){
-  df<-readRDS("../Data/Tables/Lat.N.1defree.rda")
+  df<-readRDS("../Data/Tables/Lat.N.1defree.without.bridges.rda")
   df<-df[year==0]
   df$seed_id<-as.numeric(df$seed_id)
+  dim(df)
   table(df$lat_bin)
   
   seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
@@ -62,18 +66,23 @@ p1 <- ggplot(lat.all.N, aes(y = lat_bin, x = N_SP, color = type, fill = type)) +
               alpha = 0.3,
               color = NA) +
   
-   geom_line(orientation = "y", linewidth = 1) +
+  geom_line(orientation = "y", linewidth = 1) +
   
-   facet_wrap(~ continent, ncol = 2, scale="free_y") +
+  facet_wrap(~ continent, ncol = 2, scale="free_y") +
+  facetted_pos_scales(
+    y = list(
+      continent == "South America" ~ scale_y_reverse()
+    )
+  ) +
+  scale_color_manual(values=c("Native"=color_low, "Immigrant"=color_high))+
+  scale_fill_manual(values=c("Native"=color_low, "Immigrant"=color_high))+
   
   labs(
-    x = "Number of Species (N_SP)",
+    x = "Number of Species",
     y = "Latitude",
     color = "Species Type",
     fill  = "Species Type"
   ) +
-  
-
   theme_minimal() +
   theme(
     legend.position = "bottom",
@@ -81,7 +90,10 @@ p1 <- ggplot(lat.all.N, aes(y = lat_bin, x = N_SP, color = type, fill = type)) +
     panel.spacing = unit(1, "lines")
   )
 p1
-
+ggsave(p1, filename="../Figures/Lat.Gradient/Lat.Gradient.pdf", width=6, height=6)
+ggsave(p1, filename="../Figures/Lat.Gradient/Lat.Gradient.png", width=6, height=6, bg="white")
+setorderv(lat.all.N, c("seed_continent", "continent", "lat_bin"))
+to.doc(lat.all.N, "Latitudinal gradient", "../Figures/Lat.Gradient/Lat.Gradient.docx", digits=2)
 lat.all.N<-rep.df[,.(N_SP=mean(N_SP), sd=sd(N_SP)), 
                       by=list(seed_continent, continent, lat_bin, type, nb, da)]
 
