@@ -264,7 +264,7 @@ N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.
                           Invader_per=mean(Invader_per), sd.Invader_per=sd(Invader_per)),
                       by=list(BIOME_NAME, continent)]
 N.merge.mean[,c("BIOME_NAME", "Invader_per", "sd.Invader_per")]
-#N.merge.mean<-N.merge.mean[N.Invader>10]
+
 p<-ggplot(N.merge.mean[continent %in% c("North America", "South America")])+
   geom_point(aes(x=BIOME_NAME, y=Invader_per))+
   geom_errorbar(aes(x=BIOME_NAME, 

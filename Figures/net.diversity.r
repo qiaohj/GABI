@@ -3,6 +3,7 @@ library(ggplot2)
 library(sf)
 setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
+source("Figures/common.r")
 if (F){
   sp.with.bridge<-readRDS("../Data/Tables/sp_full_continents.rda")
   sp.with.bridge[sp_id=="10050" & NB=="BIG" & DA=="GOOD"]
@@ -128,28 +129,22 @@ if (F){
 year_window_size<-50
 rep.df<-readRDS(sprintf("../Data/Tables/N.net.diversity.rep.window.size.%d.rda", year_window_size))
 rep.df.all<-readRDS(sprintf("../Data/Tables/N.net.diversity.all.window.size.%d.rep.rda", year_window_size))
+#rep.df.all.prev<-rep.df.all
+#rep.df.all.prev$year_window<-rep.df.all.prev$year_window+year_window_size
+#colnames(rep.df.all.prev)[4]<-"Prev_N_SP"
+#rep.df.all<-merge(rep.df.all, rep.df.all.prev, by=c("year_window", "seed_continent", "type", "rep"))
+#rep.df.all$net_div_rate1<-(rep.df.all$N_SP-rep.df.all$Prev_N_SP)/rep.df.all$Prev_N_SP
 
 setorder(rep.df.all, seed_continent, type, rep, year_window)
 rep.df.all[, net_div_rate := (N_SP-shift(N_SP)) / shift(N_SP), by = .(seed_continent, type, rep)]
+#rep.df.all[net_div_rate!=net_div_rate1]
+
 rep.df.all$continent<-rep.df.all$seed_continent
 rep.df.all$other_continent<-ifelse(rep.df.all$continent=="North America", "South America", "North America")
 rep.df.all[type=="Immigrant", continent:=other_continent]
 rep.df.all$seed_continent<-factor(rep.df.all$seed_continent, levels=c("North America", "South America"),
                                   labels=c("North American Origin", "South American Origin"))
-p1<-ggplot(rep.df.all[between(year_window, -1000, -50)])+
-  geom_smooth(aes(x=year_window, y=net_div_rate, color=type), 
-              method = "loess", span = 0.3, se = T, linewidth = 1) + 
-  #geom_point(aes(x=year_window, y=net_div_rate, color=type)) + 
-  scale_color_manual(values = c("Native" = color_low, "Immigrant" = color_high)) +
-  labs(x = "Year", y = "Net Diversification Rate", 
-       color = "Species Type") +
-  theme_classic() +
-  theme(
-    legend.position = "bottom",
-    axis.title = element_text(face = "bold")
-  )+facet_wrap(~seed_continent, nrow=2)
-
-p2<-ggplot(rep.df.all[between(year_window, -1000, -50)])+
+p1<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
   geom_smooth(aes(x=year_window, y=net_div_rate, color=type), 
               method = "loess", span = 0.3, se = T, linewidth = 1) + 
   geom_point(aes(x=year_window, y=net_div_rate, color=type)) + 
@@ -160,9 +155,22 @@ p2<-ggplot(rep.df.all[between(year_window, -1000, -50)])+
   theme(
     legend.position = "bottom",
     axis.title = element_text(face = "bold")
+  )+facet_wrap(~seed_continent, nrow=2)
+p1
+p2<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
+  geom_smooth(aes(x=year_window, y=net_div_rate, color=type), 
+              method = "loess", span = 0.1, se = T, linewidth = 1) + 
+  #geom_point(aes(x=year_window, y=net_div_rate, color=type)) + 
+  scale_color_manual(values = c("Native" = color_low, "Immigrant" = color_high)) +
+  labs(x = "Year", y = "Net Diversification Rate", 
+       color = "Species Type") +
+  theme_classic() +
+  theme(
+    legend.position = "bottom",
+    axis.title = element_text(face = "bold")
   )+facet_wrap(~continent, nrow=2)
-
-p3<-ggplot(rep.df.all[between(year_window, -1000, -50)])+
+p2
+p3<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
   geom_smooth(aes(x=year_window, y=N_SP, color=type), 
               method = "loess", span = 0.3, se = T, linewidth = 1) + 
   geom_point(aes(x=year_window, y=N_SP, color=type)) + 

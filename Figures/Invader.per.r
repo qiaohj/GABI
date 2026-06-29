@@ -23,7 +23,7 @@ if (F){
   head(species.dis.seed.continent)
   species.dis.seed.continent$type<-
     ifelse(species.dis.seed.continent$continent==species.dis.seed.continent$seed_continent, 
-                           "Aborigines", "Invader")
+           "Aborigines", "Invader")
   rep.list<-list()
   rep.list.all<-list()
   for (rrrr in c(1:100)){
@@ -73,10 +73,65 @@ N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.
 N.merge.mean[,c("global_id", "Invader_per", "sd.Invader_per")]
 
 cells<-read_sf("../Shape/isea3h8/N_S_America.shp")
-cells.invader.pre<-merge(cells, N.merge.mean, by.x="seqnum", by.y="global_id", all.x=T)
+cells.invader.pre<-merge(cells, N.merge.mean, by.x="seqnum", by.y="global_id")
 cells.invader.pre[which(is.na(cells.invader.pre$Invader_per)),]
-#N.merge.mean<-N.merge.mean[N.Invader>10]
-p<-ggplot(cells.invader.pre)+
+
+write_sf(cells.invader.pre, "../Figures/Invader.Per/Invader.Per.shp")
+p<-ggplot()+
   geom_sf(data=cells, fill=NA, color="lightgrey")+
-  geom_sf(aes(fill=Invader_per))
+  geom_sf(data=cells.invader.pre, aes(fill=Invader_per), color=NA)+
+  scale_fill_gradient2(high=color_high, mid=color_mid2, low=color_low, midpoint = 0.5)+
+  theme_bw()+
+  labs(fill="Immigrant persentage")+
+  theme(legend.position = "bottom")
 p
+ggsave(p, filename="../Figures/Invader.Per/Invader.Per.pdf", width=6, height=6)
+ggsave(p, filename="../Figures/Invader.Per/Invader.Per.png", width=6, height=6, bg="white")
+
+rep.df<-readRDS("../Data/Tables/biome.N.species.by.nb.cell.rda")
+
+
+Aborigines<-rep.df[type=="Aborigines"]
+colnames(Aborigines)[6]<-"N.Aborigines"
+Aborigines$type<-NULL
+Invader<-rep.df[type=="Invader"]
+colnames(Invader)[6]<-"N.Invader"
+Invader$type<-NULL
+N.merge<-merge(Aborigines, Invader, 
+               by=c("global_id", "rep", "continent", "nb", "da"), all=T)
+
+N.merge[is.na(N.Aborigines), N.Aborigines:=0]
+
+N.merge[is.na(N.Invader), N.Invader:=0]
+
+N.merge$Invader_per<-N.merge$N.Invader/(N.merge$N.Invader+N.merge$N.Aborigines)
+
+
+N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.Aborigines),
+                          N.Invader=mean(N.Invader), sd.N.Invader=sd(N.Invader),
+                          Invader_per=mean(Invader_per), sd.Invader_per=sd(Invader_per)),
+                      by=list(global_id, continent, nb, da)]
+
+cells<-read_sf("../Shape/isea3h8/N_S_America.shp")
+cells.invader.pre<-merge(cells, N.merge.mean, by.x="seqnum", by.y="global_id")
+cells.invader.pre[which(is.na(cells.invader.pre$Invader_per)),]
+
+write_sf(cells.invader.pre, "../Figures/Invader.Per/Invader.Per.nb.da.shp")
+
+cells.invader.pre$nb<-factor(cells.invader.pre$nb, 
+                     levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                     labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+unique(cells.invader.pre$nb)
+cells.invader.pre[is.na(cells.invader.pre$nb),]
+p<-ggplot()+
+  geom_sf(data=cells, fill=NA, color="lightgrey")+
+  geom_sf(data=cells.invader.pre, aes(fill=Invader_per), color=NA)+
+  scale_fill_gradient2(high=color_high, mid=color_mid2, low=color_low, midpoint = 0.5)+
+  scale_x_continuous(guide = guide_axis(check.overlap = TRUE)) +
+  theme_bw()+
+  facet_grid(da~nb)+
+  labs(fill="Immigrant persentage")+
+  theme(legend.position = "bottom")
+p
+ggsave(p, filename="../Figures/Invader.Per/Invader.Per.NB.DA.pdf", width=15, height=6)
+ggsave(p, filename="../Figures/Invader.Per/Invader.Per.NB.DA.png", width=15, height=6, bg="white")
