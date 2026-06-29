@@ -42,12 +42,7 @@ if (F){
 for (i in c(1:length(folders))){
   f<-folders[i]
   files<-list.files(f)
-  if (length(files[grepl("too", files)])>0){
-    next()
-  }
-  if (length(files[grepl("unfinished", files)])>0){
-    next()
-  }
+  
   #print(length(files))
   if (length(files)>=4){
     print(paste(f, i, length(folders)))
@@ -149,6 +144,7 @@ if (F){
   ns<-data.table(ns)
   ns$geometry<-NULL
   all_df<-list()
+  all_df_merge_isthmus<-list()
   div_df<-NULL
   div_df_nb<-NULL
   div_df_da<-NULL
@@ -172,11 +168,15 @@ if (F){
       
       if (nrow(df)>0){
         df$label<-item$label
-        
+        df_merge_isthmus<-df
+        df_merge_isthmus[continent=="bridge1", continent:="North America"]
+        df_merge_isthmus<-df_merge_isthmus[,.(N=sum(N)), by=list(year, continent, sp_id, seed_id, nb, da, label)]
       }
     }
     
     all_df[[i]]<-df
+    all_df_merge_isthmus[[i]]<-df_merge_isthmus
+    
     
     rm(list=c("target", "df"))
     target_div<-sprintf("/media/huijieqiao/Butterfly/GABI/Results/%s/species.richness.rda", 
@@ -247,8 +247,9 @@ if (F){
     
   }
   all_dfx<-rbindlist(all_df)
-  
+  all_df_merge_isthmusx<-rbindlist(all_df_merge_isthmus)
   saveRDS(all_dfx, "../Data/Tables/virtual.species.rda")
+  saveRDS(all_df_merge_isthmusx, "../Data/Tables/virtual.species.merge.isthmus.rda")
   saveRDS(div_df, "../Data/Tables/virtual.species.richness.all.rda")
   saveRDS(div_df_nb, "../Data/Tables/virtual.species.richness.nb.rda")
   saveRDS(div_df_da, "../Data/Tables/virtual.species.richness.da.rda")

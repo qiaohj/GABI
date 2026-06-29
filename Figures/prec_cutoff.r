@@ -34,7 +34,11 @@ if (F){
   cutoff_sim<-simulations.dt[which(simulations.dt$pr_low<0),]
   
   simulated.seeds<-cutoff_sim[which(cutoff_sim$seqnum %in% seeds$seed_id),]
-  
+  dim(simulated.seeds)
+  simulated.seeds.t<-as.data.table(simulated.seeds)
+  x<-simulated.seeds.t[,.(N=length(unique(seqnum))),
+                  by=list(NB, continent)]
+  sum(x$N)
   p<-ggplot()+
     geom_sf(data=cell.dist, fill=NA, color="lightgrey", alpha=0.3)+
     geom_sf(data=cutoff_sim, aes(fill=abs(pr_low)), color=NA)+

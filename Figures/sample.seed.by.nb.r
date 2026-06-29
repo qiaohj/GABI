@@ -19,18 +19,6 @@ seed.dist[which(seed.dist$seqnum==9745),]
 df<-readRDS("../Data/Tables/N.Speciation.Extinction.All.NB.rda")
 df[seed_id==9745]
 
-if (F){
-  test<-df[year==burn_in+1 & N_SPECIES>0]
-  test[, .(N=.N), by=list(nb, da)]
-  
-  MODERATE<-test[nb=="MODERATE-MODERATE"]
-  NARROW<-test[nb=="NARROW-NARROW"]
-  
-  NARROW[!seed_id %in% MODERATE$seed_id]
-  df[seed_id==1163 & nb=="NARROW-NARROW" & da=="POOR"]
-  
-  xxx<-readRDS("/media/huijieqiao/Butterfly/GABI/Results/1163.NARROW-NARROW.POOR/1163.NARROW-NARROW.POOR.N.speciation.extinction.rda")
-}
 table(df$nb)
 df[,(N=length(unique(seed_id))), by="continent"]
 nrow(df)
@@ -52,10 +40,21 @@ df_N_checked$label<-sprintf("%d.%s", df_N_checked$seed_id, df_N_checked$nb)
 df.detail$label<-sprintf("%d.%s", df.detail$seed_id, df.detail$nb)
 df_filtered_seeds<-df.detail[label %in% df_N_checked[N==2]$label]
 table(df_N_checked$N)
+
 df.detail[,.(N=length(unique(seed_id))), by=list(nb)]
 
-df_filtered_seeds[,.(N=length(unique(seed_id))), by=list(nb)]
+df.detail$label2<-sprintf("%d.%s.%s", df.detail$seed_id, df.detail$nb, df.detail$da)
+no.boot.seeds.id<-no.boot.seeds[!seed_id %in% df_N_checked[N==2]$seed_id]
+no.boot.seeds.id[,.(N=length(unique(seed_id))), by=list(continent)]
+no.boot.seeds.id<-unique(no.boot.seeds.id$seed_id)
+no.boot.seeds.id<-no.boot.seeds.id[sample(length(no.boot.seeds.id), 37)]
+df.detail_xx<-df.detail[seed_id %in% no.boot.seeds.id | continent=="South America"]
+failed<-df.detail_xx[year==burn_in & N_SPECIES==0]
 
+df_filtered_seeds[,.(N=length(unique(seed_id))), by=list(continent)]
+
+
+saveRDS(df_filtered_seeds, "../Data/Tables/bootstrapping.seeds.rda")
 
 df_filtered_N<-df_filtered_seeds[, .(N_SPECIES=sum(N_SPECIES), 
                                      N_SPECIATION=sum(N_SPECIATION),
@@ -83,7 +82,7 @@ table(df_N_checked$N)
 
 #define outliers
 N_species<-df_filtered_seeds[year==0 & N_SPECIES>0]
-
+N_species.all<-df_filtered_seeds[year==0]
 df_filtered_seeds[,.(N=length(unique(seed_id))), by="continent"]
 
 
@@ -93,10 +92,42 @@ length(unique(df.detail[! seed_id %in% df_filtered_seeds[continent=="South Ameri
 table(seeds$continent)
 
 quantiles<-quantile(N_species$N_SPECIES, c(0, 1, 0.99, 0.98, 0.95, 0.90, 0.999))
+names(quantiles)<-NULL
+p<-ggplot(N_species.all)+
+  geom_histogram(aes(x=N_SPECIES), binwidth=1)+
+  geom_vline(aes(xintercept=quantiles[3]), linetype=2)+
+  scale_x_sqrt(breaks=c(100, 1000, ceiling(quantiles[3]), 2500, 5000, 7500, 10000))+
+  scale_y_sqrt()+
+  theme_minimal() +
+  labs(
+    x = "Number of species",
+    y = "Number of simulations"
+  ) +
+  theme(
+    panel.grid = element_blank()
+  )       
+p
+ggsave(p, filename="../Figures/Outliers/Outlier.distribution.pdf", width=6, height=3)
+ggsave(p, filename="../Figures/Outliers/Outlier.distribution.png", width=6, height=3, bg="white")
 
 N_species$seed_label<-paste(N_species$seed_id, N_species$nb, N_species$da)
 outliers<-unique(N_species[(N_SPECIES>quantiles[3])])
+dt.outliers<-outliers[,.(N=.N), by=list(nb, da, continent)]
+dt.outliers$nb<-factor(dt.outliers$nb, 
+                     levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                     labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+setorderv(dt.outliers, c("nb", "da", "continent"))
 
+dt.outliers<-outliers[,.(N=.N), by=list(nb, da)]
+dt.outliers$nb<-factor(dt.outliers$nb, 
+                       levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                       labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+setorderv(dt.outliers, c("nb", "da"))
+
+dt.outliers
+
+to.doc(dt.outliers, "Number of outliers per combination", "../Figures/Outliers/outliers.docx",
+       digits = 0)
 range(N_species$N_SPECIES)
 ggplot(outliers)+geom_histogram(aes(x=N_SPECIES), bins=100)+
   facet_grid(nb~continent)
@@ -200,6 +231,7 @@ set.seed(1024)
 for (rep in c(1:100)){
   print(rep)
   seed_pool.rand<-list()
+  bin<-bins[N==5][94]
   for (i in c(1:nrow(bins))){
     bin<-bins[i]
     
@@ -252,8 +284,10 @@ saveRDS(all_ramdom_seeds_df, "../Data/Tables/random.seeds.threshold.by.nb.distan
 
 
 all_ramdom_seeds_df<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
-
+NN<-all_ramdom_seeds_df[,.(N_seed=length(unique(seed_id))), by=list(rep)]
+NN[,.(N=mean(N_seed), sd=sd(N_seed))]
 N.seed<-all_ramdom_seeds_df[, .(N=.N/2), by=list(seed_id)]
+
 N.seed<-merge(seed.dist, N.seed, by.x="seqnum", by.y="seed_id")
 ggplot()+geom_sf(data=seed.dist, fill=NA, color="lightgrey")+
   geom_sf(data=N.seed, aes(fill=N))

@@ -35,10 +35,16 @@ if (F){
   final.df<-rbindlist(final)
   saveRDS(final.df, "../Data/Tables/N.with.bridge.simulation.rda")
 }
+
 source("Figures/common.r")
 df<-readRDS("../Data/Tables/N.with.bridge.simulation.rda")
+df.label<-df
+df.label$label<-sprintf("%d.%s.%s", df.label$seed_id, df.label$NB, df.label$DA)
 seeds<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
 
+seeds.unique<-unique(seeds[, c("continent", "seed_id", "nb", "da", "label")])
+extinct.burn.in<-seeds.unique[!(label %in% df.label$label)]
+extinct.burn.in[,.(N=.N), by=list(nb, da, continent)]
 
 
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
@@ -50,6 +56,7 @@ if (F){
 }
 
 unique.seeds<-unique(seeds[, c("continent", "seed_id")])
+table(unique.seeds$continent)
 unique.seeds<-merge(cell.dist, unique.seeds, by.x="seqnum",
                     by.y="seed_id")
 
@@ -91,6 +98,7 @@ p<-ggplot()+
   )
 
 p
+
 ggsave(p, filename="../Figures/Seed.Dispersal/Seed.Dispersal.Map.pdf", width=10, height=5)
 ggsave(p, filename="../Figures/Seed.Dispersal/Seed.Dispersal.Map.png", width=10, height=5, bg="white")
 

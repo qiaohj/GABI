@@ -40,6 +40,7 @@ all_v_last<-merge(all_v_last, centroids, by="seqnum", all=T)
 #all_v_last<-all_v_last[which(!all_v_last$seqnum %in% c(8920, 8921, 9002)),]
 sf_use_s2(FALSE)
 nb_full<-list()
+
 for (i in c(1:length(species))){
   print(paste(i, length(species)))
   sp<-species[i]
@@ -62,7 +63,8 @@ for (i in c(1:length(species))){
   continent<-ifelse(nrow(v_items[continent %in% c("North America", "South America")])>0,
                     "America", "None")
   v_items_america<-v_items[continent %in% c("North America", "South America")]
-  
+  is_na<-nrow(v_items[continent %in% c("North America")])>0
+  is_sa<-nrow(v_items[continent %in% c("South America")])>0
   if (nrow(v_items)>0){
     item_df<-v_items[, .(species=sp,
                          N_CELLS=length(unique(v_items_america$seqnum)),
@@ -74,7 +76,9 @@ for (i in c(1:length(species))){
                          q1=quantile(v, 0.25),
                          q3=quantile(v, 0.75),
                          q01=quantile(v, 0.01),
-                         q99=quantile(v, 0.99)),
+                         q99=quantile(v, 0.99),
+                         is_na=is_na,
+                         is_sa=is_sa),
                      by=list(var)]
     vlist<-list()
     for (vv in unique(v_items$var)){
@@ -90,7 +94,9 @@ for (i in c(1:length(species))){
                      min_3sd=min(v_items_sub$v), 
                      max_3sd=max(v_items_sub$v),
                      min=min(v_items[var==vv]$v),
-                     max=max(v_items[var==vv ]$v))
+                     max=max(v_items[var==vv ]$v),
+                     is_na=is_na,
+                     is_sa=is_sa)
       nb$range<-nb$max-nb$min
       nb$range_3sd<-nb$max_3sd-nb$min_3sd
       nb$var<-vv
@@ -106,6 +112,10 @@ nb_full_df<-rbindlist(nb_full)
 saveRDS(nb_full_df, sprintf("../Data/IUCN_NB/Mammals.%s.rda", label))
 
 table(nb_full_df$continent)/4
+length(unique(nb_full_df[is_na==T & is_sa ==F & range>0]$species))
+length(unique(nb_full_df[is_sa==T & is_na ==F & range>0]$species))
+length(unique(nb_full_df[is_sa==T & is_na ==T & range>0]$species))
+
 
 nb_full_df<-readRDS(sprintf("../Data/IUCN_NB/Mammals.%s.rda", label))
 

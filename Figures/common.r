@@ -28,13 +28,15 @@ guide_legend_top<-guides(fill = guide_legend(
   nrow = 1,
   byrow = TRUE
 ))
-color_low<-"#3C5488"
-color_high<-"#E64B35"
-color_mid2<-"#00A087"
+
+
+color_high<-"#CC79A7"
+color_low<-"#44AA99"
+color_mid2<-"#88CCEE"
 color_mid<-"#F7F7F7"
 
-color_1<-"#A8DE1C"
-color_2<-"#FFC300"
+color_1<-"#332288"
+color_2<-"#DDCC77"
 
 to.doc<-function(summary_dt, title, output_file, digits = 3, in_place = F){
   summary_dt<-format_sigfigs_dt(summary_dt, digits=digits, in_place=in_place)

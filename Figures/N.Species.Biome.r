@@ -281,9 +281,9 @@ pp<-ggplot(data = biome.per)+
     xlim = c(bbox["xmin"] - margin_dist * 3, bbox["xmax"] + margin_dist * 3), 
     clip = "off"
   )+
-  scale_fill_gradient2(low="#2166AC",
-                       mid="#F7F7F7",
-                       high="#B2182B",
+  scale_fill_gradient2(low=color_low,
+                       mid=color_mid,
+                       high=color_high,
                        midpoint =0.5,
                        limits=c(0, 1))+
   theme_void()
