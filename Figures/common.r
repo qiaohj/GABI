@@ -34,7 +34,10 @@ color_high<-"#CC79A7"
 color_low<-"#44AA99"
 color_mid2<-"#88CCEE"
 color_mid<-"#F7F7F7"
-
+color_na<-color_high
+color_sa<-color_low
+color_native<-color_high
+color_immigrant<-color_low
 color_1<-"#332288"
 color_2<-"#DDCC77"
 

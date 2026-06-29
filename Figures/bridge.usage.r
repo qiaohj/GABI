@@ -1,0 +1,174 @@
+library(data.table)
+library(ggplot2)
+library(sf)
+library(stringr)
+setDTthreads(30)
+
+setwd("/media/huijieqiao/Butterfly/GABI/GABI")
+source("Figures/common.r")
+if (F){
+  sp<-readRDS("../Data/Tables/sp_full_continents.rda")
+  N<-sp[,.(N_SP=length(unique(species.label))), 
+        by=list(seed_id, seed_continent, current_continent, NB, DA)]
+  N$label<-sprintf("%d.%s.%s", N$seed_id, N$NB, N$DA)
+  
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+  rep.list<-list()
+  
+  for (rrrr in c(1:100)){
+    print(rrrr)
+    seeds<-seeds.all[rep==rrrr]
+    item<-N[label %in% seeds$label]
+    item$rep<-rrrr
+    rep.list[[rrrr]]<-item
+  }
+  rep.df<-rbindlist(rep.list)
+  saveRDS(rep.df, "../Data/Tables/bridge.usage.rda")
+  
+  sp.ids<-unique(sp$species.label)
+  sp.id<-sp.ids[1]
+  list_of_sp <- split(sp, by = "species.label")
+  length(list_of_sp)
+  final.list<-list()
+  for (i in c(1:length(list_of_sp))){
+    
+    print(paste(i, length(list_of_sp)))
+    item<-list_of_sp[[i]]
+    item<-item[current_continent %in% c("North America", "South America", "bridge1", "bridge2")]
+    coutinents<-unique(item$current_continent)
+    if (length(coutinents)>=2){
+      item.info<-item[1]
+      if (length(coutinents)==2){
+        dt.item<-data.table(seed_id=item.info$seed_id,
+                            sp_id=item.info$sp_id,
+                            NB=item.info$NB,
+                            DA=item.info$DA,
+                            species.label=item.info$species.label,
+                            seed_continent=item.info$seed_continent,
+                            bridge_continent=coutinents[coutinents %in% c("bridge1", "bridge2")],
+                            across_bridge=F)
+      }
+      if (length(coutinents)==3){
+        dt.item<-data.table(seed_id=item.info$seed_id,
+                            sp_id=item.info$sp_id,
+                            NB=item.info$NB,
+                            DA=item.info$DA,
+                            species.label=item.info$species.label,
+                            seed_continent=item.info$seed_continent,
+                            bridge_continent=coutinents[coutinents %in% c("bridge1", "bridge2")],
+                            across_bridge=T)
+      }
+      if (length(coutinents)==4){
+        
+        dt.item<-data.table(seed_id=item.info$seed_id,
+                            sp_id=item.info$sp_id,
+                            NB=item.info$NB,
+                            DA=item.info$DA,
+                            species.label=item.info$species.label,
+                            seed_continent=item.info$seed_continent,
+                            bridge_continent=coutinents[coutinents %in% c("bridge1", "bridge2")],
+                            across_bridge=T)
+      }
+      final.list[[length(final.list)+1]]<-dt.item
+    }
+  }
+  final.df<-rbindlist(final.list)
+  saveRDS(final.df, "../Data/Tables/bridge.usage.details.rda")
+  
+  final.df$label<-sprintf("%d.%s.%s", final.df$seed_id, final.df$NB, final.df$DA)
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+  
+  rep.list<-list()
+  
+  for (rrrr in c(1:100)){
+    print(rrrr)
+    seeds<-seeds.all[rep==rrrr]
+    item<-final.df[label %in% seeds$label]
+    item$rep<-rrrr
+    rep.list[[rrrr]]<-item
+  }
+  rep.df<-rbindlist(rep.list)
+  saveRDS(rep.df, "../Data/Tables/bridge.usage.details.rep.rda")
+  
+}
+
+final.df<-readRDS("../Data/Tables/bridge.usage.details.rep.rda")
+final.df$species.label<-sprintf("%s.%s.%s", final.df$sp_id, final.df$NB, final.df$DA)
+rep.df.all<-final.df[,.(N_SP=length(unique(species.label))), 
+                     by=list(seed_continent, bridge_continent, across_bridge, rep)]
+rep.df.all.se<-rep.df.all[,.(N_SP=mean(N_SP), sd=sd(N_SP)), 
+                          by=list(seed_continent, bridge_continent, across_bridge)]
+
+
+pd <- position_dodge(width = 0.4)
+rep.df.all.se$current_continent<-factor(rep.df.all.se$current_continent,
+                                        levels=c("bridge1", "bridge2"),
+                                        labels=c("Isthmus", "Caribbean"))
+p<-ggplot(rep.df.all.se, aes(x = bridge_continent, y = N_SP, color = seed_continent)) +
+  
+  geom_errorbar(aes(ymin = N_SP - sd, ymax = N_SP + sd), 
+                width = 0.2, 
+                position = pd, 
+                linewidth = 0.8) +
+  geom_point(position = pd, size = 3) +
+  labs(
+    x = "Bridge",
+    y = "Number of Species",
+    color = "Original Continent"
+  ) +
+  scale_color_manual(values=c("North America"=color_na, "South America"=color_sa))+
+  facet_wrap(~across_bridge, scale="free")+
+  theme_bw() +
+  theme(
+    axis.title = element_text(face = "bold", size = 12),
+    axis.text = element_text(size = 11),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold")
+  )
+p
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.pdf", width=8, height=4)
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.png", width=8, height=4, bg="white")
+to.doc(rep.df.all.se, "Bridge usage", "../Figures/Bridge.Usage/Bridge.Usage.docx",
+       digits = 2)
+
+rep.df.all<-final.df[,.(N_SP=length(unique(species.label))), 
+                     by=list(seed_continent, bridge_continent, NB, DA, across_bridge, rep)]
+
+rep.df.sum<-rep.df.all[,.(N_SP=sum(N_SP)), 
+                   by=list(seed_continent, bridge_continent, NB, DA, across_bridge, rep)]
+rep.df.se<-rep.df.sum[,.(N_SP=mean(N_SP), sd=sd(N_SP)), 
+                  by=list(seed_continent, bridge_continent, NB, DA, across_bridge)]
+
+rep.df.se$bridge_continent<-factor(rep.df.se$bridge_continent,
+                                        levels=c("bridge1", "bridge2"),
+                                        labels=c("Isthmus", "Caribbean"))
+rep.df.se$NB<-factor(rep.df.se$NB, 
+                     levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                     labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+p<-ggplot(rep.df.se, aes(x = bridge_continent, y = N_SP, color = seed_continent)) +
+  
+  geom_errorbar(aes(ymin = N_SP - sd, ymax = N_SP + sd), 
+                width = 0.2, 
+                position = pd, 
+                linewidth = 0.8) +
+  geom_point(position = pd, size = 3) +
+  labs(
+    x = "Bridge",
+    y = "Number of Species",
+    color = "Original Continent"
+  ) +
+  scale_color_manual(values=c("North America"=color_na, "South America"=color_sa))+
+  theme_bw() +
+  theme(
+    axis.title = element_text(face = "bold", size = 12),
+    axis.text = element_text(size = 11),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold")
+  )+
+  facet_grid(across_bridge~NB+DA, scale="free")
+p
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.NB.DA.pdf", width=12, height=6)
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.NB.DA.png", width=12, height=6, bg="white")
+to.doc(rep.df.se, "Bridge usage", "../Figures/Bridge.Usage/Bridge.Usage.NB.DA.docx",
+       digits = 2)
+

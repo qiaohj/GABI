@@ -152,7 +152,7 @@ p1<-ggplot(rep.df.all[between(year_window, -1000, -50)])+
 p2<-ggplot(rep.df.all[between(year_window, -1000, -50)])+
   geom_smooth(aes(x=year_window, y=net_div_rate, color=type), 
               method = "loess", span = 0.3, se = T, linewidth = 1) + 
-  #geom_point(aes(x=year_window, y=net_div_rate, color=type)) + 
+  geom_point(aes(x=year_window, y=net_div_rate, color=type)) + 
   scale_color_manual(values = c("Native" = color_low, "Immigrant" = color_high)) +
   labs(x = "Year", y = "Net Diversification Rate", 
        color = "Species Type") +
@@ -161,6 +161,21 @@ p2<-ggplot(rep.df.all[between(year_window, -1000, -50)])+
     legend.position = "bottom",
     axis.title = element_text(face = "bold")
   )+facet_wrap(~continent, nrow=2)
+
+p3<-ggplot(rep.df.all[between(year_window, -1000, -50)])+
+  geom_smooth(aes(x=year_window, y=N_SP, color=type), 
+              method = "loess", span = 0.3, se = T, linewidth = 1) + 
+  geom_point(aes(x=year_window, y=N_SP, color=type)) + 
+  scale_color_manual(values = c("Native" = color_low, "Immigrant" = color_high)) +
+  labs(x = "Year", y = "Species Richness", 
+       color = "Species Type") +
+  theme_classic() +
+  theme(
+    legend.position = "bottom",
+    axis.title = element_text(face = "bold")
+  )+facet_wrap(~continent, nrow=2)
+p3
+
 ggsave(p1, filename="../Figures/NET/Net.Diversification.Rate.origin.pdf", width=8, height=5)
 ggsave(p1, filename="../Figures/NET/Net.Diversification.Rate.origin.png", width=8, height=5, bg="white")
 

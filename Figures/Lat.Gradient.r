@@ -58,7 +58,9 @@ rep.df.all<-readRDS("../Data/Tables/N.Sp.Lat.all.rep.rda")
 
 lat.all.N<-rep.df.all[,.(N_SP=mean(N_SP), sd=sd(N_SP)), 
                       by=list(seed_continent, continent, lat_bin, type)]
-
+lat.all.N$type<-factor(lat.all.N$type, 
+                     levels = c("Native", "Immigrant"), 
+                     labels = c("Native", "Immigrant"))
 
 p1 <- ggplot(lat.all.N, aes(y = lat_bin, x = N_SP, color = type, fill = type)) +
   
@@ -83,7 +85,7 @@ p1 <- ggplot(lat.all.N, aes(y = lat_bin, x = N_SP, color = type, fill = type)) +
     color = "Species Type",
     fill  = "Species Type"
   ) +
-  theme_minimal() +
+  theme_bw() +
   theme(
     legend.position = "bottom",
     strip.text = element_text(size = 12, face = "bold"),
@@ -98,6 +100,12 @@ lat.all.N<-rep.df[,.(N_SP=mean(N_SP), sd=sd(N_SP)),
                       by=list(seed_continent, continent, lat_bin, type, nb, da)]
 
 
+lat.all.N$nb<-factor(lat.all.N$nb, 
+                     levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                     labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+lat.all.N$type<-factor(lat.all.N$type, 
+                       levels = c("Native", "Immigrant"), 
+                       labels = c("Native", "Immigrant"))
 p <- ggplot(lat.all.N, aes(y = lat_bin, x = N_SP, color = type, fill = type)) +
   
   geom_ribbon(aes(xmin = pmax(0, N_SP - sd), xmax = N_SP + sd), 
@@ -107,20 +115,33 @@ p <- ggplot(lat.all.N, aes(y = lat_bin, x = N_SP, color = type, fill = type)) +
   geom_line(orientation = "y", linewidth = 1) +
   
   facet_grid(continent~nb+da, scale="free") +
+  facetted_pos_scales(
+    y = list(
+      continent == "South America" ~ scale_y_reverse()
+    )
+  ) +
+  scale_color_manual(values=c("Native"=color_low, "Immigrant"=color_high))+
+  scale_fill_manual(values=c("Native"=color_low, "Immigrant"=color_high))+
   
   labs(
-    x = "Number of Species (N_SP)",
+    x = "Number of Species",
     y = "Latitude",
     color = "Species Type",
     fill  = "Species Type"
   ) +
+  scale_x_continuous(guide = guide_axis(check.overlap = TRUE)) +
   
   
-  theme_minimal() +
+  theme_bw() +
   theme(
     legend.position = "bottom",
     strip.text = element_text(size = 12, face = "bold"),
     panel.spacing = unit(1, "lines")
   )
 p
+
+ggsave(p, filename="../Figures/Lat.Gradient/Lat.Gradient.NB.DA.pdf", width=15, height=6)
+ggsave(p, filename="../Figures/Lat.Gradient/Lat.Gradient.NB.DA.png", width=15, height=6, bg="white")
+setorderv(lat.all.N, c("nb", "da", "seed_continent", "continent", "lat_bin"))
+to.doc(lat.all.N, "Latitudinal gradient", "../Figures/Lat.Gradient/Lat.Gradient.NB.DA.docx", digits=2)
 

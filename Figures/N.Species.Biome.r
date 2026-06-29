@@ -102,6 +102,7 @@ if (F){
             aes(fill=BIOME_NAME))
   
   write_sf(hexagon_biome, "../Shape/hexagon_biome/hexagon_biome.shp")
+  
   species.dis<-readRDS("../Data/Tables/Final.Distribution.Unique.rda")
   seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
   species.dis.sub<-species.dis[seed_id %in% unique(seeds.all$seed_id)]
@@ -118,6 +119,25 @@ if (F){
                                "Aborigines", "Invader")
   
   saveRDS(species.dis.geo, "../Data/Tables/species.dis.biome.rda")
+  
+  
+  species.dis<-readRDS("../Data/Tables/Final.Distribution.NULL.Unique.rda")
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+  species.dis.sub<-species.dis[seed_id %in% unique(seeds.all$seed_id)]
+  
+  species.dis.geo<-merge(species.dis.sub, cells.biome, by="global_id")
+  
+  species.dis.geo$geometry<-NULL
+  
+  seeds<-data.table(seed_id=as.numeric(hexagon$seqnum), seed_continent=hexagon$continent)
+  species.dis.geo<-merge(species.dis.geo, seeds, by="seed_id")
+  
+  
+  species.dis.geo$type<-ifelse(species.dis.geo$continent==species.dis.geo$seed_continent, 
+                               "Aborigines", "Invader")
+  
+  saveRDS(species.dis.geo, "../Data/Tables/species.dis.biome.NULL.rda")
+  
   
 }
 
@@ -185,12 +205,45 @@ if (F){
     
   }
   rep.df<-rbindlist(rep.list)
-  rep.list.all<-rbindlist(rep.list.all)
+  rep.df.all<-rbindlist(rep.list.all)
   saveRDS(rep.df, "../Data/Tables/biome.N.species.by.nb.rda")
-  saveRDS(rep.list.all, "../Data/Tables/biome.N.species.rda")
+  saveRDS(rep.df.all, "../Data/Tables/biome.N.species.rda")
   
 }
-rep.list.all<-readRDS("../Data/Tables/biome.N.species.rda")
+
+if (F){
+  species.dis.geo<-readRDS("../Data/Tables/species.dis.biome.NULL.rda")
+  
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+  
+  rep.list<-list()
+  rep.list.all<-list()
+  for (rrrr in c(1:100)){
+    print(rrrr)
+    seeds<-seeds.all[rep==rrrr]
+    item<-species.dis.geo[seed_id %in% seeds$seed_id]
+    type.N<-item[, .(N.species=length(unique(sp_id))),
+                 by=list(type, nb, da, BIOME_NAME, continent)]
+    
+    type.N<-type.N[!is.na(BIOME_NAME)]
+    type.N<-type.N[BIOME_NAME!="N/A"]
+    type.N$rep<-rrrr
+    rep.list[[rrrr]]<-type.N
+    type.N.sum<-type.N[, .(N.species=sum(N.species)),
+                       by=list(type, BIOME_NAME, continent, rep)]
+    
+    rep.list.all[[rrrr]]<-type.N.sum
+    
+  }
+  rep.df<-rbindlist(rep.list)
+  rep.df.all<-rbindlist(rep.list.all)
+  saveRDS(rep.df, "../Data/Tables/biome.N.species.by.nb.NULL.rda")
+  saveRDS(rep.df.all, "../Data/Tables/biome.N.species.NULL.rda")
+  
+}
+
+simulation.type<-"NULL"
+rep.list.all<-readRDS(sprintf("../Data/Tables/biome.N.species.%s.rda", simulation.type))
 rep.list.all[rep==1]
 Aborigines<-rep.list.all[type=="Aborigines"]
 colnames(Aborigines)[5]<-"N.Aborigines"
@@ -223,8 +276,8 @@ p<-ggplot(N.merge.mean[continent %in% c("North America", "South America")])+
   facet_wrap(~continent)
 p
 
-ggsave(p, filename="../Figures/Figure.Biome/biome_invader.pdf", width=8, height=6)
-ggsave(p, filename="../Figures/Figure.Biome/biome_invader.png", width=8, height=6)
+ggsave(p, filename=sprintf("../Figures/Figure.Biome/biome_invader.%s.pdf", simulation.type), width=8, height=6)
+ggsave(p, filename=sprintf("../Figures/Figure.Biome/biome_invader.%s.png", simulation.type), width=8, height=6)
 
 biome<-read_sf("../Shape/hexagon_biome/hexagon_biome.shp")
 anchor_points <- st_point_on_surface(biome)
@@ -288,7 +341,7 @@ pp<-ggplot(data = biome.per)+
                        limits=c(0, 1))+
   theme_void()
 pp
-ggsave(pp, filename="../Figures/Figure.Biome/Invader.by.biome.png", width=15, height=12,
+ggsave(pp, filename=sprintf("../Figures/Figure.Biome/Invader.by.biome.%s.png", simulation.type), width=15, height=12,
        bg="white")
 
 sf_data<-biome.per
@@ -354,9 +407,10 @@ dt_aborigine[, `:=`(start_angle = Invader_per * 2 * pi, end_angle = 2 * pi, pie_
 dt_pie <- rbindlist(list(dt_invader, dt_aborigine))
 
 biome_names <- unique(sf_data$BIOME_NAME)
-
-for (op in c("magma", "inferno", "plasma", "viridis", "cividis", "rocket", "mako", "turbo",
-             "user.defined", "user.defined.blind.friendly")){
+op<-"user.defined.blind.friendly"
+#for (op in c("magma", "inferno", "plasma", "viridis", "cividis", "rocket", "mako", "turbo",
+#             "user.defined", "user.defined.blind.friendly")){
+for (op in c("user.defined.blind.friendly")){
   if (op %in% c("user.defined", "user.defined.blind.friendly")){
     if (op=="user.defined"){
       sunny_days_colors <- c(
@@ -454,8 +508,8 @@ for (op in c("magma", "inferno", "plasma", "viridis", "cividis", "rocket", "mako
       axis.title = element_blank()
     )
   #ppp
-  ggsave(ppp, filename=sprintf("../Figures/Figure.Biome/Biome.theme/N.nvader.by.biome.pie.%s.pdf", op), width=12, height=7)
-  ggsave(ppp, filename=sprintf("../Figures/Figure.Biome/Biome.theme/N.nvader.by.biome.pie.%s.png", op), width=12, height=7, bg="white")
+  ggsave(ppp, filename=sprintf("../Figures/Figure.Biome/N.nvader.by.biome.pie.%s.%s.pdf", op, simulation.type), width=12, height=7)
+  ggsave(ppp, filename=sprintf("../Figures/Figure.Biome/N.nvader.by.biome.pie.%s.%s.png", op, simulation.type), width=12, height=7, bg="white")
 }
 
 
@@ -466,9 +520,32 @@ dt<-data.table(sf_data[, c("BIOME_NAME","continent",
 dt$geometry<-NULL
 dt<-dt[continent %in% c("North America", "South America")]
 to.doc(dt, "Number of invaders per biome", 
-       "../Figures/Figure.Biome/N.nvader.by.biome.pie.docx",
+       sprintf("../Figures/Figure.Biome/N.nvader.by.biome.pie.%s.docx", simulation.type),
        digits=2, in_place=F)
-#-------OLD CODE--------------
+
+
+
+#By NB and DA
+
+rep.df<-readRDS("../Data/Tables/biome.N.species.by.nb.rda")
+combs<-unique(rep.df[, c("nb", "da")])
+
+biome<-read_sf("../Shape/hexagon_biome/hexagon_biome.shp")
+anchor_points <- st_point_on_surface(biome)
+coords <- st_coordinates(anchor_points)
+biome$label_x <- coords[, "X"]
+biome$label_y <- coords[, "Y"]
+bbox <- st_bbox(biome)
+bbox[3]<- -33
+mid_x <- (bbox["xmin"] + bbox["xmax"]) / 2
+margin_dist <- (bbox["xmax"] - bbox["xmin"]) * 0.1 
+
+biome <- biome %>%
+  mutate(
+    nudge_x = bbox["xmin"] - label_x - margin_dist,
+    hjust = 1
+  )
+
 Aborigines<-rep.df[type=="Aborigines"]
 colnames(Aborigines)[6]<-"N.Aborigines"
 Aborigines$type<-NULL
@@ -476,7 +553,7 @@ Invader<-rep.df[type=="Invader"]
 colnames(Invader)[6]<-"N.Invader"
 Invader$type<-NULL
 N.merge<-merge(Aborigines, Invader, 
-               by=c("nb", "da", "BIOME_NAME", "rep", "continent"), all=T)
+               by=c("BIOME_NAME", "rep", "continent", "nb", "da"), all=T)
 
 N.merge[is.na(N.Aborigines), N.Aborigines:=0]
 
@@ -486,51 +563,161 @@ N.merge$Invader_per<-N.merge$N.Invader/(N.merge$N.Invader+N.merge$N.Aborigines)
 N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.Aborigines),
                           N.Invader=mean(N.Invader), sd.N.Invader=sd(N.Invader),
                           Invader_per=mean(Invader_per), sd.Invader_per=sd(Invader_per)),
-                      by=list(nb, da, BIOME_NAME, continent)]
+                      by=list(BIOME_NAME, continent, nb, da)]
+biome.list<-list()
+for (i in c(1:nrow(combs))){
+  comb<-combs[i]
+  item<-N.merge.mean[nb==comb$nb & da==comb$da]
 
-#N.merge.mean<-N.merge.mean[N.Invader>10]
+  biome.per<-merge(biome, item, by=c("BIOME_NAME", "continent"))
+  biome.list[[i]]<-biome.per
+  sf_data<-biome.per
+  sf_data$plot_fill <- ifelse(
+    sf_data$continent %in% c("bridge1", "bridge2"), 
+    "Bridge (100% Invader)", 
+    sf_data$BIOME_NAME
+  )
+  
+  sf_poly <- suppressWarnings(st_cast(sf_data, "POLYGON"))
+  dt_poly <- as.data.table(sf_poly)
+  dt_poly[, poly_area := as.numeric(st_area(geometry))]
+  
+  dt_largest_idx <- dt_poly[, .I[which.max(poly_area)], by = .(BIOME_NAME, continent)]$V1
+  dt_largest <- dt_poly[dt_largest_idx]
+  
+  sf_largest <- st_as_sf(dt_largest)
+  coords <- st_coordinates(suppressMessages(st_point_on_surface(sf_largest)))
+  dt_largest[, `:=`(X = coords[, 1], Y = coords[, 2])]
+  
+  dt_pies_base <- dt_largest[!(continent %in% c("bridge1", "bridge2"))]
+  area_threshold <- median(dt_pies_base$poly_area)
+  
+  
+  dt_pies_base[, placement := ifelse(poly_area < area_threshold, "LEFT", "INSIDE")]
+  dt_pies_base[BIOME_NAME == "Flooded Grasslands & Savannas" & continent == "North America", placement := "RIGHT"]
+  dt_pies_base[BIOME_NAME == "Mangroves" & continent == "South America", placement := "RIGHT"]
+  dt_pies_base[BIOME_NAME == "Montane Grasslands & Shrublands" & continent == "South America", placement := "LEFT"]
+  
+  dt_pies_base[, `:=`(pie_X = X, pie_Y = Y)]
+  bbox <- st_bbox(sf_data)
+  
+  idx_left <- dt_pies_base[placement == "LEFT", which = TRUE]
+  if (length(idx_left) > 0) {
+    idx_left_sorted <- idx_left[order(dt_pies_base$Y[idx_left])]
+    N_left <- length(idx_left_sorted)
+    dt_pies_base[idx_left_sorted, pie_Y := seq(bbox["ymin"] - 5, bbox["ymax"] + 5, length.out = N_left)]
+    arc_curve <- sin(seq(0, pi, length.out = N_left)) 
+    dt_pies_base[idx_left_sorted, pie_X := bbox["xmin"] + 50 - 25 * arc_curve]
+  }
+  
+  idx_right <- dt_pies_base[placement == "RIGHT", which = TRUE]
+  if (length(idx_right) > 0) {
+    dt_pies_base[idx_right, pie_Y := Y] 
+    dt_pies_base[idx_right, pie_X := bbox["xmax"] + 25] 
+  }
+  
+  dt_pies_base[, total_N := N.Aborigines + N.Invader]
+  
+  max_radius <- 6  
+  scale_factor <- max_radius / max(sqrt(dt_pies_base$total_N), na.rm = TRUE)  
+  dt_pies_base[, radius := sqrt(total_N) * scale_factor]
+  
+  dt_pies_base[, label_invader := paste0(round(N.Invader, 0), " ± ", round(sd.N.Invader, 0))]
+  dt_pies_base[, label_aborigines := paste0(round(N.Aborigines, 0), " ± ", round(sd.N.Aborigines, 0))]
+  
+  dt_invader <- copy(dt_pies_base)
+  dt_invader[, `:=`(start_angle = 0, end_angle = Invader_per * 2 * pi, pie_category = BIOME_NAME)]
+  
+  dt_aborigine <- copy(dt_pies_base)
+  dt_aborigine[, `:=`(start_angle = Invader_per * 2 * pi, end_angle = 2 * pi, pie_category = "Native (Aborigines)")]
+  
+  dt_pie <- rbindlist(list(dt_invader, dt_aborigine))
+  
+  biome_names <- unique(sf_data$BIOME_NAME)
+  sunny_days_colors<-c(
+    "#D55E00", "#E69F00", "#F0E442", "#DDCC77", 
+    "#CC6677", "#CC79A7", "#882255", "#56B4E9", 
+    "#88CCEE", "#009E73", "#44AA99", "#0072B2", 
+    "#332288", "#AA4499"
+  )
+  color_palette <- setNames(sunny_days_colors, biome_names)
+  
+  color_palette["Native (Aborigines)"] <- "#E0E0E0"          
+  color_palette["Bridge (100% Invader)"] <- "grey50"         
+  legend_breaks <- setdiff(
+    names(color_palette), 
+    c("Native (Aborigines)", "Bridge (100% Invader)")
+  )
+  
+  ppp<-ggplot() +
+    geom_sf(data=biome, fill=NA, color="lightgrey")+
+    geom_sf(data = sf_data, aes(fill = plot_fill), 
+            color = "white", linewidth = 0.2, alpha = 0.7) +
+    geom_segment(data = dt_pies_base[placement != "INSIDE"],
+                 aes(x = X, y = Y, xend = pie_X, yend = pie_Y),
+                 color = "grey40", linewidth = 0.4, linetype = "dotted") +
+    geom_arc_bar(data = dt_pie,
+                 aes(x0 = pie_X, y0 = pie_Y, r0 = 0, r = radius, 
+                     start = start_angle, end = end_angle, 
+                     fill = pie_category),
+                 color = "white", linewidth = 0.3) +
+    geom_text(data = dt_pies_base,
+              aes(x = pie_X, y = pie_Y, label = percent(Invader_per, accuracy = 0.1)),
+              size = 3, fontface = "bold", color = "black") +
+    scale_fill_manual(values = color_palette, breaks = legend_breaks) +
+    theme_minimal() +
+    labs(
+      title = sprintf("Proportion of Invaders across Biomes (%s & %s)", comb$nb, comb$da),
+      #subtitle = "Pie area proportional to Total Population",
+      fill = "Biome"
+    ) +
+    theme(
+      panel.grid = element_blank(),
+      axis.text = element_blank(),  
+      axis.title = element_blank()
+    )
+  ppp
+  ggsave(ppp, 
+         filename=sprintf("../Figures/Figure.Biome/Biome.by.nb.da/N.nvader.by.biome.pie.%s.%s.pdf", 
+                          comb$nb, comb$da), width=12, height=7)
+  ggsave(ppp, 
+         filename=sprintf("../Figures/Figure.Biome/Biome.by.nb.da/N.nvader.by.biome.pie.%s.%s.png", 
+                          comb$nb, comb$da), width=12, height=7, bg="white")
+  
+  dt<-data.table(sf_data[, c("BIOME_NAME","continent",
+                             "N.Aborigines","sd.N.Aborigines",
+                             "N.Invader","sd.N.Invader",
+                             "Invader_per","sd.Invader_per",
+                             "nb", "da")])
+  dt$geometry<-NULL
+  dt<-dt[continent %in% c("North America", "South America")]
+  to.doc(dt, sprintf("Number of invaders per biome (%s & %s)", comb$nb, comb$da), 
+         sprintf("../Figures/Figure.Biome/Biome.by.nb.da/N.nvader.by.biome.pie.%s.%s.docx", 
+         comb$nb, comb$da),
+         digits=2, in_place=F)
+}
+biome.df<-rbindlist(biome.list)
+biome.df$geometry<-NULL
+biome.df<-data.table(biome.df[, c("nb", "da",
+                                  "BIOME_NAME","continent",
+                                  "N.Aborigines","sd.N.Aborigines",
+                                  "N.Invader","sd.N.Invader",
+                                  "Invader_per","sd.Invader_per"
+                                  )])
 
-p<-ggplot(N.merge.mean[continent %in% c("North America", "South America")])+
-  geom_point(aes(x=BIOME_NAME, y=Invader_per))+
-  geom_errorbar(aes(x=BIOME_NAME, 
-                    ymin = Invader_per-sd.Invader_per, 
-                    ymax=Invader_per+sd.Invader_per), width=0.5)+
-  geom_hline(yintercept = 0.5, linetype=2)+
-  theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-  facet_grid(nb+da~continent)
+fwrite(biome.df, "../Figures/Figure.Biome/Biome.by.nb.da/biome.invader.per.all.csv")
+N.merge$nb<-factor(N.merge$nb, 
+                     levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                     labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+
+p<-ggplot(N.merge[continent %in% c("North America", "South America")])+
+  geom_boxplot(aes(y=BIOME_NAME, x=Invader_per))+
+  facet_grid(continent~nb+da)+
+  theme_bw()
 p
-ggsave(p, filename="../Figures/Figure.Biome/biome_invader_da_nb.pdf", width=8, height=10)
+ggsave(p, filename="../Figures/Figure.Biome/Figure.Biome.full.pdf", width=12, height=8)
+ggsave(p, filename="../Figures/Figure.Biome/Figure.Biome.full.png", width=15, height=8, bg="white")
 
 
 
-#For null
-biome<-read_sf("../Shape/Ecoregions2017/biome.simplify.shp")
-biome<-biome[which(biome$REALM %in% c("Nearctic", "Neotropic")),]
-biome$area<-st_area(biome)
-biome$continent<-ifelse(biome$REALM=="Nearctic", "North America", "South America")
-
-
-
-
-
-biome.n<-merge(biome, N.merge.mean, by=c("BIOME_NAME", "continent"))
-write_sf(biome.n, "../Data/Shape/biome.n.NULL.shp")
-source("Figures/common.r")
-p<-ggplot(biome)+
-  geom_sf(fill="lightgrey", color="grey", linewidth=0.5)+
-  geom_sf(data=biome.n[which(biome.n$REALM %in% c("Nearctic", "Neotropic") &
-                                   biome.n$continent %in% c("North America", "South America")),], 
-          aes(fill=Invader_per))+
-  scale_fill_gradient2(low=color_low,
-                       mid=color_mid,
-                       high=color_high,
-                       midpoint = 0.5,
-                       limits=c(0,1))+
-  coord_sf(crs=map_crs)+
-  map_theme
-p
-N.merge.mean[Invader_per>0.5 & continent %in% c("South America", "North America")]
-
-ggsave(p, filename="../Figures/biome_invader_map.NULL.pdf", width=10, height=8)
 

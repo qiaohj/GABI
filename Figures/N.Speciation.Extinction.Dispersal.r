@@ -1,6 +1,7 @@
 library(data.table)
 library(ggplot2)
 library(sf)
+library(patchwork)
 setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 source("Figures/common.r")
@@ -243,15 +244,28 @@ table(all.df$type)
 all.df$event<-factor(all.df$event, levels=c("Speciation", "Extinction", "Richness"))
 all.df$type<-factor(all.df$type, levels=c("Native", "Immigrant"))
 
-p<-ggplot(all.df)+geom_boxplot(aes(x=continent, y=N, color=type))+
+p1<-ggplot(all.df[event %in% c("Speciation", "Extinction")])+
+  geom_boxplot(aes(x=continent, y=N, color=type))+
   facet_wrap(~event, nrow=1, scale="free")+
-  labs(y="Number of events/species", color="Species type")+
-  scale_color_manual(values=c("Native"=color_low, "Immigrant"=color_high))+
+  labs(y="Number of events", color="Species type")+
+  scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
   theme_bw()+
   theme(legend.position = "bottom",
         axis.title.x = element_blank())
-p
+p1
+p2<-ggplot(all.df[event %in% c("Richness")])+
+  geom_boxplot(aes(x=continent, y=N, color=type))+
+  facet_wrap(~event, nrow=1, scale="free")+
+  labs(y="Number of species", color="Species type")+
+  scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
+  theme_bw()+
+  theme(legend.position = "bottom",
+        axis.title.x = element_blank())
+p2
 
+p<-p1+p2+plot_layout(guides = "collect", widths = c(2.1, 1)) & 
+  theme(legend.position = "bottom")
+p
 all.df.se<-all.df[,.(mean=mean(N), sd=sd(N)),
                                 by=list(event, continent, type)]
 setorderv(all.df.se, c("event", "continent", "type"))
