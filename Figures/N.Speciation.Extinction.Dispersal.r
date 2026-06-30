@@ -2,6 +2,7 @@ library(data.table)
 library(ggplot2)
 library(sf)
 library(patchwork)
+library(dplyr)
 setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 source("Figures/common.r")
@@ -203,12 +204,17 @@ dispersal.all[seed_continent=="North America" & type=="Primary Invader", disp.ty
 dispersal.all[seed_continent=="North America" & type=="Secondary Invader", disp.type:="S to N"]
 dispersal.all[seed_continent=="South America" & type=="Primary Invader", disp.type:="S to N"]
 dispersal.all[seed_continent=="South America" & type=="Secondary Invader", disp.type:="N to S"]
-
-p<-ggplot(dispersal.all)+geom_boxplot(aes(x=disp.type, y=N))+
+custom_colors <- c(
+  "N to S" = color_n2s,
+  "S to N" = color_s2n
+)
+p<-ggplot(dispersal.all)+geom_boxplot(aes(x=disp.type, y=N, color=disp.type))+
   facet_wrap(~type)+
+  scale_color_manual(values=custom_colors)+
   labs(y="Number of Species")+
   theme_bw()+
-  theme(axis.title.x = element_blank())
+  theme(axis.title.x = element_blank(),
+        legend.position = "none")
 p
 dispersal.all.se<-dispersal.all[,.(mean=mean(N), sd=sd(N)),
                                 by=list(type, disp.type)]
@@ -385,7 +391,7 @@ all.df$continent<-ifelse(all.df$continent=="North America", "N", "S")
 p<-ggplot(all.df)+geom_boxplot(aes(x=continent, y=N, color=type))+
   facet_grid(event~NB+DA, scale="free")+
   labs(y="Number of events/species", color="Species type")+
-  scale_color_manual(values=c("Native"=color_low, "Immigrant"=color_high))+
+  scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
   theme_bw()+
   theme(legend.position = "bottom",
         axis.title.x = element_blank())
@@ -398,9 +404,9 @@ to.doc(all.df.se, "Number of speciation and extinction events, and species richn
        "../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Richness.details.docx",
        digits=2)
 ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Richness.details.pdf", 
-       width=15, height=5)
+       width=10, height=5)
 ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Richness.details.png", 
-       width=15, height=5, bg="white")
+       width=10, height=5, bg="white")
 
 
 

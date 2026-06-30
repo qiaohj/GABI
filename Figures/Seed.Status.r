@@ -176,22 +176,7 @@ p
 ggsave(p, filename="../Figures/Seeds/Seeds.pdf", width=5, height=5)
 ggsave(p, filename="../Figures/Seeds/Seeds.png", width=5, height=5, bg="white")
 
-
-no.survive<-df_N_checked[N==1]
-no.survive[,.(N=.N), by=list(nb)]
-
-no.survive$N<-NULL
-no.survive$label<-NULL
-no.survive1<-no.survive
-no.survive1$da<-"GOOD"
-no.survive2<-no.survive
-no.survive2$da<-"POOR"
-no.survive<-rbindlist(list(no.survive1, no.survive2))
-no.boot.seeds.id$continent<-NULL
-no.boot.seeds.id$type<-NULL
-
-no.survive.all<-rbindlist(list(no.boot.seeds.id, no.survive))
-no.survive.all[, .(N=.N/2), by=list(nb)]
+saveRDS(all.seeds.shp, "../Figures/Seeds/Seeds.rda")
 
 library(data.table)
 library(sf)
@@ -248,3 +233,5 @@ NNNN$nb<-factor(NNNN$nb,
                           labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
 
 setorderv(NNNN, c("nb", "continent"))
+
+saveRDS(simulations_filter, "../Data/Tables/Seed.Pool.rda")

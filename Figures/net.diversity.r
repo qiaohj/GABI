@@ -144,11 +144,13 @@ rep.df.all$other_continent<-ifelse(rep.df.all$continent=="North America", "South
 rep.df.all[type=="Immigrant", continent:=other_continent]
 rep.df.all$seed_continent<-factor(rep.df.all$seed_continent, levels=c("North America", "South America"),
                                   labels=c("North American Origin", "South American Origin"))
-p1<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
+rep.df.all$type<-factor(rep.df.all$type, levels=c("Native", "Immigrant"),
+                        labels=c("Native", "Immigrant"))
+p1<-ggplot(rep.df.all[between(year_window, -1000, -50)])+
   geom_smooth(aes(x=year_window, y=net_div_rate, color=type), 
               method = "loess", span = 0.3, se = T, linewidth = 1) + 
   geom_point(aes(x=year_window, y=net_div_rate, color=type)) + 
-  scale_color_manual(values = c("Native" = color_low, "Immigrant" = color_high)) +
+  scale_color_manual(values = c("Native" = color_native, "Immigrant" = color_immigrant)) +
   labs(x = "Year", y = "Net Diversification Rate", 
        color = "Species Type") +
   theme_classic() +
@@ -157,11 +159,11 @@ p1<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
     axis.title = element_text(face = "bold")
   )+facet_wrap(~seed_continent, nrow=2)
 p1
-p2<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
+p2<-ggplot(rep.df.all[between(year_window, -1000, -50)])+
   geom_smooth(aes(x=year_window, y=net_div_rate, color=type), 
-              method = "loess", span = 0.1, se = T, linewidth = 1) + 
+              method = "loess", span = 0.3, se = T, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=net_div_rate, color=type)) + 
-  scale_color_manual(values = c("Native" = color_low, "Immigrant" = color_high)) +
+  scale_color_manual(values = c("Native" = color_native, "Immigrant" = color_immigrant)) +
   labs(x = "Year", y = "Net Diversification Rate", 
        color = "Species Type") +
   theme_classic() +
@@ -170,11 +172,11 @@ p2<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
     axis.title = element_text(face = "bold")
   )+facet_wrap(~continent, nrow=2)
 p2
-p3<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
+p3<-ggplot(rep.df.all[between(year_window, -1000, -50)])+
   geom_smooth(aes(x=year_window, y=N_SP, color=type), 
               method = "loess", span = 0.3, se = T, linewidth = 1) + 
   geom_point(aes(x=year_window, y=N_SP, color=type)) + 
-  scale_color_manual(values = c("Native" = color_low, "Immigrant" = color_high)) +
+  scale_color_manual(values = c("Native" = color_native, "Immigrant" = color_immigrant)) +
   labs(x = "Year", y = "Species Richness", 
        color = "Species Type") +
   theme_classic() +
@@ -212,8 +214,8 @@ p1<-ggplot(rep.df.all[between(year_window, -1000, -50) & type!="Local.Extinction
   geom_smooth(aes(x=year_window, y=N, color=species.type), 
               method = "loess", span = 0.3, se = FALSE, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
-  scale_color_manual(values = c("Native" = color_low, 
-                                "Immigrant" = color_high, 
+  scale_color_manual(values = c("Native" = color_native, 
+                                "Immigrant" = color_immigrant, 
                                 "Isthmus" = color_mid2,
                                 "Caribbean" = color_2)) +
   labs(x = "Year", y = "Number of Extinction", 
@@ -230,8 +232,8 @@ p2<-ggplot(rep.df.all[between(year_window, -1000, -50) & type!="Local.Extinction
   geom_smooth(aes(x=year_window, y=N, color=species.type), 
               method = "loess", span = 0.3, se = FALSE, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
-  scale_color_manual(values = c("Native" = color_low, 
-                                "Immigrant" = color_high, 
+  scale_color_manual(values = c("Native" = color_native, 
+                                "Immigrant" = color_immigrant, 
                                 "Isthmus" = color_mid2,
                                 "Caribbean" = color_2)) +
   labs(x = "Year", y = "Number of Extinction", 
@@ -242,7 +244,7 @@ p2<-ggplot(rep.df.all[between(year_window, -1000, -50) & type!="Local.Extinction
     legend.position = "bottom",
     axis.title = element_text(face = "bold")
   )+facet_wrap(~continent, nrow=4, scale="free")
-
+p2
 ggsave(p1, filename="../Figures/NET/Extinction.origin.pdf", width=8, height=5)
 ggsave(p1, filename="../Figures/NET/Extinction.origin.png", width=8, height=5, bg="white")
 
@@ -273,8 +275,8 @@ p1<-ggplot(rep.df.all[between(year_window, -1000, -50)])+
   geom_smooth(aes(x=year_window, y=N, color=species.type), 
               method = "loess", span = 0.3, se = FALSE, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
-  scale_color_manual(values = c("Native" = color_low, 
-                                "Immigrant" = color_high, 
+  scale_color_manual(values = c("Native" = color_native, 
+                                "Immigrant" = color_immigrant, 
                                 "Isthmus" = color_mid2,
                                 "Caribbean" = color_2)) +
   labs(x = "Year", y = "Number of Speciation", 
@@ -291,8 +293,8 @@ p2<-ggplot(rep.df.all[between(year_window, -1000, -50)])+
   geom_smooth(aes(x=year_window, y=N, color=species.type), 
               method = "loess", span = 0.3, se = FALSE, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
-  scale_color_manual(values = c("Native" = color_low, 
-                                "Immigrant" = color_high, 
+  scale_color_manual(values = c("Native" = color_native, 
+                                "Immigrant" = color_immigrant, 
                                 "Isthmus" = color_mid2,
                                 "Caribbean" = color_2)) +
   labs(x = "Year", y = "Number of Speciation", 

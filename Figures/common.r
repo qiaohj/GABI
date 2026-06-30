@@ -36,6 +36,8 @@ color_mid2<-"#88CCEE"
 color_mid<-"#F7F7F7"
 color_na<-color_high
 color_sa<-color_low
+color_n2s<-color_high
+color_s2n<-color_low
 color_native<-color_high
 color_immigrant<-color_low
 color_1<-"#332288"

@@ -42,7 +42,7 @@ if (F){
   p<-ggplot()+
     geom_sf(data=cell.dist, fill=NA, color="lightgrey", alpha=0.3)+
     geom_sf(data=cutoff_sim, aes(fill=abs(pr_low)), color=NA)+
-    geom_sf(data=simulated.seeds, fill=NA, color=color_low, alpha=0.5)+
+    #geom_sf(data=simulated.seeds, fill=NA, color=color_low, alpha=0.5)+
     facet_wrap(~NB, nrow=1)+
     scale_x_continuous(guide = guide_axis(check.overlap = TRUE)) +
     scale_fill_gradient(
@@ -57,9 +57,9 @@ if (F){
       #axis.text = element_blank(),  
       axis.title = element_blank()
     )
-  
-  ggsave(p, filename="../Figures/Prec_Cutoff/Prec_Cutoff.pdf", width=10, height=3)
-  ggsave(p, filename="../Figures/Prec_Cutoff/Prec_Cutoff.png", width=10, height=3, bg="white")
+  p
+  ggsave(p, filename="../Figures/Prec_Cutoff/Prec_Cutoff.pdf", width=8, height=3)
+  ggsave(p, filename="../Figures/Prec_Cutoff/Prec_Cutoff.png", width=8, height=3, bg="white")
   
   
   

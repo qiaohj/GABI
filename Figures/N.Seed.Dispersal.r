@@ -2,6 +2,7 @@ library(data.table)
 library(ggplot2)
 library(sf)
 library(stringr)
+library(patchwork)
 setDTthreads(30)
 
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
@@ -40,7 +41,9 @@ source("Figures/common.r")
 df<-readRDS("../Data/Tables/N.with.bridge.simulation.rda")
 df.label<-df
 df.label$label<-sprintf("%d.%s.%s", df.label$seed_id, df.label$NB, df.label$DA)
-seeds<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+seeds<-readRDS("../Data/Tables/Seed.Pool.rda")
+seeds$seed_id<-seeds$global_id
+seeds$label<-sprintf("%d.%s.%s", seeds$seed_id, seeds$nb, seeds$da)
 
 seeds.unique<-unique(seeds[, c("continent", "seed_id", "nb", "da", "label")])
 extinct.burn.in<-seeds.unique[!(label %in% df.label$label)]
@@ -88,6 +91,7 @@ p<-ggplot()+
              "Extinct during burn-in" = color_mid2))+
   labs(fill="Dispersal to the other continent")+
   scale_x_continuous(guide = guide_axis(check.overlap = TRUE)) +
+  #coord_sf(crs = map_crs)+
   facet_grid(DA~NB)+
   theme_bw() +
   theme(
@@ -154,8 +158,8 @@ saveRDS(rep.df.all.seed, "../Data/Tables/N.Seed.Dispersal.all.rep.rda")
 rep.df.seed$label<-sprintf("%s.%s", rep.df.seed$NB, rep.df.seed$DA)
 rep.df.seed
 custom_colors <- c(
-  "N to S" = color_high,
-  "S to N" = color_low
+  "N to S" = color_n2s,
+  "S to N" = color_s2n
 )
 
 rep.df.seed$type<-ifelse(rep.df.seed$seed_continent=="North America", "N to S", "S to N")
@@ -164,14 +168,16 @@ rep.df.seed$NB<-factor(rep.df.seed$NB,
                      labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
 
 p1<-ggplot(rep.df.seed, 
-       aes(x=type, y=N.to_target_continent_final))+
+       aes(x=type, y=N.to_target_continent_final, color=type))+
   labs(y="Number of seeds to the other continent")+
-  #scale_color_manual(values=custom_colors)+
+  scale_color_manual(values=custom_colors)+
   #geom_point()+
   geom_boxplot()+
   facet_grid(DA~NB, scale="free")+
   theme_bw()+
-  theme(axis.title.x = element_blank())
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.position = "none")
 p1
 ggsave(p1, filename="../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.pdf", width=10, height=5)
 ggsave(p1, filename="../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.png", width=10, height=5, bg="white")
@@ -180,16 +186,21 @@ fwrite(rep.df.seed, "../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.csv")
 rep.df.all.seed$type<-ifelse(rep.df.all.seed$seed_continent=="North America", "N to S", "S to N")
 
 p2<-ggplot(rep.df.all.seed, 
-          aes(x=type, y=N.to_target_continent_final))+
+          aes(x=type, y=N.to_target_continent_final, color=type))+
   labs(y="Number of seeds to the other continent")+
+  scale_color_manual(values=custom_colors)+
   geom_boxplot()+
   theme_bw()+
-  theme(axis.title.x = element_blank())
+  theme(axis.title.x = element_blank(),
+        legend.position = "none")
 p2
-ggsave(p2, filename="../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.all.pdf", width=5, height=4)
-ggsave(p2, filename="../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.all.png", width=5, height=4, bg="white")
+ggsave(p2, filename="../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.all.pdf", width=2, height=4)
+ggsave(p2, filename="../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.all.png", width=2, height=4, bg="white")
 
-p2+p1
+p<-p2+p1+plot_layout(guides = "collect", widths = c(1, 4))
+ggsave(p, filename="../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.full.pdf", width=8, height=4)
+ggsave(p, filename="../Figures/Seed.Dispersal/Seed.Dispersal.boxplot.full.png", width=8, height=4, bg="white")
+
 summary_dt<-rep.df.seed[, .(mean=mean(N.to_target_continent_final),
                sd=sd(N.to_target_continent_final)),
             by=list(type, NB, DA)]

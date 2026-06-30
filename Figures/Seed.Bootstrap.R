@@ -55,7 +55,7 @@ p2<-ggplot()+
     low = "lightgrey",
     high = color_low,
     na.value = "transparent",
-    name = "Number of seeds"
+    name = "Number of uses"
   ) +
   scale_x_continuous(guide = guide_axis(check.overlap = TRUE)) +
   theme_bw() +
@@ -65,3 +65,15 @@ p2
 p<-p1+p2
 ggsave(p, filename="../Figures/Seed.Bootstrap/Seed.Bootstrap.pdf", width=10, height=5)
 ggsave(p, filename="../Figures/Seed.Bootstrap/Seed.Bootstrap.png", width=10, height=5, bg="white")
+
+seeds<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+seeds$nb<-factor(seeds$nb, 
+                          levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                          labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+
+N<-seeds[,.(N_Seeds=length(unique(seed_id))), by=list(rep, nb, da, continent)]
+
+N_se<-N[, .(N_Seeds=mean(N_Seeds)), by=list(nb, continent)]
+setorderv(N_se, "nb")
+to.doc(N_se, "Number of seed per repeat", "../Figures/Seed.Bootstrap/Seed.Bootstrap.docx",
+       digits = 0)

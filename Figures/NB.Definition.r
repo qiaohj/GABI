@@ -41,3 +41,16 @@ p<-ggplot(iucn)+geom_histogram(aes(x=range, fill=var), bins = 50)+
 ggsave(p, filename="../Figures/NB/NB.pdf", width=8, height=4)
 ggsave(p, filename="../Figures/NB/NB.png", width=8, height=3, bg="white")
 to.doc(vline, "Niche Breadth", "../Figures/NB/NB.docx", digits = 0)
+
+
+nb_full_df<-readRDS(sprintf("../Data/IUCN_NB/Mammals.%s.rda", "World"))
+N<-nb_full_df[range>0,.(N_SP=length(unique(species))),
+              by=list(is_na, is_sa)]
+N.doc<-nb_full_df[range>0 & (is_na==T | is_sa==T)]
+N.doc<-unique(N.doc)
+
+N.doc$min_3sd<-NULL
+N.doc$max_3sd<-NULL
+N.doc$range_3sd<-NULL
+N.doc$continent<-NULL
+fwrite(N.doc, "../Figures/NB/IUCN.NB.csv")

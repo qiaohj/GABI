@@ -76,8 +76,8 @@ p1 <- ggplot(lat.all.N, aes(y = lat_bin, x = N_SP, color = type, fill = type)) +
       continent == "South America" ~ scale_y_reverse()
     )
   ) +
-  scale_color_manual(values=c("Native"=color_low, "Immigrant"=color_high))+
-  scale_fill_manual(values=c("Native"=color_low, "Immigrant"=color_high))+
+  scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
+  scale_fill_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
   
   labs(
     x = "Number of Species",
@@ -120,8 +120,8 @@ p <- ggplot(lat.all.N, aes(y = lat_bin, x = N_SP, color = type, fill = type)) +
       continent == "South America" ~ scale_y_reverse()
     )
   ) +
-  scale_color_manual(values=c("Native"=color_low, "Immigrant"=color_high))+
-  scale_fill_manual(values=c("Native"=color_low, "Immigrant"=color_high))+
+  scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
+  scale_fill_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
   
   labs(
     x = "Number of Species",
@@ -140,8 +140,8 @@ p <- ggplot(lat.all.N, aes(y = lat_bin, x = N_SP, color = type, fill = type)) +
   )
 p
 
-ggsave(p, filename="../Figures/Lat.Gradient/Lat.Gradient.NB.DA.pdf", width=15, height=6)
-ggsave(p, filename="../Figures/Lat.Gradient/Lat.Gradient.NB.DA.png", width=15, height=6, bg="white")
+ggsave(p, filename="../Figures/Lat.Gradient/Lat.Gradient.NB.DA.pdf", width=10, height=6)
+ggsave(p, filename="../Figures/Lat.Gradient/Lat.Gradient.NB.DA.png", width=10, height=6, bg="white")
 setorderv(lat.all.N, c("nb", "da", "seed_continent", "continent", "lat_bin"))
 to.doc(lat.all.N, "Latitudinal gradient", "../Figures/Lat.Gradient/Lat.Gradient.NB.DA.docx", digits=2)
 
