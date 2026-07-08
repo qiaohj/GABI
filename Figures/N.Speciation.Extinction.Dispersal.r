@@ -1,3 +1,4 @@
+library("rwosstarter")
 library(data.table)
 library(ggplot2)
 library(sf)
@@ -7,33 +8,55 @@ setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 source("Figures/common.r")
 if (F){
-  sp.with.bridge<-readRDS("../Data/Tables/sp_full_continents.rda")
-  View(sp.with.bridge[seed_id==33595 & NB=="NARROW" & DA=="POOR" & type!="Still.There"])
+  sp.with.bridge_bak<-readRDS("../Data/Tables/sp_full_continents.rda")
+  sp.with.bridge<-sp.with.bridge_bak
+  #View(sp.with.bridge[seed_id==33595 & NB=="NARROW" & DA=="POOR" & type!="Still.There"])
   
-  sp.with.bridge[previous_continent %in% c("bridge1", "bridge2") & type=="New.Immigrants" & current_continent==seed_continent,
+  sp.with.bridge[previous_continent %in% c("bridge1", "bridge2") & type=="New.Immigrants" & 
+                   current_continent==seed_continent,
                  type:="Still.There"]
   
+  sp.with.bridge<-sp.with.bridge[!(type=="New.Immigrants" & gain.continent %in% c("", "Two continents"))]
+  sp.with.bridge[type=="New.Immigrants" & gain.continent=="Two continents"]
+  sp.with.bridge<-sp.with.bridge[!(type=="Speciation" & gain.continent=="")]
+  sp.with.bridge<-sp.with.bridge[!(type=="Extinction" & loss.continent=="")]
+  sp.with.bridge<-sp.with.bridge[!(type=="Local.Extinction" & loss.continent=="")]
+  
+  
+  sp.with.bridge<-sp.with.bridge[!(current_continent=="Two continents" & type=="Speciation")]
   sp.with.bridge.N<-sp.with.bridge[, .(N=.N), 
                                    by=list(type, gain.continent, loss.continent, 
                                            seed_id, NB, DA, seed_continent)]
   sp.with.bridge.N<-sp.with.bridge.N[!is.na(type)]
-  unique(sp.with.bridge.N$type)
+  table(sp.with.bridge.N$type)
   
   sp.with.bridge[seed_id==33595 & NB=="NARROW" & DA=="POOR" & type=="New.Immigrants"]
   
   sp.with.bridge.N<-sp.with.bridge.N[type %in% c("New.Immigrants",   "Local.Extinction", "Speciation" , "Extinction")]
+  sp.with.bridge.N[type=="New.Immigrants" & gain.continent==""]
+  table(sp.with.bridge.N[type=="New.Immigrants"]$gain.continent)
+  
   sp.with.bridge.N[type=="New.Immigrants" & gain.continent==seed_continent, type:="Secondary Invader"]
   sp.with.bridge.N[type=="New.Immigrants" & gain.continent!=seed_continent, type:="Primary Invader"]
+  
+  table(sp.with.bridge.N[type=="Speciation"]$gain.continent)
   sp.with.bridge.N[type=="Speciation" & gain.continent!=seed_continent, type:="Non-local Speciation"]
   sp.with.bridge.N[type=="Speciation" & gain.continent==seed_continent, type:="Local Speciation"]
+  
+  table(sp.with.bridge.N[type=="Extinction"]$loss.continent)
+  
   sp.with.bridge.N[type=="Extinction" & loss.continent!=seed_continent, type:="Failed Invader"]
   sp.with.bridge.N[type=="Extinction" & loss.continent==seed_continent, type:="Extinction"]
+  
+  table(sp.with.bridge.N[type=="Local.Extinction"]$loss.continent)
+  
   sp.with.bridge.N[type=="Local.Extinction" & loss.continent==seed_continent, type:="Local Extinction"]
   sp.with.bridge.N[type=="Local.Extinction" & loss.continent!=seed_continent, type:="Non-local Extinction"]
   saveRDS(sp.with.bridge.N, "../Data/Tables/N.Speciation.Extinction.Dispersal.rda")
   
   sp.with.bridge.final<-sp.with.bridge[year==0]
   sp.with.bridge.final<-sp.with.bridge.final[N>0]
+  table(sp.with.bridge.final$current_continent)
   sp.with.bridge.final.2continents<-sp.with.bridge.final[current_continent=="Two continents"]
   sp.with.bridge.final.2continents1<-sp.with.bridge.final.2continents
   sp.with.bridge.final.2continents1$current_continent<-"South America"
@@ -56,13 +79,26 @@ if (F){
   sp.with.bridge[DA=="GOOD" & NB=="MODERATE" & seed_id=="11871"]
   table(sp.with.bridge$type)
   Extinction<-sp.with.bridge[type %in% c("Extinction", "Local.Extinction")]
+  table(Extinction$loss.continent)
+  
   Extinction.N<-Extinction[, .(N=.N), by=list(year, seed_id, NB, DA, seed_continent, current_continent, previous_continent,
                                               type, gain.continent, loss.continent)]
   
   saveRDS(Extinction.N, "../Data/Tables/N.Extinction.rda")
   
+  Dispersal<-sp.with.bridge[type %in% c("New.Immigrants")]
+  table(Dispersal$gain.continent)
+  Dispersal[type=="New.Immigrants" & gain.continent==seed_continent, type:="Secondary Invader"]
+  Dispersal[type=="New.Immigrants" & gain.continent!=seed_continent, type:="Primary Invader"]
+  
+  Dispersal.N<-Dispersal[, .(N=.N), by=list(year, seed_id, NB, DA, seed_continent, current_continent, previous_continent,
+                                            type, gain.continent, loss.continent)]
+  
+  saveRDS(Dispersal.N, "../Data/Tables/N.Dispersal.rda")
   
   Speciation<-sp.with.bridge[type %in% c("Speciation")]
+  table(Speciation$gain.continent)
+  
   Speciation.N<-Speciation[, .(N=.N), by=list(year, seed_id, NB, DA, seed_continent, current_continent, previous_continent,
                                               type, gain.continent, loss.continent)]
   if (F){
@@ -82,26 +118,11 @@ if (F){
   saveRDS(Speciation.N, "../Data/Tables/N.Speciation.rda")
 }
 
-if (F){
-  sp.with.bridge<-readRDS("../Data/Tables/sp_full_continents.NULL.rda")
-  sp.with.bridge.N<-sp.with.bridge[, .(N=.N), 
-                                   by=list(type, gain.continent, loss.continent, 
-                                           seed_id, NB, DA, seed_continent)]
-  sp.with.bridge.N<-sp.with.bridge.N[!is.na(type)]
-  unique(sp.with.bridge.N$type)
-  sp.with.bridge.N<-sp.with.bridge.N[type %in% c("New.Immigrants",   "Local.Extinction", "Speciation" , "Extinction")]
-  sp.with.bridge.N[type=="New.Immigrants" & gain.continent==seed_continent, type:="Secondary Invader"]
-  sp.with.bridge.N[type=="New.Immigrants" & gain.continent!=seed_continent, type:="Primary Invader"]
-  sp.with.bridge.N[type=="Speciation" & gain.continent!=seed_continent, type:="Non-local Speciation"]
-  sp.with.bridge.N[type=="Speciation" & gain.continent==seed_continent, type:="Local Speciation"]
-  sp.with.bridge.N[type=="Extinction" & loss.continent!=seed_continent, type:="Failed Invader"]
-  sp.with.bridge.N[type=="Extinction" & loss.continent==seed_continent, type:="Extinction"]
-  sp.with.bridge.N[type=="Local.Extinction" & loss.continent==seed_continent, type:="Local Extinction"]
-  sp.with.bridge.N[type=="Local.Extinction" & loss.continent!=seed_continent, type:="Non-local Extinction"]
-  saveRDS(sp.with.bridge.N, "../Data/Tables/N.Speciation.Extinction.Dispersal.NULL.rda")
-}
 
 df<-readRDS("../Data/Tables/N.Speciation.Extinction.Dispersal.rda")
+
+df[,.(N=sum(N)), by=list(type)]
+table(df$type)
 richness.df<-readRDS("../Data/Tables/N.with.bridge.seed.continent.rda")
 richness.df$label<-sprintf("%d.%s.%s", richness.df$seed_id, richness.df$NB, richness.df$DA)
 
@@ -139,9 +160,9 @@ for (rrrr in c(1:100)){
   rep.richness.list[[rrrr]]<-rep.to_target_continent
   
   rep.to_target_continent_all<-item[, 
-                                .(N.to_target_continent=sum(to_target_continent),
-                                  N.in_source_continent=sum(in_source_continent)), 
-                                by=list(seed_continent)]
+                                    .(N.to_target_continent=sum(to_target_continent),
+                                      N.in_source_continent=sum(in_source_continent)), 
+                                    by=list(seed_continent)]
   rep.to_target_continent_all$rep<-rrrr
   rep.richness.list.all[[rrrr]]<-rep.to_target_continent_all
 }
@@ -172,6 +193,20 @@ extinction.all$type<-ifelse(extinction.all$seed_continent==extinction.all$contin
 extinction.all$other.continent<-NULL
 
 ggplot(extinction.all)+geom_boxplot(aes(x=continent, y=N, color=type))
+
+local.extinction<-rep.df.all[type %in% c("Local Extinction", "Non-local Extinction")]
+local.extinction$continent<-local.extinction$seed_continent
+local.extinction$other.continent<-ifelse(local.extinction$seed_continent=="South America",
+                                         "North America", "South America")
+local.extinction[type=="Non-local Extinction", continent:=other.continent]
+
+local.extinction.all<-local.extinction
+local.extinction.all$event<-"Local Extinction"
+local.extinction.all$type<-ifelse(local.extinction.all$seed_continent==local.extinction.all$continent, 
+                                  "Native", "Immigrant")
+local.extinction.all$other.continent<-NULL
+
+ggplot(local.extinction.all)+geom_boxplot(aes(x=continent, y=N, color=type))
 
 speciation<-rep.df.all[type %in% c("Local Speciation", "Non-local Speciation")]
 speciation$continent<-speciation$seed_continent
@@ -208,22 +243,22 @@ custom_colors <- c(
   "N to S" = color_n2s,
   "S to N" = color_s2n
 )
-p<-ggplot(dispersal.all)+geom_boxplot(aes(x=disp.type, y=N, color=disp.type))+
+p.disp<-ggplot(dispersal.all)+geom_boxplot(aes(x=disp.type, y=N, color=disp.type))+
   facet_wrap(~type)+
   scale_color_manual(values=custom_colors)+
   labs(y="Number of Species")+
   theme_bw()+
   theme(axis.title.x = element_blank(),
         legend.position = "none")
-p
+p.disp
 dispersal.all.se<-dispersal.all[,.(mean=mean(N), sd=sd(N)),
                                 by=list(type, disp.type)]
 setorderv(dispersal.all.se, c("type", "disp.type"))
 to.doc(dispersal.all.se, "Number of dispersal events", 
        "../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.docx",
        digits=2)
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.pdf", width=5, height=3)
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.png", width=5, height=3, bg="white")
+ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.pdf", width=5, height=3)
+ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.png", width=5, height=3, bg="white")
 item1<-rep.richness.df.all[,c("seed_continent",   "rep", "N.to_target_continent")]
 colnames(item1)[3]<-"N"
 item1$type<-"to_target_continent"
@@ -244,19 +279,20 @@ ggplot(richness)+geom_boxplot(aes(x=continent, y=N, color=type))
 
 richness.all<-richness[, c("seed_continent", "type", "N", "rep", "continent")]
 richness.all$event<-"Richness"
-all.df<-rbindlist(list(richness.all, speciation.all, extinction.all))
+all.df<-rbindlist(list(richness.all, speciation.all, extinction.all, local.extinction.all))
 table(all.df$type)
+table(all.df$event)
 
-all.df$event<-factor(all.df$event, levels=c("Speciation", "Extinction", "Richness"))
+all.df$event<-factor(all.df$event, levels=c("Speciation", "Extinction", "Richness", "Local Extinction"))
 all.df$type<-factor(all.df$type, levels=c("Native", "Immigrant"))
 
-p1<-ggplot(all.df[event %in% c("Speciation", "Extinction")])+
+p1<-ggplot(all.df[event %in% c("Speciation", "Extinction", "Local Extinction")])+
   geom_boxplot(aes(x=continent, y=N, color=type))+
   facet_wrap(~event, nrow=1, scale="free")+
   labs(y="Number of events", color="Species type")+
   scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
   theme_bw()+
-  theme(legend.position = "bottom",
+  theme(legend.position = "none",
         axis.title.x = element_blank())
 p1
 p2<-ggplot(all.df[event %in% c("Richness")])+
@@ -266,22 +302,23 @@ p2<-ggplot(all.df[event %in% c("Richness")])+
   scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
   theme_bw()+
   theme(legend.position = "bottom",
-        axis.title.x = element_blank())
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())
 p2
 
-p<-p1+p2+plot_layout(guides = "collect", widths = c(2.1, 1)) & 
+p<-p1/(p.disp+p2+plot_layout(guides = "collect", widths = c(2, 1))) & 
   theme(legend.position = "bottom")
 p
 all.df.se<-all.df[,.(mean=mean(N), sd=sd(N)),
-                                by=list(event, continent, type)]
+                  by=list(event, continent, type)]
 setorderv(all.df.se, c("event", "continent", "type"))
 to.doc(all.df.se, "Number of speciation and extinction events, and species richness", 
        "../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Richness.docx",
        digits=2)
 ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Richness.pdf", 
-       width=10, height=3)
+       width=8, height=5)
 ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Richness.png", 
-       width=10, height=3, bg="white")
+       width=8, height=5, bg="white")
 
 
 #By NB & DA
@@ -300,6 +337,23 @@ extinction.all$other.continent<-NULL
 
 ggplot(extinction.all)+geom_boxplot(aes(x=continent, y=N, color=type))+
   facet_grid(NB~DA)
+
+
+local.extinction<-rep.df[type %in% c("Local Extinction", "Non-local Extinction")]
+local.extinction$continent<-local.extinction$seed_continent
+local.extinction$other.continent<-ifelse(local.extinction$seed_continent=="South America",
+                                         "North America", "South America")
+local.extinction[type=="Non-local Extinction", continent:=other.continent]
+
+local.extinction.all<-local.extinction
+local.extinction.all$event<-"Local Extinction"
+local.extinction.all$type<-ifelse(local.extinction.all$seed_continent==local.extinction.all$continent, 
+                                  "Native", "Immigrant")
+local.extinction.all$other.continent<-NULL
+
+ggplot(local.extinction.all)+geom_boxplot(aes(x=continent, y=N, color=type))+
+  facet_grid(NB~DA)
+
 
 speciation<-rep.df[type %in% c("Local Speciation", "Non-local Speciation")]
 speciation$continent<-speciation$seed_continent
@@ -335,9 +389,9 @@ dispersal.all[seed_continent=="North America" & type=="Secondary Invader", disp.
 dispersal.all[seed_continent=="South America" & type=="Primary Invader", disp.type:="S to N"]
 dispersal.all[seed_continent=="South America" & type=="Secondary Invader", disp.type:="N to S"]
 dispersal.all$NB<-factor(dispersal.all$NB, 
-                     levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
-                     labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
-p<-ggplot(dispersal.all)+
+                         levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                         labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+p.disp<-ggplot(dispersal.all)+
   geom_boxplot(aes(x=disp.type, y=N, color=type))+
   facet_grid(DA~NB, scale="free")+
   scale_color_manual(values=c("Primary Invader"=color_low, "Secondary Invader"=color_high))+
@@ -345,7 +399,7 @@ p<-ggplot(dispersal.all)+
   theme_bw()+
   theme(axis.title.x = element_blank(),
         legend.position = "bottom")
-p
+p.disp
 
 dispersal.all.se<-dispersal.all[,.(mean=mean(N), sd=sd(N)),
                                 by=list(type, disp.type, NB, DA)]
@@ -353,8 +407,8 @@ setorderv(dispersal.all.se, c("type", "disp.type", "NB", "DA"))
 to.doc(dispersal.all.se, "Number of dispersal events", 
        "../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.details.docx",
        digits=2)
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.details.pdf", width=10, height=5)
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.details.png", width=10, height=5, bg="white")
+ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.details.pdf", width=10, height=5)
+ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.details.png", width=10, height=5, bg="white")
 
 
 
@@ -379,14 +433,15 @@ ggplot(richness)+geom_boxplot(aes(x=continent, y=N, color=type))+
 
 richness.all<-richness[, c("seed_continent", "type", "N", "rep", "continent", "NB", "DA")]
 richness.all$event<-"Richness"
-all.df<-rbindlist(list(richness.all, speciation.all, extinction.all), use.names=T)
+all.df<-rbindlist(list(richness.all, speciation.all, extinction.all, local.extinction.all), use.names=T)
 table(all.df$type)
+table(all.df$event)
 
-all.df$event<-factor(all.df$event, levels=c("Speciation", "Extinction", "Richness"))
+all.df$event<-factor(all.df$event, levels=c("Speciation", "Extinction", "Richness", "Local Extinction"))
 all.df$type<-factor(all.df$type, levels=c("Native", "Immigrant"))
 all.df$NB<-factor(all.df$NB, 
-                     levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
-                     labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+                  levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                  labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
 all.df$continent<-ifelse(all.df$continent=="North America", "N", "S")
 p<-ggplot(all.df)+geom_boxplot(aes(x=continent, y=N, color=type))+
   facet_grid(event~NB+DA, scale="free")+
@@ -404,9 +459,9 @@ to.doc(all.df.se, "Number of speciation and extinction events, and species richn
        "../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Richness.details.docx",
        digits=2)
 ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Richness.details.pdf", 
-       width=10, height=5)
+       width=12, height=8)
 ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Richness.details.png", 
-       width=10, height=5, bg="white")
+       width=12, height=8, bg="white")
 
 
 
@@ -460,7 +515,7 @@ ggplot(dispersal)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
 dispersal<-rep.df[type %in% c("Secondary Invader", "Primary Invader")]
 dispersal$continent<-dispersal$seed_continent
 dispersal$other.continent<-ifelse(dispersal$seed_continent=="South America",
-                                   "North America", "South America")
+                                  "North America", "South America")
 
 dispersal[type=="Primary Invader", continent:=other.continent]
 
@@ -476,7 +531,7 @@ ggplot(dispersal)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
 local_extinction<-rep.df.all[type %in% c("Local Extinction", "Non-local Extinction")]
 local_extinction$continent<-local_extinction$seed_continent
 local_extinction$other.continent<-ifelse(local_extinction$seed_continent=="South America",
-                                  "North America", "South America")
+                                         "North America", "South America")
 
 local_extinction[type=="Non-local Extinction", continent:=other.continent]
 
@@ -485,7 +540,7 @@ ggplot(local_extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent
 local_extinction<-rep.df[type %in% c("Local Extinction", "Non-local Extinction")]
 local_extinction$continent<-local_extinction$seed_continent
 local_extinction$other.continent<-ifelse(local_extinction$seed_continent=="South America",
-                                  "North America", "South America")
+                                         "North America", "South America")
 
 local_extinction[type=="Non-local Extinction", continent:=other.continent]
 
@@ -495,7 +550,7 @@ ggplot(local_extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent
 
 
 rep.df.sd<-rep.df.all[, .(N=mean(N), sd=sd(N)),
-                  by=list(seed_continent, type)]
+                      by=list(seed_continent, type)]
 pd <- position_dodge(width = 0.9)
 
 p<-ggplot(rep.df.sd)+

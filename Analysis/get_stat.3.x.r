@@ -5,7 +5,7 @@ library(DBI)
 library(ggplot2)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 target<-"/media/huijieqiao/Butterfly/GABI/Results_NULL"
-target<-"/media/huijieqiao/Butterfly/GABI/Results"
+#target<-"/media/huijieqiao/Butterfly/GABI/Results"
 
 folders<-list.dirs(target, full.names=T)
 length(folders)

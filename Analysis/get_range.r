@@ -5,7 +5,7 @@ library(DBI)
 library(ggplot2)
 library(ggh4x)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
-target<-"/media/huijieqiao/Butterfly/GABI/Results"
+target<-"/media/huijieqiao/Butterfly/GABI/Results_NULL"
 if (F){
   folders<-list.dirs(target, full.names=T)
   length(folders)
@@ -19,24 +19,31 @@ cells<-readRDS("../Data/Tables/cells.with.dist.rda")
 colnames(cells)[1]<-"global_id"
 cells$geometry<-NULL
 cells<-data.table(cells)
-folders<-readRDS("../Data/LOG/all.sim.folders.rda")
+folders<-list.dirs(target)
+folders<-folders[2:length(folders)]
 folders<-folders[sample(length(folders), length(folders))]
 f<-folders[1]
 
 
 for (i in c(1:length(folders))){
   f<-folders[i]
+  
   info<-basename(f)
   infos<-strsplit(info, "\\.")[[1]]
   
   print(paste(f, i, length(folders)))
+  fffff<-sprintf("%s/%s.log", f, info)
+  if (!file.exists(fffff)){
+    next()
+  }
+  
   target<-sprintf("%s/range.rda", f)
   if (file.exists(target)){
     next()
   }
   
   saveRDS(NULL, target)
-  log<-fread(sprintf("%s/%s.log", f, info))
+  log<-fread(fffff)
   colnames(log)<-c("year", "global_id", "group_id", "n", "sp_id", "suitable")
   log<-log[suitable==1]
   log<-log[year==0]
@@ -67,7 +74,7 @@ if (F){
   colnames(cells)[1]<-"global_id"
   cells$geometry<-NULL
   cells<-data.table(cells)
-  folders<-readRDS("../Data/LOG/all.sim.folders.rda")
+  folders<-list.dirs(target)
   folders<-folders[2:length(folders)]
   
   folders<-folders[sample(length(folders), length(folders))]
@@ -98,10 +105,10 @@ if (F){
   }
   
   range.df<-rbindlist(range.list)
-  saveRDS(range.df, "../Data/Tables/Species.Range.rda")
-  #saveRDS(range.df, "../Data/Tables/Species.Range.NULL.rda")
+  #saveRDS(range.df, "../Data/Tables/Species.Range.rda")
+  saveRDS(range.df, "../Data/Tables/Species.Range.NULL.rda")
   final.dis.df<-rbindlist(final.dis)
-  saveRDS(final.dis.df, "../Data/Tables/Final.Distribution.rda")
-  #saveRDS(final.dis.df, "../Data/Tables/Final.Distribution.NULL.rda")
+  #saveRDS(final.dis.df, "../Data/Tables/Final.Distribution.rda")
+  saveRDS(final.dis.df, "../Data/Tables/Final.Distribution.NULL.rda")
   
 }

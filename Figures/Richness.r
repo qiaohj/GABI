@@ -356,7 +356,7 @@ ggplot(lat, aes(y = lat_bin, x = N_SP)) +
 cor(continents.full$N.sp.null, continents.full$N.sp.sim)
 cor(continents.full$N.iucn, continents.full$N.sp.sim)
 cor(continents.full$N.iucn, continents.full$N.sp.null)
-p<-p1+p3+p_ldg
+p<-p1+p2+p3+p_ldg
 p
 ggsave(p, filename="../Figures/Figure.Richness/Figure.Richness.pdf", width=12, height=5)
 ggsave(p, filename="../Figures/Figure.Richness/Figure.Richness.png", width=12, height=5)

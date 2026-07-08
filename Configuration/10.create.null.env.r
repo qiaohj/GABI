@@ -72,7 +72,13 @@ conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
 simulations<-data.table(dbReadTable(conn, "simulations"))
 timeline<-data.table(dbReadTable(conn, "timeline"))
 dbDisconnect(conn)
-simulations$speciation_years<-10000
+#simulations$speciation_years<-10000
+
+seeds<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+seeds<-unique(seeds[, c("seed_id", "nb", "da", "label")])
+simulations$is_run<-0
+simulations[label %in% seeds$label, is_run:=1]
+table(simulations$is_run)
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.null.sqlite")
 dbWriteTable(conn, "simulations", simulations, overwrite=T)
 dbWriteTable(conn, "timeline", timeline, overwrite=T)
