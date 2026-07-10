@@ -9,7 +9,7 @@ library(phytools)
 #library(ggtree)
 library(phangorn)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
-target<-"/media/huijieqiao/Butterfly/GABI/Results"
+target<-"/media/huijieqiao/Butterfly/GABI/Results_NULL"
 ll<-readRDS("../Data/Tables/cells.with.dist.rda")
 local2<-data.table(global_id=as.numeric(ll$seqnum), lon=ll$lon, lat=ll$lat)
 local2$lat_bin<-floor((local2$lat+0.5)/1)*1
@@ -53,7 +53,7 @@ for (i in c(1:length(folders))){
     }
     
     log.full<-merge(log, local, by.x="global_id", by.y="global_id")
-    ids<-strsplit(gsub("/media/huijieqiao/Butterfly/GABI/Results/", "", f), "\\.")[[1]]
+    ids<-strsplit(gsub("/media/huijieqiao/Butterfly/GABI/Results_NULL/", "", f), "\\.")[[1]]
     log.div<-log.full[, .(N_SP=length(unique(sp_id)), 
                           seed_id=ids[1], 
                           nb=ids[2], da=ids[3]), 

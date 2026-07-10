@@ -10,14 +10,14 @@ library(phytools)
 library(phangorn)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 if (F){
-  sp<-readRDS("../Data/Tables/virtual.species.merge.isthmus.rda")
+  sp<-readRDS("../Data/Tables/virtual.species.merge.isthmus.NULL.rda")
   table(sp$continent)
   sp$Parent<-sub("-[^-]*$", "", sp$sp_id)
   sp$year<-as.numeric(sp$year)
   sp[sp_id==Parent, Parent:=""]
   head(sp)
   
-  species.type.N<-readRDS("../Data/Tables/species.type.N.merge.isthmus.rda")
+  species.type.N<-readRDS("../Data/Tables/species.type.N.merge.isthmus.NULL.rda")
   species.type.N$sp_id<-as.character(species.type.N$sp_id)
   species.type.N$Parent<-as.character(species.type.N$Parent)
   species.type.N[sp_id==Parent, Parent:=""]
@@ -170,7 +170,7 @@ if (F){
   }
   event.N<-sp_full_continents[,.(N=.N), by=list(parent_continent, previous_continent, current_continent, type)]
   fwrite(event.N, 
-         "../Data/full.event.N.csv")
+         "../Data/full.event.N.merge.isthmus.NULL.csv")
   table(sp_full_continents$type)
   
   sp_full_continents$south.america<-0
@@ -188,7 +188,7 @@ if (F){
                      south.america:=-1]
   sp_full_continents[south.america==1 & north.america==1]
   
-  saveRDS(sp_full_continents, "../Data/Tables/sp_full_continents.merge.isthmus.rda")
+  saveRDS(sp_full_continents, "../Data/Tables/sp_full_continents.merge.isthmus.NULL.rda")
   
   #sp[year==1604 & seed_id==12 & NB=="TINY" & DA=="POOR"]
   sp_full_continents[year==-1604 & seed_id==12 & NB=="TINY" & DA=="POOR"]

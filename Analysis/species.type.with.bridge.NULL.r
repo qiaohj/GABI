@@ -10,7 +10,8 @@ library(phytools)
 library(phangorn)
 setDTthreads(20)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
-sp<-readRDS("../Data/Tables/virtual.species.merge.isthmus.NULL.rda")
+sp<-readRDS("../Data/Tables/virtual.species.NULL.rda")
+table(sp$continent)
 sp_N<-sp[,.(N=.N), by=list(seed_id, nb, da)]
 sp$Parent<-sub("-[^-]*$", "", sp$sp_id)
 
@@ -20,7 +21,6 @@ if (F){
   ff[!ff %in% labels]
 }
 labels<-unique(sp$label)
-table(sp$continent)
 sp$year<-as.numeric(sp$year)
 #sp_clean<-sp[continent %in% c("North America", "South America")]
 
@@ -37,11 +37,12 @@ assign_named_row <- function(dt, row, vals) {
 }
 labels<-labels[sample(length(labels), length(labels))]
 j=1
-
+#labels<-labels[labels %in% c("2782.BIG.GOOD", "11030.MODERATE.GOOD", "36125.MODERATE.GOOD",
+#                             "11021.NARROW.GOOD", "40356.NARROW.GOOD")]
 for (j in c(1:length(labels))){
   l<-labels[j]
   print(paste(j, length(labels), l))
-  target<-sprintf("../Data/temp.N.sp.NULL.isthmus/%s.rda", l)
+  target<-sprintf("../Data/temp.N.sp.NULL/%s.rda", l)
   if (file.exists(target)){
     next()
   }
@@ -108,7 +109,6 @@ for (j in c(1:length(labels))){
       item<-d[sp_id==sp.id]
       item<-item[year==min(year) & continent %in% c("North America", "South America")]
       item<-item[,.(N=sum(N)), by=list(year, continent, sp_id, seed_id, nb, da, label, Parent)]
-      
       if (nrow(item)==1){
         continent<-item$continent
       }
@@ -141,7 +141,8 @@ for (j in c(1:length(labels))){
     assign_named_row(species, 1, n)
   }
   species$origin_continent<-unique(d[year==-1899 & 
-                                       continent %in% c("North America", "South America")]$continent)  
+                                       continent %in% c("North America", "South America")]$continent)
+  
   saveRDS(species, target)
 }
 
@@ -151,7 +152,7 @@ if (F){
     l<-labels[j]
     strs<-strsplit(l, "\\.")[[1]]
     print(paste(j, length(labels), l))
-    target<-sprintf("../Data/temp.N.sp.NULL.isthmus/%s.rda", l)
+    target<-sprintf("../Data/temp.N.sp.NULL/%s.rda", l)
     df<-readRDS(target)
     df$NB<-strs[[2]]
     df$DA<-strs[[3]]
@@ -163,7 +164,7 @@ if (F){
   all_N<-rbindlist(all_N, fill=T)
   all_N[continent=="", continent:=all_N[continent==""]$origin_continent]
   all_N<-all_N[!is.na(sp_id)]
-  saveRDS(all_N, "../Data/Tables/species.type.N.merge.isthmus.NULL.rda")
+  saveRDS(all_N, "../Data/Tables/species.type.N.NULL.rda")
   table(all_N$NB)
   all_N_gg<-all_N
   p<-ggplot(all_N_gg[Speciation<500])+geom_point(aes(x=Extinction, y=Speciation))+
