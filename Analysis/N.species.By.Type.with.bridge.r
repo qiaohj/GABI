@@ -6,7 +6,7 @@ library(ggplot2)
 library(ggh4x)
 library(ape)
 library(phytools)
-library(ggtree)
+#library(ggtree)
 library(phangorn)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 if (F){
@@ -197,9 +197,8 @@ if (F){
 if (F){
   sp<-readRDS("../Data/Tables/virtual.species.NULL.rda")
   table(sp$continent)
-  table(sp$nb)
   sp$Parent<-sub("-[^-]*$", "", sp$sp_id)
-  sp<-sp[nb!="HUGE-HUGE"]
+  sp$year<-as.numeric(sp$year)
   sp[sp_id==Parent, Parent:=""]
   head(sp)
   
@@ -208,27 +207,24 @@ if (F){
   species.type.N$Parent<-as.character(species.type.N$Parent)
   species.type.N[sp_id==Parent, Parent:=""]
   
-  #seeds.all<-readRDS("../Data/Tables/random.seeds.rda")
   
   colnames(species.type.N)[c(8, 12)]<-c("origin_continent", "seed_continent")
   species.type.N[origin_continent!=seed_continent]
   
   species.type<-species.type.N[, c("sp_id", "NB", "DA", "from", "to", "type",
                                    "origin_continent", "seed_continent")]
-  species.type<-species.type[NB!="HUGE-HUGE"]
   colnames(sp)[c(6,7)]<-c("NB", "DA")
   colnames(species.type)
   
-  burn_in<-(-3100/2)
-  sp$sp_id<-as.character(sp$sp_id)
-  #species.type$sp_id
   sp_full<-merge(sp, species.type, by=c("sp_id", "NB", "DA"))
+  
   colnames(sp_full)[5]<-"current_continent"
   sp_full$year<-sp_full$year * -1
   
   sp_full.N<-sp_full[, .(N=uniqueN(current_continent)), 
                      by=.(year, sp_id, NB, DA, seed_id, Parent, 
                           from, to, origin_continent, seed_continent)]
+  
   sp_full$species.label.year<-sprintf("%s.%s.%s.%d", sp_full$sp_id,
                                       sp_full$NB, sp_full$DA, sp_full$year)
   sp_full.N$species.label.year<-sprintf("%s.%s.%s.%d", sp_full.N$sp_id,
@@ -322,14 +318,27 @@ if (F){
                                    by=list(parent_continent, previous_continent,
                                            current_continent, type, gain.continent,
                                            loss.continent)]
+  dim(combinations)
   setorderv(combinations, c("previous_continent", "current_continent", "parent_continent"))
   if (F){
-    fwrite(combinations, 
-           "../Data/full.combination.csv")
+    
+    oldcombinations<-fread("/media/huijieqiao/Butterfly/GABI/Data/20251213/Tables/full.combination.csv")
+    combination.new<-merge(combinations[,c("parent_continent",
+                                           "previous_continent",
+                                           "current_continent", "N"
+    )], oldcombinations, 
+    by=c("parent_continent",
+         "previous_continent",
+         "current_continent"
+    ), all=T)
+    
+    fwrite(combination.new, 
+           "../Data/Tables/full.combination.csv")
   }
   
   ##Detect the type of species
   combinations<-fread( "../Data/Tables/full.combination.csv")
+  dim(combinations)
   i=1
   for (i in c(1:nrow(combinations))){
     com<-combinations[i]
@@ -365,4 +374,7 @@ if (F){
   sp_full_continents[south.america==1 & north.america==1]
   
   saveRDS(sp_full_continents, "../Data/Tables/sp_full_continents.NULL.rda")
+  
+  #sp[year==1604 & seed_id==12 & NB=="TINY" & DA=="POOR"]
+  sp_full_continents[year==-1604 & seed_id==12 & NB=="TINY" & DA=="POOR"]
 }

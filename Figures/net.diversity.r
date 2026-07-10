@@ -18,9 +18,16 @@ if (F){
   sp.full<-rbindlist(list(sp.with.bridge.NA, sp.with.bridge.SA))
   year_window_size<-50
   sp.full$year_window<-floor(sp.full$year/year_window_size)*year_window_size
-  N.species<-sp.full[,.(N_SP=length(unique(sp_id))), 
+  
+  N.species<-sp.full[,.(N_SP_FULL=length(unique(sp_id)),
+                        N_SP = length(unique(sp_id[year_window == year]))), 
                             by=list(seed_id, year_window, 
                                     NB, DA, current_continent, seed_continent)]
+  ggplot(N.species)+
+    geom_point(aes(x=N_SP_FULL, N_SP, color=current_continent))+
+    geom_abline()+
+    coord_equal()+
+    facet_grid(DA~NB)
   
   N.species$label<-sprintf("%d.%s.%s", N.species$seed_id, N.species$NB, N.species$DA)
   N.species$type<-ifelse(N.species$current_continent==N.species$seed_continent, "Native", "Immigrant")
@@ -46,12 +53,6 @@ if (F){
   saveRDS(rep.df.all, sprintf("../Data/Tables/N.net.diversity.all.window.size.%d.rep.rda", year_window_size))
   
   
-  dt_rep2 <- item
-  setorder(dt_rep2, seed_continent, type, year)
-  
-  dt_rep2[, diff := N_SP - shift(N_SP), by = .(seed_continent, type)]
-  sudden_drop_row <- dt_rep2[which.min(diff)]
-  print(sudden_drop_row)
   
 }
 

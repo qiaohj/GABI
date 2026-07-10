@@ -4,17 +4,32 @@ library(sf)
 library(patchwork)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 
-log<-fread("/media/huijieqiao/Butterfly/GABI/Results_NULL/41655.NARROW.GOOD/41655.NARROW.GOOD.log")
+log_80<-fread("/media/huijieqiao/Butterfly/GABI/Results_NULL_80/11030.MODERATE.GOOD/11030.MODERATE.GOOD.log")
 colnames(log)<-c("year", "global_id", "group_id", "n", "sp_id", "suitable")
 table(log$suitable)
 log<-log[suitable==1]
-log.normal<-fread("/media/huijieqiao/Butterfly/GABI/Results/41655.NARROW.GOOD/41655.NARROW.GOOD.log")
+length(unique(log[year==0]$sp_id))
+
+log_110<-fread("/media/huijieqiao/Butterfly/GABI/Results_NULL_110/11030.MODERATE.GOOD/11030.MODERATE.GOOD.log")
+colnames(log_110)<-c("year", "global_id", "group_id", "n", "sp_id", "suitable")
+table(log_110$suitable)
+log_110<-log_110[suitable==1]
+length(unique(log_110[year==0]$sp_id))
+
+log_150<-fread("/media/huijieqiao/Butterfly/GABI/Results_NULL_150/11030.MODERATE.GOOD/11030.MODERATE.GOOD.log")
+colnames(log_150)<-c("year", "global_id", "group_id", "n", "sp_id", "suitable")
+table(log_150$suitable)
+log_150<-log_150[suitable==1]
+length(unique(log_150[year==0]$sp_id))
+
+log.normal<-fread("/media/huijieqiao/Butterfly/GABI/Results/11030.MODERATE.GOOD/11030.MODERATE.GOOD.log")
 colnames(log.normal)<-c("year", "global_id", "group_id", "n", "sp_id", "suitable")
 
 table(log.normal$suitable)
 log.normal<-log.normal[suitable==1]
+length(unique(log.normal[year==0]$sp_id))
 
-log.no.sp<-fread("/media/huijieqiao/Butterfly/GABI/Results_NULL_NO_SPECIATION/41655.NARROW.GOOD/41655.NARROW.GOOD.log")
+log.no.sp<-fread("/media/huijieqiao/Butterfly/GABI/Results_NULL_NO_SPECIATION/11030.MODERATE.GOOD/11030.MODERATE.GOOD.log")
 colnames(log.no.sp)<-c("year", "global_id", "group_id", "n", "sp_id", "suitable")
 
 table(log.no.sp$suitable)
@@ -23,12 +38,13 @@ log.no.sp<-log.no.sp[suitable==1]
 cells<-read_sf("../Shape/isea3h8/N_S_America.shp")
 
 years<-unique(log$year)
-y=1899
+y=0
 all.cells.id<-unique(log$global_id, log.normal$global_id)
 cells_mask<-cells[(cells$seqnum %in% all.cells.id),]
 p1<-ggplot()+geom_sf(data=cells, fill=NA, color="lightgrey") + 
   geom_sf(data=cells_mask, fill=NA, color="black")
-ggsave(p1, filename="../Figures/Null.Example/41655.study.area.png", width=5, height=5)
+p1
+ggsave(p1, filename="../Figures/Null.Example/11030.MODERATE.GOOD.png", width=5, height=5)
 for (y in years){
   print(y)
   item<-log[year==y]
@@ -47,7 +63,7 @@ for (y in years){
   p2<-ggplot()+
     geom_sf(data=cells_mask, fill=NA, color="lightgrey")+
     geom_sf(data=item.sf, , fill="red")+
-    geom_sf_text(data = item.sf, aes(label = N_SP), size = 3, color = "white") +
+    geom_sf_text(data = item.sf, aes(label = N_SP), size = 2, color = "white") +
     
     labs(title=sprintf("No Change @ %d", y))+
     theme_bw()+
@@ -68,6 +84,7 @@ for (y in years){
     theme_bw()+
     theme(legend.position = "none")
   p<-p2+p3+p4
+  p
   ggsave(p, filename=sprintf("../Figures/Null.Example/By.year/%d.png", y), width=10, height=5)
   #0.376596738,0.724239343,0.976679685,0.9995805560000001,1.0
 }

@@ -145,7 +145,7 @@ if (F){
 if (F){
   
   
-  hexagon<-readRDS("../Data/cells.with.dist.rda")
+  hexagon<-readRDS("../Data/Tables/cells.with.dist.rda")
   cells<-data.table(global_id=as.numeric(hexagon$seqnum), continent=hexagon$continent,
                     lon=hexagon$lon, lat=hexagon$lat)
   biome<-read_sf("../Shape/Ecoregions2017/biome.simplify.shp")
