@@ -95,6 +95,7 @@ p1
 ggsave(p1, filename="../Figures/Lat.Gradient/Lat.Gradient.pdf", width=6, height=6)
 ggsave(p1, filename="../Figures/Lat.Gradient/Lat.Gradient.png", width=6, height=6, bg="white")
 setorderv(lat.all.N, c("seed_continent", "continent", "lat_bin"))
+fwrite(lat.all.N, "../Figures/Lat.Gradient/Lat.Gradient.csv")
 to.doc(lat.all.N, "Latitudinal gradient", "../Figures/Lat.Gradient/Lat.Gradient.docx", digits=2)
 lat.all.N<-rep.df[,.(N_SP=mean(N_SP), sd=sd(N_SP)), 
                       by=list(seed_continent, continent, lat_bin, type, nb, da)]
@@ -143,5 +144,6 @@ p
 ggsave(p, filename="../Figures/Lat.Gradient/Lat.Gradient.NB.DA.pdf", width=10, height=6)
 ggsave(p, filename="../Figures/Lat.Gradient/Lat.Gradient.NB.DA.png", width=10, height=6, bg="white")
 setorderv(lat.all.N, c("nb", "da", "seed_continent", "continent", "lat_bin"))
+fwrite(lat.all.N, "../Figures/Lat.Gradient/Lat.Gradient.NB.DA.csv")
 to.doc(lat.all.N, "Latitudinal gradient", "../Figures/Lat.Gradient/Lat.Gradient.NB.DA.docx", digits=2)
 

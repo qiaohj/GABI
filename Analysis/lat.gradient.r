@@ -85,7 +85,7 @@ for (i in c(1:length(folders))){
     }
     all_df<-rbindlist(all)
     
-    saveRDS(all_df, "../Data/Tables/Lat.N.1defree.without.bridges.rda")
+    saveRDS(all_df, "../Data/Tables/Lat.N.1defree.without.bridges.NULL.rda")
   }
   
 }
