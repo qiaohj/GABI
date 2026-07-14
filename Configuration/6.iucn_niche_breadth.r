@@ -119,6 +119,7 @@ length(unique(nb_full_df[is_sa==T & is_na ==T & range>0]$species))
 
 nb_full_df<-readRDS(sprintf("../Data/IUCN_NB/Mammals.%s.rda", label))
 
+
 max.temp<-nb_full_df[var=="tasmax"]
 min.temp<-nb_full_df[var=="tasmin"]
 min.temp<-min.temp[, c("species", "min", "continent")]

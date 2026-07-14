@@ -7,6 +7,7 @@ setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 source("Figures/common.r")
 
 iucn<-readRDS("../Data/Tables/nb_range_mammals_iucn.rda")
+unique(iucn$species)
 pr_percentile<-quantile(iucn[var=="pr"]$range, 
                         c(0.2, 0.4, 0.6, 0.8))
 tasmean_percentile<-quantile(iucn[var=="tas"]$range, 
@@ -48,9 +49,13 @@ N<-nb_full_df[range>0,.(N_SP=length(unique(species))),
               by=list(is_na, is_sa)]
 N.doc<-nb_full_df[range>0 & (is_na==T | is_sa==T)]
 N.doc<-unique(N.doc)
-
+N.doc$N_CELLS<-NULL
 N.doc$min_3sd<-NULL
 N.doc$max_3sd<-NULL
 N.doc$range_3sd<-NULL
 N.doc$continent<-NULL
+colnames(N.doc)[2]<-"N_CELLS"
+unique(N.doc$species)
+dim(N.doc)
+#N.doc[N_CELLS!=N_CELLS_ALL]
 fwrite(N.doc, "../Figures/NB/IUCN.NB.csv")

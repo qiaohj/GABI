@@ -147,3 +147,12 @@ setorderv(lat.all.N, c("nb", "da", "seed_continent", "continent", "lat_bin"))
 fwrite(lat.all.N, "../Figures/Lat.Gradient/Lat.Gradient.NB.DA.csv")
 to.doc(lat.all.N, "Latitudinal gradient", "../Figures/Lat.Gradient/Lat.Gradient.NB.DA.docx", digits=2)
 
+dis<-readRDS("../Data/Tables/Final.Distribution.Unique.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+dis.boot<-dis[seed_id %in% unique(seeds.all$seed_id)]
+ll<-readRDS("../Data/Tables/cells.with.dist.rda")
+seed.continent<-unique(data.table(seed_id=seeds.all$seed_id, seed_continent=seeds.all$continent))
+dis.boot.ll<-merge(dis.boot, ll, by.x="global_id", by.y="seqnum")
+dis.boot.ll.seed<-merge(dis.boot.ll, seed.continent, by="seed_id")
+dis.boot.ll.seed[,.(max_ll=max(lat), min_ll=min(lat)), 
+                 by=c("seed_continent")]

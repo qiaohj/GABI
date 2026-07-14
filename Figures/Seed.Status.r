@@ -120,10 +120,13 @@ no.boot.seeds.id
 outliers<-outliers[, c("seed_id", "nb", "da", "continent")]
 outliers$type<-"outliers"
 outliers$label<-sprintf("%d.%s.%s", outliers$seed_id, outliers$nb, outliers$da)
-no.boot.seeds.id<-data.table(expand.grid(seed_id=no.boot.seeds.id, nb=unique(df.detail$nb),
+no.boot.seeds.id<-data.table(expand.grid(seed_id=no.boot.seeds.id, 
+                                         nb=unique(df.detail$nb),
                                          da=unique(df.detail$da),
                                          continent="North America"))
 no.boot.seeds.id$type<-"no.survive"
+no.boot.seeds.id[,.(N=.N), by=list(nb, da, continent, type)]
+
 boot<-unique(all_ramdom_seeds_df[, c("seed_id", "nb", "da", "continent")])
 boot$type<-"bootstrapping"
 boot$label<-sprintf("%d.%s.%s", boot$seed_id, boot$nb, boot$da)
@@ -173,6 +176,14 @@ p<-ggplot()+
   theme_bw()+
   theme(legend.position = "bottom")
 p
+
+no_su<-data.table(global_id=all.seeds.shp$seqnum, continent=all.seeds.shp$continent.x,
+                  NB=all.seeds.shp$nb, DA=all.seeds.shp$da,
+                  type=all.seeds.shp$type)
+
+no_su<-no_su[type=="No Survive"]
+no_su_N<-no_su[,.(N=.N), by=list(continent, NB, DA)]
+
 ggsave(p, filename="../Figures/Seeds/Seeds.pdf", width=5, height=5)
 ggsave(p, filename="../Figures/Seeds/Seeds.png", width=5, height=5, bg="white")
 
@@ -235,3 +246,36 @@ NNNN$nb<-factor(NNNN$nb,
 setorderv(NNNN, c("nb", "continent"))
 
 saveRDS(simulations_filter, "../Data/Tables/Seed.Pool.rda")
+
+simulations_filter<-readRDS("../Data/Tables/Seed.Pool.rda")
+df_N_checked<-df.detail[year==burn_in & N_SPECIES>0, 
+                        .(N=.N), by=list(seed_id, nb)]
+simulations_filter$label<-sprintf("%d.%s", simulations_filter$global_id, simulations_filter$nb)
+no_su<-simulations_filter[label %in% df_N_checked[N!=2]$label]
+
+NNNN<-simulations_filter[suitable==F, .(N=.N), by=list(nb, da, continent)]
+NNNN$da<-NULL
+NNNN<-unique(NNNN)
+NNNN$nb<-factor(NNNN$nb, 
+                levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+
+setorderv(NNNN, c("nb", "continent"))
+NNNN
+sum(NNNN$N)
+to.doc(NNNN, "No Survive", "../Figures/Seeds/no.surveve.docx", digits = 0)
+
+all_ramdom_seeds_df<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+
+N_seed_usage<-all_ramdom_seeds_df[, .(N=.N/100), by=c("continent", "nb", "da")]
+seeed_rep<-unique(all_ramdom_seeds_df[,c("continent", "seed_id", "nb", "da")])
+
+N_seed_rep<-seeed_rep[, .(N=.N), by=list(continent, nb, da)]
+N_seed_rep$nb<-factor(N_seed_rep$nb, 
+                levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+N_seed_rep$per<-round(N_seed_rep$N/500, 2)
+setorderv(N_seed_rep, c("nb", "da", "continent"))
+to.doc(N_seed_rep, "Bootstraping seeds", 
+       "../Figures/Seeds/bootstraping.seeds.docx", digits = 2)
+  

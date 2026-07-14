@@ -94,6 +94,10 @@ if (F){
 
 final.df<-readRDS("../Data/Tables/bridge.usage.details.rep.rda")
 final.df$species.label<-sprintf("%s.%s.%s", final.df$sp_id, final.df$NB, final.df$DA)
+rep.df.all.details<-final.df[,.(N_SP=length(unique(species.label))), 
+                     by=list(seed_continent, bridge_continent, across_bridge, rep, NB, DA)]
+rep.df.all.details[bridge_continent=="bridge2", .(N=mean(N_SP)), by=list(across_bridge, DA)]
+
 rep.df.all<-final.df[,.(N_SP=length(unique(species.label))), 
                      by=list(seed_continent, bridge_continent, across_bridge, rep)]
 rep.df.all.se<-rep.df.all[,.(N_SP=mean(N_SP), sd=sd(N_SP)), 
@@ -180,4 +184,7 @@ ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.NB.DA.pdf", width=12, h
 ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.NB.DA.png", width=12, height=6, bg="white")
 to.doc(rep.df.se, "Bridge usage", "../Figures/Bridge.Usage/Bridge.Usage.NB.DA.docx",
        digits = 2)
+fwrite(rep.df.se, "../Figures/Bridge.Usage/Bridge.Usage.NB.DA.csv")
 
+
+rep.df.se[bridge_continent=="Caribbean" & across_bridge==T]

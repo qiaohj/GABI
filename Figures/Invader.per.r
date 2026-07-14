@@ -82,8 +82,9 @@ p<-ggplot()+
   geom_sf(data=cells.invader.pre, aes(fill=Invader_per), color=NA)+
   scale_fill_gradient2(high=color_high, mid=color_mid2, low=color_low, midpoint = 0.5)+
   theme_bw()+
-  labs(fill="Immigrant persentage")+
-  theme(legend.position = "bottom")
+  labs(fill="Immigrant percentage")+
+  theme(legend.position = "bottom")+
+  guides(fill = guide_colorbar(barwidth = unit(6, "cm")))
 p
 ggsave(p, filename="../Figures/Invader.Per/Invader.Per.pdf", width=6, height=6)
 ggsave(p, filename="../Figures/Invader.Per/Invader.Per.png", width=6, height=6, bg="white")
@@ -130,8 +131,9 @@ p<-ggplot()+
   scale_x_continuous(guide = guide_axis(check.overlap = TRUE)) +
   theme_bw()+
   facet_grid(da~nb)+
-  labs(fill="Immigrant persentage")+
-  theme(legend.position = "bottom")
+  labs(fill="Immigrant percentage")+
+  theme(legend.position = "bottom")+
+  guides(fill = guide_colorbar(barwidth = unit(10, "cm")))
 p
 ggsave(p, filename="../Figures/Invader.Per/Invader.Per.NB.DA.pdf", width=15, height=6)
 ggsave(p, filename="../Figures/Invader.Per/Invader.Per.NB.DA.png", width=15, height=6, bg="white")

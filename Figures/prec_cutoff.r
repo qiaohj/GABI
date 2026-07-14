@@ -16,9 +16,28 @@ if (F){
   dbDisconnect(mydb)
   simulations<-data.table(simulations)
   nrow(simulations)
+  new_cols<-c("tasmin_low", "tasmin_high",
+              "tasmax_low", "tasmax_high",
+              "pr_low", "pr_high")
+  simulations[, (new_cols) := tstrsplit(simulations$nb_v, split = "[,|]", type.convert = TRUE)]
+  simulations[,.(N=.N), by=list(NB)]
+  
+  simulations<-merge(cell.dist, simulations, by.y="seed_id", by.x="seqnum")
+  simulations$nb<-factor(simulations$nb, 
+                            levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                            labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+  
+  cutoff_sim_all<-simulations[which(simulations$pr_low<0),]
+  simulations[,.(N=.N), by=list(nb, continent)]
+  
+  cutoff_sim_all[,.(N=.N), by=list(nb, continent)]
+  cutoff_sim_all[continent=="South America"]
   seeds<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
   
-  simulations.dt<-unique(data.table(seed_id=simulations$global_id, NB=simulations$nb,
+  
+  simulations[global_id==9078]
+  simulations.dt<-unique(data.table(seed_id=simulations$global_id, 
+                                    NB=simulations$nb,
                              nb_v=simulations$nb_v))
   new_cols<-c("tasmin_low", "tasmin_high",
               "tasmax_low", "tasmax_high",
@@ -32,6 +51,7 @@ if (F){
                        labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
   
   cutoff_sim<-simulations.dt[which(simulations.dt$pr_low<0),]
+  
   
   simulated.seeds<-cutoff_sim[which(cutoff_sim$seqnum %in% seeds$seed_id),]
   dim(simulated.seeds)

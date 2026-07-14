@@ -1,4 +1,3 @@
-library("rwosstarter")
 library(data.table)
 library(ggplot2)
 library(sf)
@@ -142,11 +141,13 @@ for (rrrr in c(1:100)){
   print(rrrr)
   seeds<-seeds.all[rep==rrrr]
   item<-df[label %in% seeds$label]
-  item.rep<-item[, .(N=sum(N)), 
+  item.rep<-item[, .(N=sum(N),
+                     N_Seed=length(unique(label))), 
                  by=list(NB, DA, seed_continent, type)]
   item.rep$rep<-rrrr
   rep.list[[rrrr]]<-item.rep
-  item.rep<-item[, .(N=sum(N)), 
+  item.rep<-item[, .(N=sum(N),
+                     N_Seed=length(unique(label))), 
                  by=list(seed_continent, type)]
   item.rep$rep<-rrrr
   rep.list.all[[rrrr]]<-item.rep
@@ -171,7 +172,7 @@ rep.df.all<-rbindlist(rep.list.all)
 
 rep.richness.df<-rbindlist(rep.richness.list)
 rep.richness.df.all<-rbindlist(rep.richness.list.all)
-
+rep.richness.df.all_se<-rep.richness.df.all[]
 #rep.df$NB.label<-factor(rep.df$NB, 
 #                        levels=c("BROAD-BROAD", "BIG-BIG", "MODERATE-MODERATE", "NARROW-NARROW"),
 #                        labels=c( "BROAD", "BIG", "MODERATE", "NARROW"))
@@ -221,6 +222,7 @@ speciation.all$type<-ifelse(speciation.all$seed_continent==speciation.all$contin
 speciation.all$other.continent<-NULL
 ggplot(speciation.all)+geom_boxplot(aes(x=continent, y=N, color=type))
 
+#Dispersal by species
 dispersal<-rep.df.all[type %in% c("Secondary Invader", "Primary Invader")]
 #dispersal$type2<-dispersal$type
 dispersal$continent<-dispersal$seed_continent
@@ -259,6 +261,32 @@ to.doc(dispersal.all.se, "Number of dispersal events",
        digits=2)
 ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.pdf", width=5, height=3)
 ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.png", width=5, height=3, bg="white")
+
+#Dispersal by seeds
+
+p.disp.seed<-ggplot(dispersal.all[type=="Primary Invader"])+
+  geom_boxplot(aes(x=disp.type, y=N_Seed, color=disp.type))+
+  #facet_wrap(~type)+
+  scale_color_manual(values=custom_colors)+
+  labs(y="Number of Seeds")+
+  theme_bw()+
+  theme(axis.title.x = element_blank(),
+        legend.position = "none")
+p.disp.seed
+dispersal.all.se<-dispersal.all[,.(mean=mean(N_Seed), sd=sd(N_Seed)),
+                                by=list(type, disp.type)]
+setorderv(dispersal.all.se, c("type", "disp.type"))
+to.doc(dispersal.all.se, "Number of dispersal events by seed", 
+       "../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.Seed.docx",
+       digits=2)
+ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.Seed.pdf", width=3, height=3)
+ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.Seed.png", width=3, height=3, bg="white")
+
+p<-p.disp.seed+p.disp+plot_layout(guides = "collect", widths = c(1, 2))
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.Seed.and.Species.pdf",
+       width=6, height=3)
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.Seed.and.Species.png",
+       width=6, height=3)
 item1<-rep.richness.df.all[,c("seed_continent",   "rep", "N.to_target_continent")]
 colnames(item1)[3]<-"N"
 item1$type<-"to_target_continent"
@@ -279,7 +307,7 @@ ggplot(richness)+geom_boxplot(aes(x=continent, y=N, color=type))
 
 richness.all<-richness[, c("seed_continent", "type", "N", "rep", "continent")]
 richness.all$event<-"Richness"
-all.df<-rbindlist(list(richness.all, speciation.all, extinction.all, local.extinction.all))
+all.df<-rbindlist(list(richness.all, speciation.all, extinction.all, local.extinction.all), fill=T)
 table(all.df$type)
 table(all.df$event)
 
@@ -302,11 +330,16 @@ p2<-ggplot(all.df[event %in% c("Richness")])+
   scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
   theme_bw()+
   theme(legend.position = "bottom",
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank())
+        axis.title.x = element_blank()
+        #axis.title.y = element_blank()
+        )
 p2
+all.df.all<-all.df
 
-p<-p1/(p.disp+p2+plot_layout(guides = "collect", widths = c(2, 1))) & 
+#p<-p1/(p.disp+p2+plot_layout(guides = "collect", widths = c(2, 1))) & 
+#  theme(legend.position = "bottom")
+#p
+p<-p1+p2+plot_layout(guides = "collect", widths = c(3.5, 1)) & 
   theme(legend.position = "bottom")
 p
 all.df.se<-all.df[,.(mean=mean(N), sd=sd(N)),
@@ -316,9 +349,9 @@ to.doc(all.df.se, "Number of speciation and extinction events, and species richn
        "../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Richness.docx",
        digits=2)
 ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Richness.pdf", 
-       width=8, height=5)
+       width=10, height=4)
 ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Richness.png", 
-       width=8, height=5, bg="white")
+       width=10, height=4, bg="white")
 
 
 #By NB & DA
@@ -410,6 +443,26 @@ to.doc(dispersal.all.se, "Number of dispersal events",
 ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.details.pdf", width=10, height=5)
 ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.details.png", width=10, height=5, bg="white")
 
+#Dispersal by seeds
+
+p.disp.seed<-ggplot(dispersal.all[type=="Primary Invader"])+
+  geom_boxplot(aes(x=disp.type, y=N_Seed, color=disp.type))+
+  facet_grid(DA~NB)+
+  scale_color_manual(values=custom_colors)+
+  labs(y="Number of Seeds")+
+  theme_bw()+
+  theme(axis.title.x = element_blank(),
+        legend.position = "none")
+p.disp.seed
+dispersal.all.se<-dispersal.all[,.(mean=mean(N_Seed), sd=sd(N_Seed)),
+                                            by=list(type, disp.type)]
+setorderv(dispersal.all.se, c("type", "disp.type"))
+to.doc(dispersal.all.se, "Number of dispersal events by seed", 
+       "../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.Seed.details.docx",
+       digits=2)
+ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.Seed.details.pdf", width=6, height=3)
+ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.Seed.details.png", width=6, height=3, bg="white")
+
 
 
 item1<-rep.richness.df[,c("seed_continent",   "rep", "N.to_target_continent", "NB", "DA")]
@@ -433,7 +486,7 @@ ggplot(richness)+geom_boxplot(aes(x=continent, y=N, color=type))+
 
 richness.all<-richness[, c("seed_continent", "type", "N", "rep", "continent", "NB", "DA")]
 richness.all$event<-"Richness"
-all.df<-rbindlist(list(richness.all, speciation.all, extinction.all, local.extinction.all), use.names=T)
+all.df<-rbindlist(list(richness.all, speciation.all, extinction.all, local.extinction.all), use.names=T, fill=T)
 table(all.df$type)
 table(all.df$event)
 
@@ -443,15 +496,36 @@ all.df$NB<-factor(all.df$NB,
                   levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
                   labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
 all.df$continent<-ifelse(all.df$continent=="North America", "N", "S")
-p<-ggplot(all.df)+geom_boxplot(aes(x=continent, y=N, color=type))+
+unique(all.df$event)
+all.df$event<-factor(all.df$event, levels=c("Speciation", "Extinction", "Local Extinction", "Richness"))
+p1<-ggplot(all.df[event %in% c("Speciation", "Extinction", "Local Extinction")])+
+  geom_boxplot(aes(x=continent, y=N, color=type))+
   facet_grid(event~NB+DA, scale="free")+
-  labs(y="Number of events/species", color="Species type")+
+  labs(y="Number of events", color="Species type")+
   scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
   theme_bw()+
   theme(legend.position = "bottom",
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
         axis.title.x = element_blank())
-p
+p1
 
+p2<-ggplot(all.df[event %in% c("Richness")])+
+  geom_boxplot(aes(x=continent, y=N, color=type))+
+  facet_grid(event~NB+DA, scale="free")+
+  labs(y="Number of species", color="Species type")+
+  scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
+  theme_bw()+
+  theme(legend.position = "bottom",
+        axis.title.x = element_blank(),
+        strip.text.x = element_blank(),
+        strip.background.x = element_blank())
+p2
+p <- (p1 / p2) + 
+  plot_layout(heights = c(3, 1), guides = "collect") & 
+  theme(legend.position = "bottom")
+p
+all.df.nb.da<-all.df
 all.df.se<-all.df[,.(mean=mean(N), sd=sd(N)),
                   by=list(event, continent, type, NB, DA)]
 setorderv(all.df.se, c("event", "continent", "type", "NB", "DA"))
@@ -463,89 +537,6 @@ ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Ex
 ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Speciation.Extinction.Richness.details.png", 
        width=12, height=8, bg="white")
 
-
-
-###For analysis only
-ggplot(extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
-  labs(title="Extinction")
-
-extinction<-rep.df[type %in% c("Failed Invader", "Extinction")]
-extinction$continent<-extinction$seed_continent
-extinction$other.continent<-ifelse(extinction$seed_continent=="South America",
-                                   "North America", "South America")
-
-extinction[type=="Failed Invader", continent:=other.continent]
-
-ggplot(extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
-  facet_grid(NB~DA, scale="free")+
-  labs(title="Extinction")
-
-ggplot(extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
-  facet_wrap(~NB, scale="free")+
-  labs(title="Extinction")
-
-
-
-
-
-ggplot(speciation)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
-  labs(title="Speciation")
-
-speciation<-rep.df[type %in% c("Local Speciation", "Non-local Speciation")]
-speciation$continent<-speciation$seed_continent
-speciation$other.continent<-ifelse(speciation$seed_continent=="South America",
-                                   "North America", "South America")
-
-speciation[type=="Non-local Speciation", continent:=other.continent]
-
-ggplot(speciation)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
-  facet_grid(NB~DA, scale="free")+
-  labs(title="Speciation")
-
-ggplot(speciation)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
-  facet_wrap(~NB, scale="free")+
-  labs(title="Speciation")
-
-
-
-
-ggplot(dispersal)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
-  labs(title="Dispersal")
-
-dispersal<-rep.df[type %in% c("Secondary Invader", "Primary Invader")]
-dispersal$continent<-dispersal$seed_continent
-dispersal$other.continent<-ifelse(dispersal$seed_continent=="South America",
-                                  "North America", "South America")
-
-dispersal[type=="Primary Invader", continent:=other.continent]
-
-ggplot(dispersal)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
-  facet_grid(NB~DA, scale="free")+
-  labs(title="Dispersal")
-
-ggplot(dispersal)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
-  facet_wrap(~NB, scale="free")+
-  labs(title="Dispersal")
-
-
-local_extinction<-rep.df.all[type %in% c("Local Extinction", "Non-local Extinction")]
-local_extinction$continent<-local_extinction$seed_continent
-local_extinction$other.continent<-ifelse(local_extinction$seed_continent=="South America",
-                                         "North America", "South America")
-
-local_extinction[type=="Non-local Extinction", continent:=other.continent]
-
-ggplot(local_extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))
-
-local_extinction<-rep.df[type %in% c("Local Extinction", "Non-local Extinction")]
-local_extinction$continent<-local_extinction$seed_continent
-local_extinction$other.continent<-ifelse(local_extinction$seed_continent=="South America",
-                                         "North America", "South America")
-
-local_extinction[type=="Non-local Extinction", continent:=other.continent]
-
-ggplot(local_extinction)+geom_boxplot(aes(x=continent, y=N, color=seed_continent))+
-  facet_grid(NB~DA, scale="free")
 
 
 
@@ -580,3 +571,115 @@ p<-ggplot(rep.df.sd[type %in% c("Extinction", "Local Speciation", "Non-local Spe
     vjust = 1 
   ))
 p
+
+##For Percentage
+
+richness_merge<-all.df.all[event %in% c("Richness")]
+richness_merge_N_Native<-richness_merge[type=="Native"]
+richness_merge_N_Immigrant<-richness_merge[type=="Immigrant"]
+colnames(richness_merge_N_Native)[3]<-"Native"
+colnames(richness_merge_N_Immigrant)[3]<-"Immigrant"
+richness_merge<-merge(richness_merge_N_Native, richness_merge_N_Immigrant, 
+                      by=c("rep", "continent"), all=T)
+richness_merge$Per_Immigrant<-richness_merge$Immigrant/(richness_merge$Native+richness_merge$Immigrant)
+richness_merge$Per_Native<-richness_merge$Native/(richness_merge$Native+richness_merge$Immigrant)
+
+richness_merge[, c("rep", "continent", "Per_Immigrant", "Per_Native")]
+
+richness_se<-richness_merge[,.(N_Native=mean(Native), 
+                               sd_Native=sd(Native),
+                               N_Immigrant=mean(Immigrant), 
+                               sd_Immigrant=sd(Immigrant),
+                               N_Per_Immigrant=mean(Per_Immigrant), 
+                               sd_Per_Immigrant=sd(Per_Immigrant)), 
+                            by=list(continent)]
+richness_se
+
+richness_merge_Native<-richness_merge
+richness_merge_Native<-data.table(rep=richness_merge_Native$rep,
+                              continent=richness_merge_Native$continent,
+                              type="Native",
+                              per=richness_merge_Native$Per_Native)
+richness_merge_Immigrant<-richness_merge
+richness_merge_Immigrant<-data.table(rep=richness_merge_Immigrant$rep,
+                                  continent=richness_merge_Immigrant$continent,
+                                  type="Immigrant",
+                                  per=richness_merge_Immigrant$Per_Immigrant)
+
+richness_merge_df<-rbindlist(list(richness_merge_Native, richness_merge_Immigrant))
+
+richness_merge_df$type<-factor(richness_merge_df$type, levels=c("Native", "Immigrant"))
+p2<-ggplot(richness_merge_df)+
+  geom_boxplot(aes(x=continent, y=per, color=type))+
+  labs(y="Percentage", color="Species type")+
+  scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
+  theme_bw()+
+  theme(legend.position = "bottom",
+        axis.title.x = element_blank(),
+        #axis.title.y = element_blank()
+        )
+p2
+
+richness_nb_da_merge<-all.df.nb.da[event %in% c("Richness")]
+richness_nb_da_merge_N_Native<-richness_nb_da_merge[type=="Native"]
+richness_nb_da_merge_N_Immigrant<-richness_nb_da_merge[type=="Immigrant"]
+colnames(richness_nb_da_merge_N_Native)[3]<-"Native"
+colnames(richness_nb_da_merge_N_Immigrant)[3]<-"Immigrant"
+richness_nb_da_merge<-merge(richness_nb_da_merge_N_Native, richness_nb_da_merge_N_Immigrant, 
+                      by=c("rep", "continent", "NB", "DA"), all=T)
+richness_nb_da_merge$Per_Immigrant<-richness_nb_da_merge$Immigrant/(richness_nb_da_merge$Native+richness_nb_da_merge$Immigrant)
+richness_nb_da_merge$Per_Native<-richness_nb_da_merge$Native/(richness_nb_da_merge$Native+richness_nb_da_merge$Immigrant)
+
+richness_nb_da_merge[, c("rep", "continent", "Per_Immigrant", "Per_Native", "NB", "DA")]
+
+richness_se_nb_da<-richness_nb_da_merge[,.(N_Native=mean(Native), 
+                               sd_Native=sd(Native),
+                               N_Immigrant=mean(Immigrant), 
+                               sd_Immigrant=sd(Immigrant),
+                               N_Per_Immigrant=mean(Per_Immigrant), 
+                               sd_Per_Immigrant=sd(Per_Immigrant)), 
+                            by=list(continent, NB, DA)]
+richness_se_nb_da
+
+
+richness_merge_Native_nb_da<-richness_nb_da_merge
+richness_merge_Native_nb_da<-data.table(rep=richness_merge_Native_nb_da$rep,
+                                  continent=richness_merge_Native_nb_da$continent,
+                                  type="Native",
+                                  per=richness_merge_Native_nb_da$Per_Native,
+                                  NB=richness_nb_da_merge$NB,
+                                  DA=richness_nb_da_merge$DA)
+richness_merge_Immigrant_nb_da<-richness_nb_da_merge
+richness_merge_Immigrant_nb_da<-data.table(rep=richness_merge_Immigrant_nb_da$rep,
+                                     continent=richness_merge_Immigrant_nb_da$continent,
+                                     type="Immigrant",
+                                     per=richness_merge_Immigrant_nb_da$Per_Immigrant,
+                                     NB=richness_nb_da_merge$NB,
+                                     DA=richness_nb_da_merge$DA)
+
+richness_merge_df_nb_da<-rbindlist(list(richness_merge_Native_nb_da, richness_merge_Immigrant_nb_da))
+
+richness_merge_df_nb_da$type<-factor(richness_merge_df_nb_da$type, levels=c("Native", "Immigrant"))
+
+richness_merge_df_nb_da$continent<-factor(richness_merge_df_nb_da$continent, levels=c("N", "S"),
+                                          labels=c("NA", "SA"))
+p3<-ggplot(richness_merge_df_nb_da)+
+  geom_boxplot(aes(x=continent, y=per, color=type))+
+  labs(y="Percentage", color="Species type")+
+  scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
+  facet_grid(DA~NB)+
+  theme_bw()+
+  theme(legend.position = "bottom",
+        axis.title.x = element_blank()
+        #axis.title.y = element_blank()
+        )
+p3
+
+p<-p2/p3
+p
+ggsave(p2, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Richness.Per.pdf", 
+       width=4, height=3, bg="white")
+
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Richness.Per.ALL.pdf", 
+       width=8, height=6, bg="white")
+

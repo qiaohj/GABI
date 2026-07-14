@@ -36,12 +36,13 @@ color_mid2<-"#88CCEE"
 color_mid<-"#F7F7F7"
 color_na<-color_high
 color_sa<-color_low
-color_n2s<-color_high
-color_s2n<-color_low
-color_native<-color_high
-color_immigrant<-color_low
 color_1<-"#332288"
 color_2<-"#DDCC77"
+color_n2s<-color_1
+color_s2n<-color_2
+color_native<-color_high
+color_immigrant<-color_low
+
 
 to.doc<-function(summary_dt, title, output_file, digits = 3, in_place = F){
   summary_dt<-format_sigfigs_dt(summary_dt, digits=digits, in_place=in_place)

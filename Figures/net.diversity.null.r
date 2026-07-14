@@ -477,7 +477,7 @@ p2<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
               method = "loess", span = 0.1, se = FALSE, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
   scale_color_manual(values=custom_colors) +
-  labs(x = "Year", y = "Immigrant persentage", 
+  labs(x = "Year", y = "Immigrant percentage", 
        color = "Species Type") +
   scale_y_sqrt()+
   theme_bw() +
@@ -803,7 +803,7 @@ p2<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
               method = "loess", span = 0.1, se = FALSE, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
   scale_color_manual(values=custom_colors) +
-  labs(x = "Year", y = "Immigrant persentage", 
+  labs(x = "Year", y = "Immigrant percentage", 
        color = "Species Type") +
   scale_y_sqrt()+
   theme_bw() +

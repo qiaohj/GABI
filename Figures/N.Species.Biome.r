@@ -243,7 +243,13 @@ if (F){
 }
 
 simulation.type<-"NULL"
-rep.list.all<-readRDS(sprintf("../Data/Tables/biome.N.species.%s.rda", simulation.type))
+simulation.type<-"Sim"
+if (simulation.type=="NULL"){
+  rep.list.all<-readRDS(sprintf("../Data/Tables/biome.N.species.%s.rda", simulation.type))
+}else{
+  rep.list.all<-readRDS("../Data/Tables/biome.N.species.rda")
+}
+
 rep.list.all[rep==1]
 Aborigines<-rep.list.all[type=="Aborigines"]
 colnames(Aborigines)[5]<-"N.Aborigines"
@@ -363,13 +369,22 @@ coords <- st_coordinates(suppressMessages(st_point_on_surface(sf_largest)))
 dt_largest[, `:=`(X = coords[, 1], Y = coords[, 2])]
 
 dt_pies_base <- dt_largest[!(continent %in% c("bridge1", "bridge2"))]
-area_threshold <- median(dt_pies_base$poly_area)
-
+#area_threshold <- median(dt_pies_base$poly_area)
+area_threshold <- 1e100
 
 dt_pies_base[, placement := ifelse(poly_area < area_threshold, "LEFT", "INSIDE")]
 dt_pies_base[BIOME_NAME == "Flooded Grasslands & Savannas" & continent == "North America", placement := "RIGHT"]
 dt_pies_base[BIOME_NAME == "Mangroves" & continent == "South America", placement := "RIGHT"]
 dt_pies_base[BIOME_NAME == "Montane Grasslands & Shrublands" & continent == "South America", placement := "LEFT"]
+dt_pies_base[BIOME_NAME == "Tropical & Subtropical Dry Broadleaf Forests" & continent == "South America", placement := "RIGHT"]
+dt_pies_base[BIOME_NAME == "Boreal Forests/Taiga" & continent == "North America", placement := "RIGHT"]
+dt_pies_base[BIOME_NAME == "Temperate Broadleaf & Mixed Forests" & continent == "North America", placement := "RIGHT"]
+dt_pies_base[BIOME_NAME == "Tropical & Subtropical Moist Broadleaf Forests" & continent == "South America", placement := "RIGHT"]
+dt_pies_base[BIOME_NAME == "Temperate Grasslands, Savannas & Shrublands" & continent == "South America", placement := "RIGHT"]
+dt_pies_base[BIOME_NAME == "Tropical & Subtropical Grasslands, Savannas & Shrublands" & continent == "South America", placement := "RIGHT"]
+dt_pies_base[BIOME_NAME == "Temperate Grasslands, Savannas & Shrublands" & continent == "North America", placement := "RIGHT"]
+dt_pies_base[BIOME_NAME == "Tundra" & continent == "North America", placement := "RIGHT"]
+dt_pies_base[BIOME_NAME == "Tropical & Subtropical Grasslands, Savannas & Shrublands" & continent == "North America", placement := "RIGHT"]
 
 dt_pies_base[, `:=`(pie_X = X, pie_Y = Y)]
 bbox <- st_bbox(sf_data)
@@ -378,15 +393,21 @@ idx_left <- dt_pies_base[placement == "LEFT", which = TRUE]
 if (length(idx_left) > 0) {
   idx_left_sorted <- idx_left[order(dt_pies_base$Y[idx_left])]
   N_left <- length(idx_left_sorted)
-  dt_pies_base[idx_left_sorted, pie_Y := seq(bbox["ymin"] - 5, bbox["ymax"] + 5, length.out = N_left)]
+  dt_pies_base[idx_left_sorted, pie_Y := seq(bbox["ymin"] - 5, bbox["ymax"] - 30, length.out = N_left)]
   arc_curve <- sin(seq(0, pi, length.out = N_left)) 
   dt_pies_base[idx_left_sorted, pie_X := bbox["xmin"] + 50 - 25 * arc_curve]
 }
-
+dt_pies_base[BIOME_NAME == "Temperate Conifer Forests" & continent == "North America", pie_X:=-140]
 idx_right <- dt_pies_base[placement == "RIGHT", which = TRUE]
 if (length(idx_right) > 0) {
-  dt_pies_base[idx_right, pie_Y := Y] 
-  dt_pies_base[idx_right, pie_X := bbox["xmax"] + 25] 
+  idx_right_sorted <- idx_right[order(dt_pies_base$Y[idx_right])]
+  N_right <- length(idx_right_sorted)
+  
+  dt_pies_base[idx_right_sorted, pie_Y := seq(bbox["ymin"] - 5, bbox["ymax"] + 5, length.out = N_right)]
+  
+  arc_curve <- sin(seq(0, pi, length.out = N_right)) 
+  
+  dt_pies_base[idx_right_sorted, pie_X := bbox["xmax"] + 0 + 25 * arc_curve] 
 }
 
 dt_pies_base[, total_N := N.Aborigines + N.Invader]
@@ -494,7 +515,7 @@ for (op in c("user.defined.blind.friendly")){
                  color = "white", linewidth = 0.3) +
     geom_text(data = dt_pies_base,
               aes(x = pie_X, y = pie_Y, label = percent(Invader_per, accuracy = 0.1)),
-              size = 3, fontface = "bold", color = "black") +
+              size = 3, color = "black") +
     scale_fill_manual(values = color_palette, breaks = legend_breaks) +
     theme_minimal() +
     labs(
@@ -522,9 +543,9 @@ dt<-dt[continent %in% c("North America", "South America")]
 to.doc(dt, "Number of invaders per biome", 
        sprintf("../Figures/Figure.Biome/N.nvader.by.biome.pie.%s.docx", simulation.type),
        digits=2, in_place=F)
+fwrite(dt, sprintf("../Figures/Figure.Biome/N.nvader.by.biome.pie.%s.csv", simulation.type))
 
-
-
+dt[continent=="South America"]
 #By NB and DA
 
 rep.df<-readRDS("../Data/Tables/biome.N.species.by.nb.rda")
