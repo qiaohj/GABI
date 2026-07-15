@@ -34,7 +34,7 @@ if (F){
   table(N.species$current_continent)
   seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
   outliers<-readRDS("../Data/Tables/outliers.null.rda")
-  seeds.all<-seeds.all[!(label %in% outliers)]
+  #seeds.all<-seeds.all[!(label %in% outliers)]
   rep.list<-list()
   rep.all.list<-list()
   
@@ -50,10 +50,10 @@ if (F){
   rep.df<-rbindlist(rep.list)
   rep.df.all<-rbindlist(rep.all.list)
   
-  #saveRDS(rep.df, sprintf("../Data/Tables/N.net.diversity.rep.window.size.%d.NULL.rda", year_window_size))
-  #saveRDS(rep.df.all, sprintf("../Data/Tables/N.net.diversity.all.window.size.%d.rep.NULL.rda", year_window_size))
-  saveRDS(rep.df, sprintf("../Data/Tables/N.net.diversity.rep.window.size.%d.NULL.no.outliers.rda", year_window_size))
-  saveRDS(rep.df.all, sprintf("../Data/Tables/N.net.diversity.all.window.size.%d.rep.NULL.no.outliers.rda", year_window_size))
+  saveRDS(rep.df, sprintf("../Data/Tables/N.net.diversity.rep.window.size.%d.NULL.rda", year_window_size))
+  saveRDS(rep.df.all, sprintf("../Data/Tables/N.net.diversity.all.window.size.%d.rep.NULL.rda", year_window_size))
+  #saveRDS(rep.df, sprintf("../Data/Tables/N.net.diversity.rep.window.size.%d.NULL.no.outliers.rda", year_window_size))
+  #saveRDS(rep.df.all, sprintf("../Data/Tables/N.net.diversity.all.window.size.%d.rep.NULL.no.outliers.rda", year_window_size))
   
   
   

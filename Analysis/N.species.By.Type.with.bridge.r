@@ -11,7 +11,7 @@ library(phangorn)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 if (F){
   sp<-readRDS("../Data/Tables/virtual.species.rda")
-  table(sp$continent)
+  
   sp$Parent<-sub("-[^-]*$", "", sp$sp_id)
   sp$year<-as.numeric(sp$year)
   sp[sp_id==Parent, Parent:=""]
@@ -21,7 +21,17 @@ if (F){
   species.type.N$sp_id<-as.character(species.type.N$sp_id)
   species.type.N$Parent<-as.character(species.type.N$Parent)
   species.type.N[sp_id==Parent, Parent:=""]
-  
+  if (F){
+    species.type.N[, seed_id := sub("-.*", "", sp_id)]
+    ddd<-sp[seed_id=="33100" & NB=="BIG" & DA=="GOOD"]
+    ddd
+    length(unique(ddd$sp_id))
+    
+    ddd.row<-readRDS("../Data/temp.N.sp/33100.BIG.GOOD.rda")
+    length(unique(ddd.row$sp_id))
+    nrow(ddd.row[type=="Speciation"])
+    
+  }
   
   colnames(species.type.N)[c(8, 12)]<-c("origin_continent", "seed_continent")
   species.type.N[origin_continent!=seed_continent]
@@ -186,17 +196,26 @@ if (F){
   
   sp_full_continents[loss.continent %in% c("South America", "Two continents"),
                      south.america:=-1]
-  sp_full_continents[south.america==1 & north.america==1]
+  #sp_full_continents[south.america==1 & north.america==1]
+  if (F){
+    xxx<-sp_full_continents[,.(N=length(unique(sp_id))), by=list(Parent)]
+    xxx[N==3]
+    sp_full_continents[Parent=="33100-2-1-2-2-1" & type=="Speciation"]
+  }
+  idx <- sp_full_continents[
+    type == "Speciation" & current_continent %in% c("North America", "South America"), 
+    .I[2],
+    by = .(Parent, current_continent)
+  ]$V1
+  
+  sp_full_continents[na.omit(idx), gain.continent := ""]
   
   saveRDS(sp_full_continents, "../Data/Tables/sp_full_continents.rda")
   
-  #sp[year==1604 & seed_id==12 & NB=="TINY" & DA=="POOR"]
-  sp_full_continents[year==-1604 & seed_id==12 & NB=="TINY" & DA=="POOR"]
 }
 
 if (F){
   sp<-readRDS("../Data/Tables/virtual.species.NULL.rda")
-  table(sp$continent)
   sp$Parent<-sub("-[^-]*$", "", sp$sp_id)
   sp$year<-as.numeric(sp$year)
   sp[sp_id==Parent, Parent:=""]
@@ -206,7 +225,17 @@ if (F){
   species.type.N$sp_id<-as.character(species.type.N$sp_id)
   species.type.N$Parent<-as.character(species.type.N$Parent)
   species.type.N[sp_id==Parent, Parent:=""]
-  
+  if (F){
+    species.type.N[, seed_id := sub("-.*", "", sp_id)]
+    ddd<-sp[seed_id=="33100" & NB=="BIG" & DA=="GOOD"]
+    ddd
+    length(unique(ddd$sp_id))
+    
+    ddd.row<-readRDS("../Data/temp.N.sp/33100.BIG.GOOD.rda")
+    length(unique(ddd.row$sp_id))
+    nrow(ddd.row[type=="Speciation"])
+    
+  }
   
   colnames(species.type.N)[c(8, 12)]<-c("origin_continent", "seed_continent")
   species.type.N[origin_continent!=seed_continent]
@@ -355,7 +384,7 @@ if (F){
   }
   event.N<-sp_full_continents[,.(N=.N), by=list(parent_continent, previous_continent, current_continent, type)]
   fwrite(event.N, 
-         "../Data/full.event.N.NULL.csv")
+         "../Data/full.event.N.csv")
   table(sp_full_continents$type)
   
   sp_full_continents$south.america<-0
@@ -371,8 +400,19 @@ if (F){
   
   sp_full_continents[loss.continent %in% c("South America", "Two continents"),
                      south.america:=-1]
-  sp_full_continents[south.america==1 & north.america==1]
+  #sp_full_continents[south.america==1 & north.america==1]
+  if (F){
+    xxx<-sp_full_continents[,.(N=length(unique(sp_id))), by=list(Parent)]
+    xxx[N==3]
+    sp_full_continents[Parent=="33100-2-1-2-2-1" & type=="Speciation"]
+  }
+  idx <- sp_full_continents[
+    type == "Speciation" & current_continent %in% c("North America", "South America"), 
+    .I[2],
+    by = .(Parent, current_continent)
+  ]$V1
   
+  sp_full_continents[na.omit(idx), gain.continent := ""]
   saveRDS(sp_full_continents, "../Data/Tables/sp_full_continents.NULL.rda")
   
   #sp[year==1604 & seed_id==12 & NB=="TINY" & DA=="POOR"]

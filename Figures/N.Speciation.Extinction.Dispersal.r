@@ -11,7 +11,8 @@ if (F){
   sp.with.bridge<-copy(sp.with.bridge_bak)
   #View(sp.with.bridge[seed_id==33595 & NB=="NARROW" & DA=="POOR" & type!="Still.There"])
   
-  sp.with.bridge[previous_continent %in% c("bridge1", "bridge2") & type=="New.Immigrants" & 
+  sp.with.bridge[previous_continent %in% c("bridge1", "bridge2") & 
+                   type=="New.Immigrants" & 
                    current_continent==seed_continent,
                  type:="Still.There"]
   
@@ -287,6 +288,8 @@ ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.See
        width=6, height=3)
 ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/N.Dispersal.Seed.and.Species.png",
        width=6, height=3)
+
+
 item1<-rep.richness.df.all[,c("seed_continent",   "rep", "N.to_target_continent")]
 colnames(item1)[3]<-"N"
 item1$type<-"to_target_continent"

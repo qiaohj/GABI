@@ -3,6 +3,7 @@ library(ggplot2)
 library(ggrepel)
 library(ggh4x)
 library(sf)
+library(dplyr)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 source("Figures/common.r")
 seeds<-readRDS("../Data/Tables/seeds.rda")
@@ -44,17 +45,6 @@ table(df_N_checked$N)
 df.detail[,.(N=length(unique(seed_id))), by=list(nb)]
 
 df.detail$label2<-sprintf("%d.%s.%s", df.detail$seed_id, df.detail$nb, df.detail$da)
-no.boot.seeds.id<-no.boot.seeds[!seed_id %in% df_N_checked[N==2]$seed_id]
-no.boot.seeds.id[,.(N=length(unique(seed_id))), by=list(continent)]
-no.boot.seeds.id<-unique(no.boot.seeds.id$seed_id)
-no.boot.seeds.id<-no.boot.seeds.id[sample(length(no.boot.seeds.id), 37)]
-df.detail_xx<-df.detail[seed_id %in% no.boot.seeds.id | continent=="South America"]
-failed<-df.detail_xx[year==burn_in & N_SPECIES==0]
-
-df_filtered_seeds[,.(N=length(unique(seed_id))), by=list(continent)]
-
-
-saveRDS(df_filtered_seeds, "../Data/Tables/bootstrapping.seeds.rda")
 
 df_filtered_N<-df_filtered_seeds[, .(N_SPECIES=sum(N_SPECIES), 
                                      N_SPECIATION=sum(N_SPECIATION),
@@ -118,7 +108,7 @@ dt.outliers$nb<-factor(dt.outliers$nb,
                      labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
 setorderv(dt.outliers, c("nb", "da", "continent"))
 
-dt.outliers<-outliers[,.(N=.N), by=list(nb, da)]
+dt.outliers<-outliers[,.(N=.N), by=list(nb, da, continent)]
 dt.outliers$nb<-factor(dt.outliers$nb, 
                        levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
                        labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
@@ -164,7 +154,7 @@ no.outliers<-df_filtered_seeds[(year==0 & !(seed_id %in% outliers_ID))]
 
 seed_pool<-no.outliers[, .(N_SPECIES=sum(N_SPECIES)), 
                        by=list(seed_id, continent, nb, da, label)]
-seed_pool[,.(N=.N), by=list(nb, da)]
+seed_pool[,.(N=.N), by=list(nb, da, continent)]
 seed_pool$label2<-sprintf("%s.%s", seed_pool$label, seed_pool$da)
 seed_pool$weight<-1
 
@@ -231,10 +221,11 @@ set.seed(1024)
 for (rep in c(1:100)){
   print(rep)
   seed_pool.rand<-list()
-  bin<-bins[N==5][94]
   for (i in c(1:nrow(bins))){
     bin<-bins[i]
-    
+    if (nrow(bin[nb=="BROAD" & da=="POOR" & min.dist==35])==1){
+      #asdf
+    }
     seed.item<-seed_pool[nb==bin$nb & da==bin$da & min.dist==bin$min.dist]
     seed.item<-seed.item[,.SD[sample(.N, bin$N, prob=weight)],by = "continent"]
     seed_pool.rand[[length(seed_pool.rand)+1]]<-seed.item
@@ -269,6 +260,8 @@ for (rep in c(1:100)){
       facet_wrap(~nb)
   }
   ramdom_seeds$geometry<-NULL
+  Ncheck<-ramdom_seeds[,.(N=length(unique(seed_id))), by=list(continent, nb, da)]
+  print(Ncheck[nb=="NARROW" & da=="POOR"])
   all_seeds<-ramdom_seeds
   all_seeds$rep<-rep
   all_seeds$label<-sprintf("%d.%s.%s", all_seeds$seed_id, all_seeds$nb, all_seeds$da)
@@ -278,16 +271,47 @@ for (rep in c(1:100)){
 
 all_ramdom_seeds_df<-rbindlist(all_ramdom_seeds)
 
+
 unique(all_ramdom_seeds_df[, .(N=.N), by=list(continent, rep, nb, da)]$N)
 
-saveRDS(all_ramdom_seeds_df, "../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
-
+#saveRDS(all_ramdom_seeds_df, "../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
 
 all_ramdom_seeds_df<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
-NN<-all_ramdom_seeds_df[,.(N_seed=length(unique(seed_id))), by=list(rep)]
-NN[,.(N=mean(N_seed), sd=sd(N_seed))]
-N.seed<-all_ramdom_seeds_df[, .(N=.N/2), by=list(seed_id)]
+seeds<-copy(all_ramdom_seeds_df)
+seeds$nb <- factor(
+  seeds$nb,
+  levels = c("BROAD", "BIG", "MODERATE", "NARROW"),
+  labels = c("BROAD", "MODERATE", "NARROW", "TINY")
+)
 
-N.seed<-merge(seed.dist, N.seed, by.x="seqnum", by.y="seed_id")
-ggplot()+geom_sf(data=seed.dist, fill=NA, color="lightgrey")+
-  geom_sf(data=N.seed, aes(fill=N))
+N <- seeds[, .(N_Seeds = length(unique(seed_id))), by = list(rep, nb, continent)]
+
+N_ALL <- seeds[,
+  .(N_ALL_Seeds = length(unique(seed_id))),
+  by = list(nb, continent)
+]
+N<-merge(N, N_ALL, by=c("nb", "continent"))
+
+
+N$Per<-N$N_Seeds/N$N_ALL_Seeds
+N_se <- N[,
+  .(
+    N_Seeds = mean(N_Seeds),
+    sd_N_Seeds = sd(N_Seeds),
+    N_ALL_Seeds = mean(N_ALL_Seeds),
+    sd_N_ALL_Seeds = sd(N_ALL_Seeds),
+    Per = mean(Per)*100,
+    sd_Per = sd(Per)*100
+  ),
+  by = list(nb, continent)
+]
+setorderv(N_se, "nb")
+
+to.doc(N_se, "Proportion of seed usages", "../Figures/Seeds/propotion.of.seed.usage.docx", digits = 2)
+
+
+N_times<-seeds[, .(N=.N), by=c("nb", "seed_id", "continent")]
+N_times[N==200]
+length(unique(N_times[N==200]$seed_id))
+
+table(N_times[N==200]$continent)

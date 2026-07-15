@@ -176,3 +176,11 @@ if (F){
   ggsave(p, filename="../Figures/N.Speciation.boxplot.by.species.type.png",
          width=8, height=6)
 }
+
+if (F){
+  ddd<-readRDS("../Data/temp.N.sp/33100.BIG.GOOD.rda")
+  table(ddd$type)
+  
+  ddd[type=="Species"]
+  length(unique(ddd$sp_id))
+}

@@ -67,13 +67,34 @@ ggsave(p, filename="../Figures/Seed.Bootstrap/Seed.Bootstrap.pdf", width=10, hei
 ggsave(p, filename="../Figures/Seed.Bootstrap/Seed.Bootstrap.png", width=10, height=5, bg="white")
 
 seeds<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
-seeds$nb<-factor(seeds$nb, 
-                          levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
-                          labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+seeds$nb <- factor(
+  seeds$nb,
+  levels = c("BROAD", "BIG", "MODERATE", "NARROW"),
+  labels = c("BROAD", "MODERATE", "NARROW", "TINY")
+)
 
-N<-seeds[,.(N_Seeds=length(unique(seed_id))), by=list(rep, nb, da, continent)]
+N <- seeds[,
+  .(N_Seeds = length(unique(seed_id))),
+  by = list(rep, nb, continent)
+]
 
-N_se<-N[, .(N_Seeds=mean(N_Seeds)), by=list(nb, continent)]
+N_ALL <- seeds[,
+  .(N_ALL_Seeds = length(unique(seed_id))),
+  by = list(nb, continent)
+]
+N<-merge(N, N_ALL, by=c("nb", "continent"))
+N$Per<-N$N_Seeds/N$N_ALL_Seeds
+N_se <- N[,
+  .(
+    N_Seeds = mean(N_Seeds),
+    sd_N_Seeds = sd(N_Seeds),
+    N_ALL_Seeds = mean(N_ALL_Seeds),
+    sd_N_ALL_Seeds = sd(N_ALL_Seeds),
+    Per = mean(Per),
+    sd_Per = sd(Per)
+  ),
+  by = list(nb, continent)
+]
 setorderv(N_se, "nb")
 to.doc(N_se, "Number of seed per repeat", "../Figures/Seed.Bootstrap/Seed.Bootstrap.docx",
        digits = 0)
