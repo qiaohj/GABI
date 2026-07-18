@@ -163,6 +163,7 @@ if (F){
 year_window_size<-50
 rep.df.sp<-readRDS(sprintf("../Data/Tables/N.net.diversity.rep.window.size.%d.rda", year_window_size))
 rep.df.all.sp<-readRDS(sprintf("../Data/Tables/N.net.diversity.all.window.size.%d.rep.rda", year_window_size))
+
 setorder(rep.df.all.sp, seed_continent, type, rep, year_window)
 rep.df.all.sp[, net_div_rate := (N_SP-shift(N_SP)) / shift(N_SP), by = .(seed_continent, type, rep)]
 
@@ -174,12 +175,17 @@ rep.df.all.sp$seed_continent<-factor(rep.df.all.sp$seed_continent, levels=c("Nor
                                   labels=c("North American Origin", "South American Origin"))
 rep.df.all.sp$type<-factor(rep.df.all.sp$type, levels=c("Native", "Immigrant"),
                         labels=c("Native", "Immigrant"))
-
-p1<-ggplot(rep.df.all.sp[between(year_window, -1800, -50)])+
-  geom_smooth(aes(x=year_window, y=net_div_rate, color=type), 
-              method = "loess", span = 0.1, se = T, linewidth = 1) + 
+rep.df.all.sp.mean<-rep.df.all.sp[,.(net_div_rate=mean(net_div_rate),
+                                     N_SP=mean(N_SP)),
+                                  by=list(year_window, seed_continent,
+                                          type, continent, other_continent)]
+p1<-ggplot(rep.df.all.sp.mean[between(year_window, -1800, -50)])+
+  geom_smooth(aes(x=year_window, y=net_div_rate, color=type, fill=type), 
+              method = "loess", span = 0.3, se = T, linewidth = 1) + 
   geom_point(aes(x=year_window, y=net_div_rate, color=type)) + 
   scale_color_manual(values = c("Native" = color_native, "Immigrant" = color_immigrant)) +
+  scale_fill_manual(values = c("Native" = color_native, "Immigrant" = color_immigrant)) +
+  
   labs(x = "Year", y = "Net Diversification Rate", 
        color = "Species Type") +
   theme_classic() +
@@ -188,9 +194,11 @@ p1<-ggplot(rep.df.all.sp[between(year_window, -1800, -50)])+
     axis.title = element_text(face = "bold")
   )+facet_wrap(~seed_continent, nrow=2)
 p1
-p2<-ggplot(rep.df.all.sp[between(year_window, -1800, -50)])+
+
+
+p2<-ggplot(rep.df.all.sp.mean[between(year_window, -1800, -50)])+
   geom_smooth(aes(x=year_window, y=net_div_rate, color=type), 
-              method = "loess", span = 0.1, se = T, linewidth = 1) + 
+              method = "loess", span = 0.3, se = T, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=net_div_rate, color=type)) + 
   scale_color_manual(values = c("Native" = color_native, "Immigrant" = color_immigrant)) +
   labs(x = "Year", y = "Net Diversification Rate", 
@@ -201,9 +209,10 @@ p2<-ggplot(rep.df.all.sp[between(year_window, -1800, -50)])+
     axis.title = element_text(face = "bold")
   )+facet_wrap(~continent, nrow=2)
 p2
+
 p3<-ggplot(rep.df.all.sp[between(year_window, -1800, -50)])+
   geom_smooth(aes(x=year_window, y=N_SP, color=type), 
-              method = "loess", span = 0.1, se = T, linewidth = 1) + 
+              method = "loess", span = 0.3, se = T, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N_SP, color=type)) + 
   scale_color_manual(values = c("Native" = color_native, "Immigrant" = color_immigrant)) +
   labs(x = "Year", y = "Species Richness", 
@@ -215,14 +224,14 @@ p3<-ggplot(rep.df.all.sp[between(year_window, -1800, -50)])+
   )+facet_wrap(~continent, nrow=2)
 p3
 
-ggsave(p1, filename="../Figures/NET/Net.Diversification.Rate.origin.pdf", width=8, height=5)
-ggsave(p1, filename="../Figures/NET/Net.Diversification.Rate.origin.png", width=8, height=5, bg="white")
+#ggsave(p1, filename="../Figures/NET/Simulations/Net.Diversification.Rate.origin.pdf", width=8, height=5)
+#ggsave(p1, filename="../Figures/NET/Simulations/Net.Diversification.Rate.origin.png", width=8, height=5, bg="white")
 
-ggsave(p2, filename="../Figures/NET/Net.Diversification.Rate.continent.pdf", width=8, height=5)
-ggsave(p2, filename="../Figures/NET/Net.Diversification.Rate.continent.png", width=8, height=5, bg="white")
+ggsave(p2, filename="../Figures/NET/Simulations/Net.Diversification.Rate.continent.pdf", width=8, height=5)
+ggsave(p2, filename="../Figures/NET/Simulations/Net.Diversification.Rate.continent.png", width=8, height=5, bg="white")
 
-ggsave(p3, filename="../Figures/NET/N.Species.continent.pdf", width=8, height=5)
-ggsave(p3, filename="../Figures/NET/N.Species.continent.png", width=8, height=5, bg="white")
+#ggsave(p3, filename="../Figures/NET/Simulations/N.Species.continent.pdf", width=8, height=5)
+#ggsave(p3, filename="../Figures/NET/Simulations/N.Species.continent.png", width=8, height=5, bg="white")
 
 
 #Extinction
@@ -268,10 +277,10 @@ rep.df.all[species.type %in% c("Native", "Immigrant") & continent %in% c("North 
 rep.df.all.extinction<-rep.df.all[species.type %in% c("Native", "Immigrant") & 
                                     continent %in% c("North America", "South America") &
                                     !is.na(type)]
-
-p1<-ggplot(rep.df.all[between(year_window, -1800, -50) & type!="Local.Extinction"])+
+rep.df.all.mean<-rep.df.all[,.(N=mean(N)), by=list(year_window, type, species.type, seed_continent)]
+p1<-ggplot(rep.df.all.mean[between(year_window, -1800, -50) & type!="Local.Extinction"])+
   geom_smooth(aes(x=year_window, y=N, color=species.type), 
-              method = "loess", span = 0.1, se = FALSE, linewidth = 1) + 
+              method = "loess", span = 0.3, se = T, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
   scale_color_manual(values = c("Native" = color_native, 
                                 "Immigrant" = color_immigrant, 
@@ -290,10 +299,14 @@ p1
 
 rep.df.all.extinction$type<-factor(rep.df.all.extinction$type, levels=c("Extinction", "Local.Extinction"),
                         labels=c("Extinction", "Local Extinction"))
-p2<-ggplot(rep.df.all.extinction[between(year_window, -1800, -50) & 
+
+rep.df.all.extinction.mean<-rep.df.all.extinction[
+  ,.(net_extinction=mean(net_extinction)),
+     by=list(year_window, species.type, continent, type)]
+p2<-ggplot(rep.df.all.extinction.mean[between(year_window, -1800, -50) & 
                                    continent %in% c("North America", "South America")])+
   geom_smooth(aes(x=year_window, y=net_extinction, color=species.type), 
-              method = "loess", span = 0.1, se = FALSE, linewidth = 1) + 
+              method = "loess", span = 0.3, se = T, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
   scale_color_manual(values = c("Native" = color_native, 
                                 "Immigrant" = color_immigrant, 
@@ -309,11 +322,11 @@ p2<-ggplot(rep.df.all.extinction[between(year_window, -1800, -50) &
   )+facet_grid(type~continent, scale="free")
 p2
 
-ggsave(p1, filename="../Figures/NET/Extinction.origin.pdf", width=8, height=5)
-ggsave(p1, filename="../Figures/NET/Extinction.origin.png", width=8, height=5, bg="white")
+#ggsave(p1, filename="../Figures/NET/Simulations/Extinction.origin.pdf", width=8, height=5)
+#ggsave(p1, filename="../Figures/NET/Simulations/Extinction.origin.png", width=8, height=5, bg="white")
 
-ggsave(p2, filename="../Figures/NET/Net.Extinction.continent.pdf", width=8, height=6)
-ggsave(p2, filename="../Figures/NET/Net.Extinction.continent.png", width=8, height=6, bg="white")
+ggsave(p2, filename="../Figures/NET/Simulations/Net.Extinction.continent.pdf", width=8, height=6)
+ggsave(p2, filename="../Figures/NET/Simulations/Net.Extinction.continent.png", width=8, height=6, bg="white")
 
 
 #Speciation
@@ -354,9 +367,13 @@ rep.df.all<-rep.df.all[!is.na(N_SP)]
 
 rep.df.all$net_speciation<-rep.df.all$N/rep.df.all$N_SP
 rep.df.all.speciation<-rep.df.all
-p1<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
+rep.df.all[year_window==-50 & seed_continent=="South American Origin" & continent=="North America" & rep]
+
+
+rep.df.all.mean<-rep.df.all[,.(N=mean(N), net_speciation=mean(net_speciation)), by=list(year_window, continent, species.type, seed_continent)]
+p1<-ggplot(rep.df.all.mean[between(year_window, -1800, -50)])+
   geom_smooth(aes(x=year_window, y=N, color=species.type), 
-              method = "loess", span = 0.1, se = FALSE, linewidth = 1) + 
+              method = "loess", span = 0.3, se = T, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
   scale_color_manual(values = c("Native" = color_native, 
                                 "Immigrant" = color_immigrant, 
@@ -371,10 +388,10 @@ p1<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
     axis.title = element_text(face = "bold")
   )+facet_wrap(~seed_continent, nrow=2, scale="free")
 
-
-p2<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
+p1
+p2<-ggplot(rep.df.all.mean[between(year_window, -1800, -50)])+
   geom_smooth(aes(x=year_window, y=net_speciation, color=species.type), 
-              method = "loess", span = 0.1, se = FALSE, linewidth = 1) + 
+              method = "loess", span = 0.3, se = T, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
   scale_color_manual(values = c("Native" = color_native, 
                                 "Immigrant" = color_immigrant, 
@@ -391,11 +408,11 @@ p2<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
 p2
 
 
-ggsave(p1, filename="../Figures/NET/Speciation.origin.pdf", width=8, height=5)
-ggsave(p1, filename="../Figures/NET/Speciation.origin.png", width=8, height=5, bg="white")
+#ggsave(p1, filename="../Figures/NET/Simulations/Speciation.origin.pdf", width=8, height=5)
+#ggsave(p1, filename="../Figures/NET/Simulations/Speciation.origin.png", width=8, height=5, bg="white")
 
-ggsave(p2, filename="../Figures/NET/Net.Speciation.continent.pdf", width=8, height=5)
-ggsave(p2, filename="../Figures/NET/Net.Speciation.continent.png", width=8, height=5, bg="white")
+ggsave(p2, filename="../Figures/NET/Simulations/Net.Speciation.continent.pdf", width=8, height=5)
+ggsave(p2, filename="../Figures/NET/Simulations/Net.Speciation.continent.png", width=8, height=5, bg="white")
 
 #Dispersal
 
@@ -444,9 +461,12 @@ custom_colors <- c(
   "Secondary Invader" = color_s2n
 )
 rep.df.all.dispersal<-rep.df.all
-p1<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
+
+rep.df.all.mean<-rep.df.all[,.(N=mean(N), net_dispersal=mean(net_dispersal)),
+                            by=list(year_window, seed_continent, continent, type)]
+p1<-ggplot(rep.df.all.mean[between(year_window, -1800, -50)])+
   geom_smooth(aes(x=year_window, y=N, color=type), 
-              method = "loess", span = 0.1, se = FALSE, linewidth = 1) + 
+              method = "loess", span = 0.3, se = T, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
   scale_color_manual(values=custom_colors) +
   labs(x = "Year", y = "Number of Dispersal", 
@@ -460,9 +480,9 @@ p1<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
 
 p1
 
-p2<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
+p2<-ggplot(rep.df.all.mean[between(year_window, -1800, -50)])+
   geom_smooth(aes(x=year_window, y=net_dispersal, color=type), 
-              method = "loess", span = 0.1, se = FALSE, linewidth = 1) + 
+              method = "loess", span = 0.3, se = T, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
   scale_color_manual(values=custom_colors) +
   labs(x = "Year", y = "Immigrant percentage", 
@@ -476,13 +496,13 @@ p2<-ggplot(rep.df.all[between(year_window, -1800, -50)])+
 p2
 
 
-ggsave(p1, filename="../Figures/NET/Dispersal.origin.pdf", width=8, height=5)
-ggsave(p1, filename="../Figures/NET/Dispersal.origin.png", width=8, height=5, bg="white")
+#ggsave(p1, filename="../Figures/NET/Simulations/Dispersal.origin.pdf", width=8, height=5)
+#ggsave(p1, filename="../Figures/NET/Simulations/Dispersal.origin.png", width=8, height=5, bg="white")
 
-ggsave(p2, filename="../Figures/NET/Net.Dispersal.continent.pdf", width=8, height=5)
-ggsave(p2, filename="../Figures/NET/Net.Dispersal.continent.png", width=8, height=5, bg="white")
+ggsave(p2, filename="../Figures/NET/Simulations/Net.Dispersal.continent.pdf", width=8, height=5)
+ggsave(p2, filename="../Figures/NET/Simulations/Net.Dispersal.continent.png", width=8, height=5, bg="white")
 
-#GLM
+ #GLM
 
 rep.df.all.extinction
 rep.df.all.speciation

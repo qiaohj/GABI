@@ -47,6 +47,10 @@ for (i in c(1:nrow(simulations_sub))){
   }
   target<-sprintf("/media/huijieqiao/Butterfly/GABI/Results/%s/continent_n_cells.rda", 
                   item$label)
+  if (F){
+    sp[label=="9652.BROAD.GOOD"]
+    xxxx<-readRDS("/media/huijieqiao/Butterfly/GABI/Results/9652.BROAD.GOOD/continent_n_cells.rda")
+  }
   if (!file.exists(target)){
     next()
   }
@@ -63,7 +67,9 @@ for (i in c(1:nrow(simulations_sub))){
       df$label<-item$label
       df_merge_isthmus<-copy(df)
       df_merge_isthmus[continent=="bridge1", continent:="North America"]
-      df_merge_isthmus<-df_merge_isthmus[,.(N=sum(N)), by=list(year, continent, sp_id, seed_id, nb, da, label)]
+      df_merge_isthmus<-df_merge_isthmus[,.(N=sum(N)), 
+                                         by=list(year, continent, sp_id, 
+                                                 seed_id, nb, da, label)]
     }else{
       next()
     }
@@ -150,3 +156,8 @@ saveRDS(div_df_nb, "../Data/Tables/virtual.species.richness.nb.rda")
 saveRDS(div_df_da, "../Data/Tables/virtual.species.richness.da.rda")
 saveRDS(div_df_nb_da, "../Data/Tables/virtual.species.richness.nb_da.rda")
 
+if (F){
+  sp<-readRDS("../Data/Tables/virtual.species.rda")
+  
+  sp_merge_isthmus<-readRDS("../Data/Tables/virtual.species.merge.isthmus.rda")
+}

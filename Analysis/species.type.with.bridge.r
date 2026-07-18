@@ -95,14 +95,16 @@ for (j in c(1:length(labels))){
   species$handle<-F
   setorderv(species, c("from", "to"), c(1, 1))
   species$continent<-""
+  species$bridge1<-0
+  species$bridge2<-0
   species$Extinction<-0
   species$Speciation<-0
   species$Species<-0
   if (nrow(species)>=1){
     for (i in c(1:nrow(species))){
       sp.id<-species[i]$sp_id
-      item<-d[sp_id==sp.id]
-      item<-item[year==min(year) & continent %in% c("North America", "South America")]
+      item.b<-d[sp_id==sp.id]
+      item<-item.b[year==min(year) & continent %in% c("North America", "South America")]
       item<-item[,.(N=sum(N)), by=list(year, continent, sp_id, seed_id, nb, da, label, Parent)]
       if (nrow(item)==1){
         continent<-item$continent
@@ -117,6 +119,29 @@ for (j in c(1:length(labels))){
         asdasdf
       }
       species[i]$continent<-continent
+      
+      item<-item.b[year==min(year) & continent %in% c("bridge1", "bridge2")]
+      item<-item[,.(N=sum(N)), by=list(year, continent, sp_id, seed_id, nb, da, label, Parent)]
+      if (nrow(item)==1){
+        bridge<-item$continent
+      }
+      if (nrow(item)==0){
+        bridge<-""
+      }
+      if (nrow(item)==2){
+        bridge<-c("bridge1", "bridge2")
+      }
+      if (nrow(item)>2){
+        asdasdf
+      }
+      if ("bridge1" %in% bridge){
+        species[i]$bridge1<-1
+      }
+      if ("bridge2" %in% bridge){
+        species[i]$bridge2<-1
+      }
+      
+      
       if (species[i]$is_leaf==F){
         
         n_tips <- length(tree$tip.label)

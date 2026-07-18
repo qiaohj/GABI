@@ -8,6 +8,9 @@ library(ape)
 library(phytools)
 #library(ggtree)
 library(phangorn)
+getDTthreads()
+parallel::detectCores(logical = FALSE)
+
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 if (F){
   sp<-readRDS("../Data/Tables/virtual.species.rda")
@@ -33,11 +36,11 @@ if (F){
     
   }
   
-  colnames(species.type.N)[c(8, 12)]<-c("origin_continent", "seed_continent")
+  colnames(species.type.N)[c(8, 14)]<-c("origin_continent", "seed_continent")
   species.type.N[origin_continent!=seed_continent]
   
   species.type<-species.type.N[, c("sp_id", "NB", "DA", "from", "to", "type",
-                                   "origin_continent", "seed_continent")]
+                                   "origin_continent", "seed_continent", "bridge1", "bridge2")]
   colnames(sp)[c(6,7)]<-c("NB", "DA")
   colnames(species.type)
   
@@ -54,12 +57,13 @@ if (F){
                                       sp_full$NB, sp_full$DA, sp_full$year)
   sp_full.N$species.label.year<-sprintf("%s.%s.%s.%d", sp_full.N$sp_id,
                                         sp_full.N$NB, sp_full.N$DA, sp_full.N$year)
-  sp_full.N$current_continent<-""
+  
   bridge1.labels<-unique(sp_full[current_continent=="bridge1"]$species.label.year)
   bridge2.labels<-unique(sp_full[current_continent=="bridge2"]$species.label.year)
   sa.labels<-unique(sp_full[current_continent=="South America"]$species.label.year)
   na.labels<-unique(sp_full[current_continent=="North America"]$species.label.year)
   
+  sp_full.N$current_continent<-""
   sp_full.N[species.label.year %in% bridge1.labels,
             current_continent:="bridge1"]
   sp_full.N[species.label.year %in% bridge2.labels,
@@ -71,6 +75,17 @@ if (F){
   sp_full.N[species.label.year %in% sa.labels & species.label.year %in% na.labels,
             current_continent:="Two continents"]
   table(sp_full.N$current_continent)
+  
+  sp_full.N$bridge<-""
+  sp_full.N[species.label.year %in% bridge1.labels,
+            bridge:="bridge1"]
+  sp_full.N[species.label.year %in% bridge2.labels,
+            bridge:="bridge2"]
+  sp_full.N[species.label.year %in% bridge1.labels & 
+              species.label.year %in% bridge2.labels,
+            bridge:="Two bridges"]
+  table(sp_full.N$bridge)
+  
   sp_full.N[current_continent=="bridge1"]
   
   sp_prev<-sp_full.N[, c("current_continent", "sp_id", "NB", "DA", "year")]
@@ -80,7 +95,6 @@ if (F){
   colnames(sp_prev)[1]<-"previous_continent"
   
   sp_full_continents<-merge(sp_full.N, sp_prev, by=c("sp_id", "NB", "DA", "year"), all=T)
-  sp_full_continents.bak<-sp_full_continents
   
   #sp_full_continents[year>0]
   
@@ -89,6 +103,8 @@ if (F){
   
   sp_full_continents[is.na(previous_continent), previous_continent:="Unknown"]
   sp_full_continents[is.na(current_continent), current_continent:="Unknown"]
+  
+  sp_full_continents[is.na(bridge), bridge:=""]
   
   sp_full_continents$seed_id<-as.numeric(sp_full_continents$seed_id)
   sp_full_continents[sp_id==Parent, Parent:=""]
@@ -111,7 +127,7 @@ if (F){
   
   
   sp_full_extinct<-sp_full_continents[current_continent=="Unknown"]
-  sp_full_extinct<-sp_full_extinct[!sp_id %in% sp_full_continents$Parent]
+  sp_full_extinct<-sp_full_extinct[!species.label %in% sp_full_continents$parent.label]
   sp_full_extinct$seed_id<-NULL
   sp_full_extinct$Parent<-NULL
   sp_full_extinct$from<-NULL
@@ -129,6 +145,8 @@ if (F){
   
   sp_full_continents<-sp_full_continents[current_continent!="Unknown"]
   sp_full_continents<-rbindlist(list(sp_full_continents, sp_full_extinct), use.names=T)
+  
+  #Remove the seed parents
   sp_full_continents[parent_continent=="Unknown" & year-from==1, parent_continent:=""]
   #sp_full_continents[type=="Speciation" & is.na(parent_continent)]
   
@@ -277,6 +295,16 @@ if (F){
   table(sp_full.N$current_continent)
   sp_full.N[current_continent=="bridge1"]
   
+  sp_full.N$bridge<-""
+  sp_full.N[species.label.year %in% bridge1.labels,
+            bridge:="bridge1"]
+  sp_full.N[species.label.year %in% bridge2.labels,
+            bridge:="bridge2"]
+  sp_full.N[species.label.year %in% bridge1.labels & species.label.year %in% bridge2.labels,
+            bridge:="Two bridges"]
+  table(sp_full.N$bridge)
+  
+  
   sp_prev<-sp_full.N[, c("current_continent", "sp_id", "NB", "DA", "year")]
   
   sp_prev$year<-sp_prev$year+1
@@ -293,7 +321,9 @@ if (F){
   
   sp_full_continents[is.na(previous_continent), previous_continent:="Unknown"]
   sp_full_continents[is.na(current_continent), current_continent:="Unknown"]
-  
+  if (F){
+    table(sp_full_continents$current_continent)
+  }
   sp_full_continents$seed_id<-as.numeric(sp_full_continents$seed_id)
   sp_full_continents[sp_id==Parent, Parent:=""]
   sp_full_continents$label<-sprintf("%d.%s.%s", sp_full_continents$seed_id,
@@ -313,9 +343,8 @@ if (F){
   sp_full_continents[is.na(parent_continent), parent_continent:=""]
   
   
-  
   sp_full_extinct<-sp_full_continents[current_continent=="Unknown"]
-  sp_full_extinct<-sp_full_extinct[!sp_id %in% sp_full_continents$Parent]
+  sp_full_extinct<-sp_full_extinct[!species.label %in% sp_full_continents$parent.label]
   sp_full_extinct$seed_id<-NULL
   sp_full_extinct$Parent<-NULL
   sp_full_extinct$from<-NULL
@@ -337,7 +366,6 @@ if (F){
   #sp_full_continents[type=="Speciation" & is.na(parent_continent)]
   
   #sp_full_continents[previous_continent=="North America" & current_continent=="North America" & parent_continent=="Unknown"]
-  sp_full_continents[species.label=="10046-2-1.MODERATE-MODERATE.POOR"]
   
   sp_full_continents$type<-""
   sp_full_continents$gain.continent<-""
@@ -382,7 +410,9 @@ if (F){
                             loss.continent=com$loss.continent)]
     
   }
-  event.N<-sp_full_continents[,.(N=.N), by=list(parent_continent, previous_continent, current_continent, type)]
+  sp_full_continents[previous_continent=="South America" & current_continent=="Two bridges"]
+  
+  event.N<-sp_full_continents[type=="",.(N=.N), by=list(parent_continent, previous_continent, current_continent, type)]
   fwrite(event.N, 
          "../Data/full.event.N.csv")
   table(sp_full_continents$type)
@@ -411,8 +441,11 @@ if (F){
     .I[2],
     by = .(Parent, current_continent)
   ]$V1
-  
+  sp_full_continents[na.omit(idx)]
   sp_full_continents[na.omit(idx), gain.continent := ""]
+  
+  sp_full_continents[type==""][1]
+  
   saveRDS(sp_full_continents, "../Data/Tables/sp_full_continents.NULL.rda")
   
   #sp[year==1604 & seed_id==12 & NB=="TINY" & DA=="POOR"]

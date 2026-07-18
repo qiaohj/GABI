@@ -1,13 +1,13 @@
 library(data.table)
 library(ggplot2)
 library(sf)
-library(dplyr)
 library(patchwork)
+library(dplyr)
 setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 source("Figures/common.r")
 if (F){
-  sp.with.bridge_bak<-readRDS("../Data/Tables/sp_full_continents.merge.isthmus.rda")
+  sp.with.bridge_bak<-readRDS("../Data/Tables/sp_full_continents.rda")
   sp.with.bridge<-copy(sp.with.bridge_bak)
   #View(sp.with.bridge[seed_id==33595 & NB=="NARROW" & DA=="POOR" & type!="Still.There"])
   
@@ -52,7 +52,7 @@ if (F){
   
   sp.with.bridge.N[type=="Local.Extinction" & loss.continent==seed_continent, type:="Local Extinction"]
   sp.with.bridge.N[type=="Local.Extinction" & loss.continent!=seed_continent, type:="Non-local Extinction"]
-  saveRDS(sp.with.bridge.N, "../Data/Tables/N.Speciation.Extinction.Dispersal.merge.isthmus.rda")
+  saveRDS(sp.with.bridge.N, "../Data/Tables/N.Speciation.Extinction.Dispersal.rda")
   
   sp.with.bridge.final<-sp.with.bridge[year==0]
   sp.with.bridge.final<-sp.with.bridge.final[N>0]
@@ -73,7 +73,7 @@ if (F){
                                       "Native", "Immigrant")
   table(sp.with.bridge.final.N$type)
   
-  saveRDS(sp.with.bridge.final.N, "../Data/Tables/N.Richness.merge.isthmus.rda")
+  saveRDS(sp.with.bridge.final.N, "../Data/Tables/N.Richness.rda")
   
   
   sp.with.bridge[DA=="GOOD" & NB=="MODERATE" & seed_id=="11871"]
@@ -84,7 +84,7 @@ if (F){
   Extinction.N<-Extinction[, .(N=.N), by=list(year, seed_id, NB, DA, seed_continent, current_continent, previous_continent,
                                               type, gain.continent, loss.continent)]
   
-  saveRDS(Extinction.N, "../Data/Tables/N.Extinction.merge.isthmus.rda")
+  saveRDS(Extinction.N, "../Data/Tables/N.Extinction.rda")
   
   Dispersal<-sp.with.bridge[type %in% c("New.Immigrants")]
   table(Dispersal$gain.continent)
@@ -94,7 +94,7 @@ if (F){
   Dispersal.N<-Dispersal[, .(N=.N), by=list(year, seed_id, NB, DA, seed_continent, current_continent, previous_continent,
                                             type, gain.continent, loss.continent)]
   
-  saveRDS(Dispersal.N, "../Data/Tables/N.Dispersal.merge.isthmus.rda")
+  saveRDS(Dispersal.N, "../Data/Tables/N.Dispersal.rda")
   
   Speciation<-sp.with.bridge[type %in% c("Speciation")]
   table(Speciation$gain.continent)
@@ -115,16 +115,15 @@ if (F){
     Speciation.N<-Speciation.N[, .(N=sum(N)), by=list(year, seed_id, NB, DA, seed_continent, current_continent, previous_continent,
                                                       type, gain.continent, loss.continent)]
   }
-  saveRDS(Speciation.N, "../Data/Tables/N.Speciation.merge.isthmus.rda")
-  
+  saveRDS(Speciation.N, "../Data/Tables/N.Speciation.rda")
 }
 
 
-df<-readRDS("../Data/Tables/N.Speciation.Extinction.Dispersal.merge.isthmus.rda")
+df<-readRDS("../Data/Tables/N.Speciation.Extinction.Dispersal.rda")
 
 df[,.(N=sum(N)), by=list(type)]
 table(df$type)
-richness.df<-readRDS("../Data/Tables/N.with.bridge.seed.continent.merge.isthmus.rda")
+richness.df<-readRDS("../Data/Tables/N.with.bridge.seed.continent.rda")
 richness.df$label<-sprintf("%d.%s.%s", richness.df$seed_id, richness.df$NB, richness.df$DA)
 
 
@@ -132,7 +131,7 @@ table(df$NB)
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$type)
 
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.no.outliers.rda")
 rep.list<-list()
 rep.list.all<-list()
 
@@ -180,8 +179,8 @@ rep.richness.df.all_se<-rep.richness.df.all[]
 #                        labels=c( "BROAD", "BIG", "MODERATE", "NARROW"))
 
 
-saveRDS(rep.df, "../Data/Tables/N.Speciation.Extinction.Dispersal.rep.merge.isthmus.rda")
-saveRDS(rep.df.all, "../Data/Tables/N.Speciation.Extinction.Dispersal.all.rep.merge.isthmus.rda")
+saveRDS(rep.df, "../Data/Tables/N.Speciation.Extinction.Dispersal.rep.FULL.rda")
+saveRDS(rep.df.all, "../Data/Tables/N.Speciation.Extinction.Dispersal.all.rep.FULL.rda")
 
 extinction<-rep.df.all[type %in% c("Failed Invader", "Extinction")]
 extinction$continent<-extinction$seed_continent
@@ -259,10 +258,10 @@ dispersal.all.se<-dispersal.all[,.(mean=mean(N), sd=sd(N)),
                                 by=list(type, disp.type)]
 setorderv(dispersal.all.se, c("type", "disp.type"))
 to.doc(dispersal.all.se, "Number of dispersal events", 
-       "../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.merge.isthmus.docx",
+       "../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.FULL.docx",
        digits=2)
-#ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.merge.isthmus.pdf", width=5, height=3)
-#ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.merge.isthmus.png", width=5, height=3, bg="white")
+#ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.FULL.pdf", width=5, height=3)
+#ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.FULL.png", width=5, height=3, bg="white")
 
 #Dispersal by seeds
 
@@ -279,15 +278,15 @@ dispersal.all.se<-dispersal.all[,.(mean=mean(N_Seed), sd=sd(N_Seed)),
                                 by=list(type, disp.type)]
 setorderv(dispersal.all.se, c("type", "disp.type"))
 to.doc(dispersal.all.se, "Number of dispersal events by seed", 
-       "../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.merge.isthmus.docx",
+       "../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.Seed.FULL.docx",
        digits=2)
-#ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.merge.isthmus.pdf", width=3, height=3)
-#ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.merge.isthmus.png", width=3, height=3, bg="white")
+#ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.Seed.FULL.pdf", width=3, height=3)
+#ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.Seed.FULL.png", width=3, height=3, bg="white")
 
 p<-p.disp.seed+p.disp+plot_layout(guides = "collect", widths = c(1, 2))
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.and.Species.pdf",
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.Seed.and.Species.FULL.pdf",
        width=6, height=3)
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.and.Species.png",
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.Seed.and.Species.FULL.png",
        width=6, height=3)
 
 
@@ -350,11 +349,11 @@ all.df.se<-all.df[,.(mean=mean(N), sd=sd(N)),
                   by=list(event, continent, type)]
 setorderv(all.df.se, c("event", "continent", "type"))
 to.doc(all.df.se, "Number of speciation and extinction events, and species richness", 
-       "../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Speciation.Extinction.Richness.merge.isthmus.docx",
+       "../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Speciation.Extinction.Richness.FULL.docx",
        digits=2)
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Speciation.Extinction.Richness.merge.isthmus.pdf", 
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Speciation.Extinction.Richness.FULL.pdf", 
        width=10, height=4)
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Speciation.Extinction.Richness.merge.isthmus.png", 
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Speciation.Extinction.Richness.FULL.png", 
        width=10, height=4, bg="white")
 
 
@@ -442,10 +441,10 @@ dispersal.all.se<-dispersal.all[,.(mean=mean(N), sd=sd(N)),
                                 by=list(type, disp.type, NB, DA)]
 setorderv(dispersal.all.se, c("type", "disp.type", "NB", "DA"))
 to.doc(dispersal.all.se, "Number of dispersal events", 
-       "../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.details.merge.isthmus.docx",
+       "../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.details.FULL.docx",
        digits=2)
-ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.details.merge.isthmus.pdf", width=10, height=5)
-ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.details.merge.isthmus.png", width=10, height=5, bg="white")
+ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.details.FULL.pdf", width=10, height=5)
+ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.details.FULL.png", width=10, height=5, bg="white")
 
 #Dispersal by seeds
 
@@ -462,10 +461,10 @@ dispersal.all.se<-dispersal.all[,.(mean=mean(N_Seed), sd=sd(N_Seed)),
                                 by=list(type, disp.type)]
 setorderv(dispersal.all.se, c("type", "disp.type"))
 to.doc(dispersal.all.se, "Number of dispersal events by seed", 
-       "../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.details.merge.isthmus.docx",
+       "../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.Seed.details.FULL.docx",
        digits=2)
-ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.details.merge.isthmus.pdf", width=6, height=3)
-ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.details.merge.isthmus.png", width=6, height=3, bg="white")
+ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.Seed.details.FULL.pdf", width=6, height=3)
+ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Dispersal.Seed.details.FULL.png", width=6, height=3, bg="white")
 
 
 
@@ -534,11 +533,11 @@ all.df.se<-all.df[,.(mean=mean(N), sd=sd(N)),
                   by=list(event, continent, type, NB, DA)]
 setorderv(all.df.se, c("event", "continent", "type", "NB", "DA"))
 to.doc(all.df.se, "Number of speciation and extinction events, and species richness", 
-       "../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Speciation.Extinction.Richness.details.merge.isthmus.docx",
+       "../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Speciation.Extinction.Richness.details.FULL.docx",
        digits=2)
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Speciation.Extinction.Richness.details.merge.isthmus.pdf", 
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Speciation.Extinction.Richness.details.FULL.pdf", 
        width=12, height=8)
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Speciation.Extinction.Richness.details.merge.isthmus.png", 
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Speciation.Extinction.Richness.details.FULL.png", 
        width=12, height=8, bg="white")
 
 
@@ -555,7 +554,7 @@ p<-ggplot(rep.df.sd)+
                 position=pd, width=0.2)+
   theme_bw()
 p
-ggsave(p, filename="../Figures/event.type.pdf", width=12, height=6)
+#ggsave(p, filename="../Figures/event.type.pdf", width=12, height=6)
 rep.df.sd<-rep.df[, .(N=mean(N), sd=sd(N)),
                   by=list(seed_continent, type, NB, DA)]
 
@@ -681,9 +680,9 @@ p3
 
 p<-p2/p3
 p
-ggsave(p2, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Richness.Per.pdf", 
+ggsave(p2, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Richness.Per.FULL.pdf", 
        width=4, height=3, bg="white")
 
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Richness.Per.ALL.pdf", 
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.FULL/N.Richness.Per.ALL.FULL.pdf", 
        width=8, height=6, bg="white")
 

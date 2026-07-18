@@ -80,84 +80,9 @@ length(unique(df.detail[! seed_id %in% df_filtered_seeds[continent=="South Ameri
                         & continent=="South America"]$seed_id))
 
 table(seeds$continent)
-
-quantiles<-quantile(N_species$N_SPECIES, c(0, 1, 0.99, 0.98, 0.95, 0.90, 0.999))
-names(quantiles)<-NULL
-p<-ggplot(N_species.all)+
-  geom_histogram(aes(x=N_SPECIES), binwidth=1)+
-  geom_vline(aes(xintercept=quantiles[7]), linetype=2)+
-  scale_x_sqrt(breaks=c(100, 1000, ceiling(quantiles[7]), 2500, 5000, 7500, 10000))+
-  scale_y_sqrt()+
-  theme_minimal() +
-  labs(
-    x = "Number of species",
-    y = "Number of simulations"
-  ) +
-  theme(
-    panel.grid = element_blank()
-  )       
-p
-ggsave(p, filename="../Figures/Outliers/Outlier.distribution.pdf", width=6, height=3)
-ggsave(p, filename="../Figures/Outliers/Outlier.distribution.png", width=6, height=3, bg="white")
-
+N_species[N_SPECIES==max(N_species$N_SPECIES)]
 N_species$seed_label<-paste(N_species$seed_id, N_species$nb, N_species$da)
-outliers<-unique(N_species[(N_SPECIES>quantiles[7])])
-dt.outliers<-outliers[,.(N=.N), by=list(nb, da, continent)]
-dt.outliers$nb<-factor(dt.outliers$nb, 
-                     levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
-                     labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
-setorderv(dt.outliers, c("nb", "da", "continent"))
-
-dt.outliers<-outliers[,.(N=.N), by=list(nb, da, continent)]
-dt.outliers$nb<-factor(dt.outliers$nb, 
-                       levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
-                       labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
-setorderv(dt.outliers, c("nb", "da"))
-
-dt.outliers
-
-to.doc(dt.outliers, "Number of outliers per combination", "../Figures/Outliers/outliers.docx",
-       digits = 0)
-range(N_species$N_SPECIES)
-
-outliers$nb<-factor(outliers$nb, 
-                       levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
-                       labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
-p<-ggplot(outliers)+geom_histogram(aes(x=N_SPECIES), bins=100)+
-  facet_grid(nb+da~continent)
-ggsave(p, filename="../Figures/Outliers/Outlier.details.pdf", width=6, height=6)
-ggsave(p, filename="../Figures/Outliers/Outlier.details.png", width=6, height=6, 
-       bg="white")
-
-
-table(outliers$continent)
-N_species_filter<-df_filtered_seeds[!seed_id %in% outliers$seed_id]
-df_filtered_N_filter<-N_species_filter[, .(N_SPECIES=sum(N_SPECIES), 
-                                           N_SPECIATION=sum(N_SPECIATION),
-                                           N_EXTINCTION=sum(N_EXTINCTION),
-                                           N_SPECIATION_YEAR=sum(N_SPECIATION_YEAR),
-                                           N_EXTINCTION_YEAR=sum(N_EXTINCTION_YEAR),
-                                           N_ALL_SPECIES=sum(N_ALL_SPECIES),
-                                           N_SEED=length(unique(seed_id))),
-                                       by=list(continent, year)]
-
-ggplot(df_filtered_N_filter)+
-  geom_line(aes(y=N_SPECIES, x=year * -1, color=continent))+
-  geom_vline(xintercept = burn_in * -1, linetype=2)+
-  geom_text(data=df_filtered_N[year==1504], 
-            aes(x=-1100, y=c(2e3, 6e4), 
-                label=paste(continent, N_SEED, sep=": ")),
-            hjust = 0)+
-  geom_text(data=df_filtered_N[year==burn_in+1], 
-            aes(x=burn_in * -1 + 10, y=c(1.7e3, 5.5e4), 
-                label=paste(continent, N_SEED, sep=": ")),
-            hjust = 0)
-
-
-outliers_ID<-unique(outliers$seed_id)
-unique(N_species$nb)
-#random seeds
-no.outliers<-df_filtered_seeds[(year==0 & !(seed_id %in% outliers_ID))]
+no.outliers<-df_filtered_seeds[(year==0 )]
 
 
 seed_pool<-no.outliers[, .(N_SPECIES=sum(N_SPECIES)), 
@@ -212,8 +137,6 @@ for (i in c(1:nrow(coms))){
   com<-coms[i]
   item<-n[nb==com$nb & da==com$da & min.dist==com$min.dist]
   if (nrow(item)!=2){
-    print(item)
-    print("skip")
     next()
   }
   min.N<-min(item$N, max_seeds)
@@ -282,9 +205,23 @@ all_ramdom_seeds_df<-rbindlist(all_ramdom_seeds)
 
 unique(all_ramdom_seeds_df[, .(N=.N), by=list(continent, rep, nb, da)]$N)
 
-saveRDS(all_ramdom_seeds_df, "../Data/Tables/random.seeds.threshold.by.nb.distance.999.rda")
+saveRDS(all_ramdom_seeds_df, "../Data/Tables/random.seeds.threshold.by.nb.distance.no.outliers.rda")
 
-all_ramdom_seeds_df<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+all_ramdom_seeds_df<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.no.outliers.rda")
+
+check<-N_species[N_SPECIES>7000]
+check$seed_label<-sprintf("%d.%s.%s", check$seed_id, check$nb, check$da)
+
+N<-all_ramdom_seeds_df[label %in% check$seed_label]
+N[,(N=.N), by=list(label)]
+
+seed_pool[seed_id==9652 & nb=="MODERATE"]
+
+xxx<-all_ramdom_seeds_df[label %in% 
+                      seed_pool[min.dist==34  & 
+                                  nb=="MODERATE" & da=="GOOD"]$label2]
+xxx$rep<-NULL
+unique(xxx)
 seeds<-copy(all_ramdom_seeds_df)
 seeds$nb <- factor(
   seeds$nb,
@@ -299,27 +236,27 @@ setorderv(N, c("rep", "nb", "continent"))
 N
 
 N_ALL <- seeds[,
-  .(N_ALL_Seeds = length(unique(label))),
-  by = list(nb, continent)
+               .(N_ALL_Seeds = length(unique(label))),
+               by = list(nb, continent)
 ]
 N<-merge(N, N_ALL, by=c("nb", "continent"))
 
 
 N$Per<-N$N_Seeds/N$N_ALL_Seeds
 N_se <- N[,
-  .(
-    N_Seeds = mean(N_Seeds),
-    sd_N_Seeds = sd(N_Seeds),
-    N_ALL_Seeds = mean(N_ALL_Seeds),
-    sd_N_ALL_Seeds = sd(N_ALL_Seeds),
-    Per = mean(Per)*100,
-    sd_Per = sd(Per)*100
-  ),
-  by = list(nb, continent)
+          .(
+            N_Seeds = mean(N_Seeds),
+            sd_N_Seeds = sd(N_Seeds),
+            N_ALL_Seeds = mean(N_ALL_Seeds),
+            sd_N_ALL_Seeds = sd(N_ALL_Seeds),
+            Per = mean(Per)*100,
+            sd_Per = sd(Per)*100
+          ),
+          by = list(nb, continent)
 ]
 setorderv(N_se, "nb")
 
-to.doc(N_se, "Proportion of seed usages", "../Figures/Seeds/propotion.of.seed.usage.docx", digits = 2)
+to.doc(N_se, "Proportion of seed usages", "../Figures/Seeds/propotion.of.seed.usage.no.outliers.docx", digits = 2)
 
 
 N_times<-seeds[, .(N=.N), by=c("nb", "da", "label", "continent")]

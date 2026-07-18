@@ -7,8 +7,8 @@ setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 source("Figures/common.r")
 if (F){
-  sp<-readRDS("../Data/Tables/sp_full_continents.rda")
-  N<-sp[,.(N_SP=length(unique(species.label))), 
+  sp.with.bridge<-readRDS("../Data/Tables/sp_full_continents.rda")
+  N<-sp.with.bridge[,.(N_SP=length(unique(species.label))), 
         by=list(seed_id, seed_continent, current_continent, NB, DA)]
   N$label<-sprintf("%d.%s.%s", N$seed_id, N$NB, N$DA)
   
@@ -25,40 +25,73 @@ if (F){
   rep.df<-rbindlist(rep.list)
   saveRDS(rep.df, "../Data/Tables/bridge.usage.rda")
   
-  sp.ids<-unique(sp$species.label)
+  sp.ids<-unique(sp.with.bridge$species.label)
   sp.id<-sp.ids[1]
-  list_of_sp <- split(sp, by = "species.label")
+  list_of_sp <- split(sp.with.bridge, by = "species.label")
   length(list_of_sp)
   final.list<-list()
   for (i in c(1:length(list_of_sp))){
     
     print(paste(i, length(list_of_sp)))
     item<-list_of_sp[[i]]
-    item<-item[current_continent %in% c("North America", "South America", "bridge1", "bridge2")]
-    coutinents<-unique(item$current_continent)
-    if (length(coutinents)>=2){
+    is.two.continents<-F
+    if (nrow(item[current_continent %in% c("Two continents")])>0){
+      is.two.continents<-T
+    }
+    item<-item[current_continent %in% c("North America", 
+                                        "South America", 
+                                        "bridge1", 
+                                        "bridge2")]
+    continents<-unique(item$current_continent)
+    if (is.two.continents==T){
+      continents<-unique(c(continents, 
+                           "North America", 
+                           "South America"))
+    }
+    #print(continents)
+    if (length(continents)>=2 | length(coutinents[coutinents %in% c("bridge1", "bridge2")])>0){
       item.info<-item[1]
-      if (length(coutinents)==2){
+      if (length(continents)==1){
         dt.item<-data.table(seed_id=item.info$seed_id,
                             sp_id=item.info$sp_id,
                             NB=item.info$NB,
                             DA=item.info$DA,
                             species.label=item.info$species.label,
                             seed_continent=item.info$seed_continent,
-                            bridge_continent=coutinents[coutinents %in% c("bridge1", "bridge2")],
+                            bridge_continent=continents[continents %in% c("bridge1", "bridge2")],
                             across_bridge=F)
       }
-      if (length(coutinents)==3){
+      if (length(continents)==2){
         dt.item<-data.table(seed_id=item.info$seed_id,
                             sp_id=item.info$sp_id,
                             NB=item.info$NB,
                             DA=item.info$DA,
                             species.label=item.info$species.label,
                             seed_continent=item.info$seed_continent,
-                            bridge_continent=coutinents[coutinents %in% c("bridge1", "bridge2")],
+                            bridge_continent=continents[continents %in% c("bridge1", "bridge2")],
+                            across_bridge=F)
+      }
+      if (length(continents)==3 & length(continents[continents %in% c("bridge1", "bridge2")])==2){
+        dt.item<-data.table(seed_id=item.info$seed_id,
+                            sp_id=item.info$sp_id,
+                            NB=item.info$NB,
+                            DA=item.info$DA,
+                            species.label=item.info$species.label,
+                            seed_continent=item.info$seed_continent,
+                            bridge_continent=continents[continents %in% c("bridge1", "bridge2")],
+                            across_bridge=F)
+      }
+      if (length(continents)==3 & length(continents[continents %in% c("bridge1", "bridge2")])==1){
+        dt.item<-data.table(seed_id=item.info$seed_id,
+                            sp_id=item.info$sp_id,
+                            NB=item.info$NB,
+                            DA=item.info$DA,
+                            species.label=item.info$species.label,
+                            seed_continent=item.info$seed_continent,
+                            bridge_continent=continents[continents %in% c("bridge1", "bridge2")],
                             across_bridge=T)
       }
-      if (length(coutinents)==4){
+      if (length(continents)==4){
         
         dt.item<-data.table(seed_id=item.info$seed_id,
                             sp_id=item.info$sp_id,
@@ -66,7 +99,7 @@ if (F){
                             DA=item.info$DA,
                             species.label=item.info$species.label,
                             seed_continent=item.info$seed_continent,
-                            bridge_continent=coutinents[coutinents %in% c("bridge1", "bridge2")],
+                            bridge_continent=continents[continents %in% c("bridge1", "bridge2")],
                             across_bridge=T)
       }
       final.list[[length(final.list)+1]]<-dt.item
