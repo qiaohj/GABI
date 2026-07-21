@@ -286,13 +286,18 @@ custom_colors <- c(
   "N to S" = color_n2s,
   "S to N" = color_s2n
 )
+dispersal.all$type<-factor(dispersal.all$type, levels=c("Primary Invader",
+                                                        "Secondary Invader"),
+                           labels=c("Primary invader",
+                                    "Secondary invader"))
 p.disp<-ggplot(dispersal.all)+geom_boxplot(aes(x=disp.type, y=N, color=disp.type))+
   facet_wrap(~type)+
   scale_color_manual(values=custom_colors)+
-  labs(y="Number of Species")+
+  labs(y="Number of species")+
   theme_bw()+
   theme(axis.title.x = element_blank(),
-        legend.position = "none")
+        legend.position = "none",
+        strip.background = element_blank())
 p.disp
 dispersal.all.se<-dispersal.all[,.(mean=mean(N), sd=sd(N)),
                                 by=list(type, disp.type)]
@@ -318,11 +323,11 @@ if (remove.outliers==F){
 
 #Dispersal by seeds
 
-p.disp.seed<-ggplot(dispersal.all[type=="Primary Invader"])+
+p.disp.seed<-ggplot(dispersal.all[type=="Primary invader"])+
   geom_boxplot(aes(x=disp.type, y=N_Seed, color=disp.type))+
   #facet_wrap(~type)+
   scale_color_manual(values=custom_colors)+
-  labs(y="Number of Seeds")+
+  labs(y="Number of seeds")+
   theme_bw()+
   theme(axis.title.x = element_blank(),
         legend.position = "none")
@@ -381,10 +386,13 @@ all.df<-rbindlist(list(richness.all, speciation.all), fill = T)
 table(all.df$type)
 table(all.df$event)
 
-all.df$event<-factor(all.df$event, levels=c("Speciation", "Extinction", "Richness", "Local Extinction"))
+all.df$event<-factor(all.df$event, 
+                     levels=c("Speciation", "Extinction", "Local Extinction", "Richness"),
+                     labels=c("Speciation", "Extinction", "Extirpation", "Richness"))
+
 all.df$type<-factor(all.df$type, levels=c("Native", "Immigrant"))
 
-p1<-ggplot(all.df[event %in% c("Speciation", "Extinction", "Local Extinction")])+
+p1<-ggplot(all.df[event %in% c("Speciation", "Extinction", "Extirpation")])+
   geom_boxplot(aes(x=continent, y=N, color=type))+
   facet_wrap(~event, nrow=1, scale="free")+
   labs(y="Number of events", color="Species type")+
@@ -504,11 +512,16 @@ dispersal.all[seed_continent=="South America" & type=="Secondary Invader", disp.
 dispersal.all$NB<-factor(dispersal.all$NB, 
                          levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
                          labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+dispersal.all$type<-factor(dispersal.all$type, 
+                           levels=c("Primary Invader",
+                                    "Secondary Invader"),
+                           labels=c("Primary invader",
+                                    "Secondary invader"))
 p.disp<-ggplot(dispersal.all)+
   geom_boxplot(aes(x=disp.type, y=N, color=type))+
   facet_grid(DA~NB, scale="free")+
-  scale_color_manual(values=c("Primary Invader"=color_low, "Secondary Invader"=color_high))+
-  labs(y="Number of Species", color="Type of invader")+
+  scale_color_manual(values=c("Primary invader"=color_low, "Secondary invader"=color_high))+
+  labs(y="Number of species", color="Type of invader")+
   theme_bw()+
   theme(axis.title.x = element_blank(),
         legend.position = "bottom")
@@ -557,20 +570,41 @@ all.df<-rbindlist(list(richness.all, speciation.all), use.names=T, fill=T)
 table(all.df$type)
 table(all.df$event)
 
-all.df$event<-factor(all.df$event, levels=c("Speciation", "Extinction", "Richness", "Local Extinction"))
 all.df$type<-factor(all.df$type, levels=c("Native", "Immigrant"))
 all.df$NB<-factor(all.df$NB, 
                   levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
                   labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+all.df$event<-factor(all.df$event, levels=c("Speciation", "Extinction", "Local Extinction", "Richness"),
+                     labels=c("Speciation", "Extinction", "Extirpation", "Richness"))
 all.df$continent<-ifelse(all.df$continent=="North America", "N", "S")
-p<-ggplot(all.df)+geom_boxplot(aes(x=continent, y=N, color=type))+
+p1<-ggplot(all.df[event %in% c("Speciation", "Extinction", "Extirpation")])+
+  geom_boxplot(aes(x=continent, y=N, color=type))+
   facet_grid(event~NB+DA, scale="free")+
-  labs(y="Number of events/species", color="Species type")+
+  labs(y="Number of events", color="Species type")+
   scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
   theme_bw()+
   theme(legend.position = "bottom",
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
         axis.title.x = element_blank())
+p1
+
+p2<-ggplot(all.df[event %in% c("Richness")])+
+  geom_boxplot(aes(x=continent, y=N, color=type))+
+  facet_grid(event~NB+DA, scale="free")+
+  labs(y="Number of species", color="Species type")+
+  scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
+  theme_bw()+
+  theme(legend.position = "bottom",
+        axis.title.x = element_blank(),
+        strip.text.x = element_blank(),
+        strip.background.x = element_blank())
+p2
+p <- (p1 / p2) + 
+  plot_layout(heights = c(1, 1), guides = "collect") & 
+  theme(legend.position = "bottom")
 p
+
 all.df.nb.da<-all.df
 
 all.df.se<-all.df[,.(mean=mean(N), sd=sd(N)),
@@ -581,9 +615,9 @@ if (remove.outliers==F){
          "../Figures/N.Speciation.Extinction.Dispersal/NULL.MODEL/N.Speciation.Extinction.Richness.details.NULL.docx",
          digits=2)
   ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/NULL.MODEL/N.Speciation.Extinction.Richness.details.NULL.pdf", 
-         width=12, height=8)
+         width=12, height=6)
   ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/NULL.MODEL/N.Speciation.Extinction.Richness.details.NULL.png", 
-         width=12, height=8, bg="white")
+         width=12, height=6, bg="white")
 }else{
   
   
@@ -591,9 +625,9 @@ if (remove.outliers==F){
          "../Figures/N.Speciation.Extinction.Dispersal/NULL.MODEL.remove.outliers/N.Speciation.Extinction.Richness.details.NULL.no.outliers.docx",
          digits=2)
   ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/NULL.MODEL.remove.outliers/N.Speciation.Extinction.Richness.details.NULL.no.outliers.pdf", 
-         width=12, height=8)
+         width=12, height=6)
   ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/NULL.MODEL.remove.outliers/N.Speciation.Extinction.Richness.details.NULL.no.outliers.png", 
-         width=12, height=8, bg="white")
+         width=12, height=6, bg="white")
 }
 
 

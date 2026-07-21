@@ -35,7 +35,7 @@ p1<-plot(pred_min_dist) +
   labs(
     y = "Predicted probability of successful dispersal",
     x = "Minimum distance to the other continent",
-    title = "(a) Effect of Minimum Distance on Dispersal Probability"
+    title = "(a) Effect of minimum distance on dispersal probability"
   ) +
   theme_classic() +
   theme(
@@ -45,9 +45,9 @@ p1<-plot(pred_min_dist) +
 
 pred_NB <- ggpredict(model, terms = "NB_factor")
 
-p2<-plot(pred_NB)+labs(x="Niche Breadth",
+p2<-plot(pred_NB)+labs(x="Niche breadth",
                        y="Predicted probability of successful dispersal",
-                       title="(b) Effect of Niche Breadth on Dispersal Probability")+
+                       title="(b) Effect of niche breadth on dispersal probability")+
   theme_classic() +
   theme(
     legend.position = "right",
@@ -56,9 +56,9 @@ p2<-plot(pred_NB)+labs(x="Niche Breadth",
   )
 
 pred_DA <- ggpredict(model, terms = "DA_factor")
-p3<-plot(pred_DA)+labs(x="Dispersal Ability",
+p3<-plot(pred_DA)+labs(x="Dispersal ability",
                        y="Predicted probability of successful dispersal",
-                       title="(c) Effect of Dispersal Ability on Dispersal Probability")+
+                       title="(c) Effect of dispersal ability on dispersal probability")+
   theme_classic() +
   theme(
     legend.position = "right",

@@ -148,7 +148,8 @@ rep.df.all.se$bridge_continent<-factor(rep.df.all.se$bridge_continent,
 rep.df.all.se$across_bridge_label<-ifelse(rep.df.all.se$across_bridge, 
                                           "Crossed over successfully",
                                           "Crossed over unsuccessfully")
-p<-ggplot(rep.df.all.se, aes(x = bridge_continent, y = N_SP, color = seed_continent)) +
+p<-ggplot(rep.df.all.se[across_bridge_label=="Crossed over successfully"],
+          aes(x = bridge_continent, y = N_SP, color = seed_continent)) +
   
   geom_errorbar(aes(ymin = N_SP - sd, ymax = N_SP + sd), 
                 width = 0.2, 
@@ -157,21 +158,19 @@ p<-ggplot(rep.df.all.se, aes(x = bridge_continent, y = N_SP, color = seed_contin
   geom_point(position = pd, size = 3) +
   labs(
     x = "Bridge",
-    y = "Number of Species",
-    color = "Original Continent"
+    y = "Number of species",
+    color = "Original continent"
   ) +
   scale_color_manual(values=c("North America"=color_na, "South America"=color_sa))+
-  facet_wrap(~across_bridge_label, scale="free")+
+  #facet_wrap(~across_bridge_label, scale="free")+
   theme_bw() +
   theme(
-    axis.title = element_text(face = "bold", size = 12),
-    axis.text = element_text(size = 11),
-    legend.position = "bottom",
-    legend.title = element_text(face = "bold")
+    axis.title.x = element_blank(),
+    legend.position = "bottom"
   )
 p
-ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.pdf", width=8, height=4)
-ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.png", width=8, height=4, bg="white")
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.pdf", width=5, height=4)
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.png", width=5, height=4, bg="white")
 fwrite(rep.df.all.se, "../Figures/Bridge.Usage/Bridge.Usage.csv")
 
 to.doc(rep.df.all.se, "Bridge usage", "../Figures/Bridge.Usage/Bridge.Usage.docx",
@@ -191,7 +190,8 @@ rep.df.se$bridge_continent<-factor(rep.df.se$bridge_continent,
 rep.df.se$NB<-factor(rep.df.se$NB, 
                      levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
                      labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
-p<-ggplot(rep.df.se, aes(x = bridge_continent, y = N_SP, color = seed_continent)) +
+p<-ggplot(rep.df.se[across_bridge==T], 
+          aes(x = bridge_continent, y = N_SP, color = seed_continent)) +
   
   geom_errorbar(aes(ymin = N_SP - sd, ymax = N_SP + sd), 
                 width = 0.2, 
@@ -200,21 +200,20 @@ p<-ggplot(rep.df.se, aes(x = bridge_continent, y = N_SP, color = seed_continent)
   geom_point(position = pd, size = 3) +
   labs(
     x = "Bridge",
-    y = "Number of Species",
-    color = "Original Continent"
+    y = "Number of species",
+    color = "Original continent"
   ) +
   scale_color_manual(values=c("North America"=color_na, "South America"=color_sa))+
   theme_bw() +
   theme(
-    axis.title = element_text(face = "bold", size = 12),
-    axis.text = element_text(size = 11),
     legend.position = "bottom",
-    legend.title = element_text(face = "bold")
+    axis.title.x = element_blank()
   )+
-  facet_grid(across_bridge~NB+DA, scale="free")
+  #facet_grid(across_bridge~NB+DA, scale="free")
+  facet_grid(DA~NB, scale="free")
 p
-ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.NB.DA.pdf", width=12, height=6)
-ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.NB.DA.png", width=12, height=6, bg="white")
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.NB.DA.pdf", width=6, height=4)
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.NB.DA.png", width=6, height=4, bg="white")
 to.doc(rep.df.se, "Bridge usage", "../Figures/Bridge.Usage/Bridge.Usage.NB.DA.docx",
        digits = 2)
 fwrite(rep.df.se, "../Figures/Bridge.Usage/Bridge.Usage.NB.DA.csv")

@@ -333,3 +333,6 @@ N_200_ST<-N_200[,.(N_Seed=length(unique(label))), by=list(nb, da, continent)]
 setorderv(N_200_ST, c("nb", "da", "continent"))
 N_200_ST
 sum(N_200_ST$N_Seed)
+
+to.doc(N_200_ST, "Number of seeds were picked 100  times.",
+       "../Figures/Seeds/picked.100.docx", digits = 0)

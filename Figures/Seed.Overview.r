@@ -3,16 +3,22 @@ library(ggplot2)
 library(ggrepel)
 library(ggh4x)
 library(sf)
+library(RSQLite)
+library(DBI)
+library(stringr)
+library(patchwork)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 source("Figures/common.r")
+
+conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
+pr<-data.table(dbReadTable(conn, "pr"))
+tasmax<-data.table(dbReadTable(conn, "tasmax"))
+tasmin<-data.table(dbReadTable(conn, "tasmin"))
+dist<-data.table(dbReadTable(conn, "distances"))
+dbDisconnect(conn)
+
 seeds<-readRDS("../Data/Tables/seeds.rda")
 seeds[global_id==9745]
-#conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
-#simulations<-data.table(dbReadTable(conn, "simulations"))
-#dbDisconnect(conn)
-#target.seeds<-simulations[continent_id<=100]$global_id
-#seeds<-seeds[global_id %in% target.seeds]
-#ggplot(seeds)+geom_sf(data=seed.dist)+geom_point(aes(x=lon, y=lat, color=continent))
 
 seed.dist<-readRDS("../Data/Tables/cells.with.dist.rda")
 seed.dist[which(seed.dist$seqnum==9745),]
@@ -51,8 +57,6 @@ df.detail$label2<-sprintf("%d.%s.%s", df.detail$seed_id, df.detail$nb, df.detail
 
 
 all_ramdom_seeds_df<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
-
-all_ramdom_seeds_df[,.(N=.N), by=list(seed_id, nb, da)]
 
 no.boot.seeds.id<-df.detail[!seed_id %in% df_N_checked[N==2]$seed_id]
 no.boot.seeds.id[,.(N=length(unique(seed_id))), by=list(continent)]
@@ -166,122 +170,115 @@ all.seeds.shp[is.na(all.seeds.shp$type), "type"]<-"Background"
 all.seeds.shp$type<-factor(all.seeds.shp$type, 
                            levels=c("no.survive", "seed.pool", "outlier", "Background"),
                            labels=c("No Survive", "Seed Pool", "Outlier", "Background"))
+cells$continent<-factor(cells$continent,
+                        levels=c("North America", "South America", "bridge1", "bridge2"),
+                        labels=c("North America", "South America", "Isthmus", "Caribbean"))
 p<-ggplot()+
-  geom_sf(data=cells, fill=NA, color="grey90")+
-  geom_sf(data=all.seeds.shp[all.seeds.shp$type!="Background",], aes(fill=type), color=NA)+
-  geom_sf(data=all.seeds.shp[all.seeds.shp$type=="Outlier",], aes(fill=type), color=NA)+
-  scale_fill_manual(values=c("No Survive"=color_1,
-                             "Seed Pool"=color_low,
-                             "Outlier"=color_high,
-                             "Background"=color_mid))+
-  labs(fill="Seed Type")+
-  theme_bw()+
-  theme(legend.position = "bottom")
+  geom_sf(data=cells, aes(fill=continent), color="grey90", alpha=0.5)+
+  geom_sf(data=all.seeds.shp[all.seeds.shp$type!="Background",], fill=color_high, color=NA)+
+  geom_sf(data=all.seeds.shp[all.seeds.shp$type=="Outlier",], fill=color_high, color=NA)+
+  theme_minimal()+
+  scale_x_continuous(guide = guide_axis(check.overlap = TRUE))+
+  scale_fill_manual(values=c("South America"=color_high,
+                             "North America"=color_low,
+                             "Isthmus"=color_2,
+                             "Caribbean"=color_mid2))+
+  labs(title="Seed cells")+
+  theme(legend.position = c(0.05, 0.05), 
+        legend.justification = c(0, 0),
+        legend.title = element_blank())
 p
 
-no_su<-data.table(global_id=all.seeds.shp$seqnum, continent=all.seeds.shp$continent.x,
-                  NB=all.seeds.shp$nb, DA=all.seeds.shp$da,
-                  type=all.seeds.shp$type)
+pr_last<-pr[year==1800]
+pr_last_cell<-merge(cells, pr_last, by.y="global_id", by.x="seqnum")
 
-no_su<-no_su[type=="No Survive"]
-no_su_N<-no_su[,.(N=.N), by=list(continent, NB, DA)]
+tasmax_last<-tasmax[year==1800]
+tasmax_last_cell<-merge(cells, tasmax_last, by.y="global_id", by.x="seqnum")
 
-ggsave(p, filename="../Figures/Seeds/Seeds.pdf", width=5, height=5)
-ggsave(p, filename="../Figures/Seeds/Seeds.png", width=5, height=5, bg="white")
+tasmin_last<-tasmin[year==1800]
+tasmin_last_cell<-merge(cells, tasmin_last, by.y="global_id", by.x="seqnum")
 
-saveRDS(all.seeds.shp, "../Figures/Seeds/Seeds.rda")
 
-library(data.table)
-library(sf)
-library(RSQLite)
-library(DBI)
-library(ggplot2)
-library(ggh4x)
-library(stringr)
-setwd("/media/huijieqiao/Butterfly/GABI/GABI")
-conn<-dbConnect(RSQLite::SQLite(), "../Configuration/configuration.sqlite")
-pr<-data.table(dbReadTable(conn, "pr"))
-tasmax<-data.table(dbReadTable(conn, "tasmax"))
-tasmin<-data.table(dbReadTable(conn, "tasmin"))
-dist<-data.table(dbReadTable(conn, "distances"))
-dbDisconnect(conn)
-base_db<-"../Configuration/conf.sqlite"
-mydb <- dbConnect(RSQLite::SQLite(), base_db)
-simulations<-data.table(dbReadTable(mydb, "simulations"))
-dbDisconnect(mydb)
-simulations[, c("tas_min","tas_max", "pr") := data.table(str_split_fixed(nb_v,"\\|",3))] 
-simulations[, c("tas_low","tas_high") := data.table(str_split_fixed(tas_min,",",2))]
-simulations[, c("pr_low","pr_high") := data.table(str_split_fixed(pr,",",2))] 
-
-simulations$tas_low<-as.numeric(simulations$tas_low)
-simulations$tas_high<-as.numeric(simulations$tas_high)
-simulations$pr_low<-as.numeric(simulations$pr_low)
-simulations$pr_high<-as.numeric(simulations$pr_high)
-
-simulations<-simulations[, c("global_id", "nb", "da", "continent", "tas_low", "tas_high", "pr_low", "pr_high")]
-
-simulations_pr<-merge(simulations, pr[year==1800], by="global_id")
-colnames(simulations_pr)[9]<-"pr"
-simulations_pr$year<-NULL
-simulations_pr_tasmax<-merge(simulations_pr, tasmax[year==1800], by="global_id")
-colnames(simulations_pr_tasmax)[10]<-"tasmax"
-simulations_pr_tasmax$year<-NULL
-
-simulations_pr_tasmax_tasmin<-merge(simulations_pr_tasmax, tasmin[year==1800], by="global_id")
-colnames(simulations_pr_tasmax_tasmin)[11]<-"tasmin"
-simulations_pr_tasmax_tasmin$year<-NULL
-
-simulations_filter<-simulations_pr_tasmax_tasmin[global_id %in% all.seeds$seed_id]
-
-simulations_filter$suitable<-F
-simulations_filter[between(pr, pr_low, pr_high) &
-                     between(tasmax, tas_low, tas_high) &
-                   between(tasmin, tas_low, tas_high), suitable:=T]
-table(simulations_filter$suitable)
-
-NNNN<-simulations_filter[suitable==F, .(N=.N), by=list(nb, da, continent)]
-NNNN$da<-NULL
-NNNN<-unique(NNNN)
-NNNN$nb<-factor(NNNN$nb, 
-                          levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
-                          labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
-
-setorderv(NNNN, c("nb", "continent"))
-
-table(simulations_filter$suitable)
-
-saveRDS(simulations_filter, "../Data/Tables/Seed.Pool.rda")
-
-simulations_filter<-readRDS("../Data/Tables/Seed.Pool.rda")
-df_N_checked<-df.detail[year==burn_in & N_SPECIES>0, 
-                        .(N=.N), by=list(seed_id, nb)]
-simulations_filter$label<-sprintf("%d.%s", simulations_filter$global_id, simulations_filter$nb)
-no_su<-simulations_filter[label %in% df_N_checked[N!=2]$label]
-table(simulations_filter$suitable)
-
-NNNN<-simulations_filter[suitable==F, .(N=.N), by=list(nb, da, continent)]
-NNNN$da<-NULL
-NNNN<-unique(NNNN)
-NNNN$nb<-factor(NNNN$nb, 
-                levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
-                labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
-
-setorderv(NNNN, c("nb", "continent"))
-NNNN$N<-NNNN$N*2
-sum(NNNN$N)
-to.doc(NNNN, "No Survive", "../Figures/Seeds/no.surveve.docx", digits = 0)
-
-all_ramdom_seeds_df<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
-
-N_seed_usage<-all_ramdom_seeds_df[, .(N=.N/100), by=c("continent", "nb", "da")]
-seeed_rep<-unique(all_ramdom_seeds_df[,c("continent", "seed_id", "nb", "da")])
-
-N_seed_rep<-seeed_rep[, .(N=.N), by=list(continent, nb, da)]
-N_seed_rep$nb<-factor(N_seed_rep$nb, 
-                levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
-                labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
-N_seed_rep$per<-round(N_seed_rep$N/500, 2)
-setorderv(N_seed_rep, c("nb", "da", "continent"))
-to.doc(N_seed_rep, "Bootstraping seeds", 
-       "../Figures/Seeds/bootstraping.seeds.docx", digits = 2)
+p_pr<-ggplot()+
+  geom_sf(data=cells, fill=NA, color="grey90")+
+  geom_sf(data=pr_last_cell, aes(fill=v), color=NA)+
+  scale_fill_gradient2(low=color_low, high=color_high, mid = color_mid,
+                       midpoint = mean(pr_last_cell$v))+
+  theme_minimal()+
+  labs(fill="PREC (mm/year)")+
+  scale_x_continuous(guide = guide_axis(check.overlap = TRUE))+
+  scale_y_continuous(guide = guide_axis(check.overlap = TRUE))+
   
+  theme(legend.position = "right",
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 6),
+        
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank())+
+  guides(
+    fill = guide_colorbar(
+      barwidth = unit(0.3, "cm"),
+      barheight = unit(1.5, "cm"),
+      label.hjust = 0.5,
+      title.hjust = 0.5
+    )
+  )
+p_pr
+p_tasmax<-ggplot()+
+  geom_sf(data=cells, fill=NA, color="grey90")+
+  geom_sf(data=tasmax_last_cell, aes(fill=v), color=NA)+
+  scale_fill_gradient2(low=color_low, high=color_high, mid = color_mid,
+                       midpoint =0)+
+  scale_y_continuous(guide = guide_axis(check.overlap = TRUE))+
+  theme_minimal()+
+  labs(fill="TMAX (°C)")+
+  
+  theme(legend.position = "right",
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 6),
+        
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank())+
+  guides(
+    fill = guide_colorbar(
+      barwidth = unit(0.3, "cm"),
+      barheight = unit(1.5, "cm"),
+      label.hjust = 0.5,
+      title.hjust = 0.5
+    )
+  )
+
+p_tasmin<-ggplot()+
+  geom_sf(data=cells, fill=NA, color="grey90")+
+  geom_sf(data=tasmin_last_cell, aes(fill=v), color=NA)+
+  scale_fill_gradient2(low=color_low, high=color_high, mid = color_mid,
+                       midpoint = 0)+
+  scale_y_continuous(guide = guide_axis(check.overlap = TRUE))+
+  theme_minimal()+
+  labs(fill="TMIN (°C)")+
+  
+  theme(legend.position = "right",
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 6),
+        
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank())+
+  guides(
+    fill = guide_colorbar(
+      barwidth = unit(0.3, "cm"),
+      barheight = unit(1.5, "cm"),
+      label.hjust = 0.5,
+      title.hjust = 0.5
+    )
+  )
+
+p_env<-p_tasmax/p_tasmin/p_pr
+p_env
+
+p_env_curve<-readRDS("../Figures/Climate_curve/Climate_curve.rda")
+
+p_final<-(p+p_env+ plot_layout(widths = c(3, 1)))/p_env_curve+ plot_layout(heights = c(2, 1))
+
+p_final
+ggsave(p_final, filename="../Figures/Figure.Overview/Overview.pdf", width=10, height=8)
+ggsave(p_final, filename="../Figures/Figure.Overview/Overview.png", width=10, height=8, bg="white")

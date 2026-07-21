@@ -247,13 +247,18 @@ custom_colors <- c(
   "N to S" = color_n2s,
   "S to N" = color_s2n
 )
+dispersal.all$type<-factor(dispersal.all$type, levels=c("Primary Invader",
+                                                        "Secondary Invader"),
+                           labels=c("Primary invader",
+                                    "Secondary invader"))
 p.disp<-ggplot(dispersal.all)+geom_boxplot(aes(x=disp.type, y=N, color=disp.type))+
   facet_wrap(~type)+
   scale_color_manual(values=custom_colors)+
-  labs(y="Number of Species")+
+  labs(y="Number of species")+
   theme_bw()+
   theme(axis.title.x = element_blank(),
-        legend.position = "none")
+        legend.position = "none",
+        strip.background = element_blank())
 p.disp
 dispersal.all.se<-dispersal.all[,.(mean=mean(N), sd=sd(N)),
                                 by=list(type, disp.type)]
@@ -266,11 +271,11 @@ to.doc(dispersal.all.se, "Number of dispersal events",
 
 #Dispersal by seeds
 
-p.disp.seed<-ggplot(dispersal.all[type=="Primary Invader"])+
+p.disp.seed<-ggplot(dispersal.all[type=="Primary invader"])+
   geom_boxplot(aes(x=disp.type, y=N_Seed, color=disp.type))+
   #facet_wrap(~type)+
   scale_color_manual(values=custom_colors)+
-  labs(y="Number of Seeds")+
+  labs(y="Number of seeds")+
   theme_bw()+
   theme(axis.title.x = element_blank(),
         legend.position = "none")
@@ -285,9 +290,10 @@ to.doc(dispersal.all.se, "Number of dispersal events by seed",
 #ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.merge.isthmus.png", width=3, height=3, bg="white")
 
 p<-p.disp.seed+p.disp+plot_layout(guides = "collect", widths = c(1, 2))
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.and.Species.pdf",
+p
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.and.Species.merge.isthmus.pdf",
        width=6, height=3)
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.and.Species.png",
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.and.Species.merge.isthmus.png",
        width=6, height=3)
 
 
@@ -315,17 +321,20 @@ all.df<-rbindlist(list(richness.all, speciation.all, extinction.all, local.extin
 table(all.df$type)
 table(all.df$event)
 
-all.df$event<-factor(all.df$event, levels=c("Speciation", "Extinction", "Richness", "Local Extinction"))
+all.df$event<-factor(all.df$event, 
+                     levels=c("Speciation", "Extinction", "Local Extinction", "Richness"),
+                     labels=c("Speciation", "Extinction", "Extirpation", "Richness"))
 all.df$type<-factor(all.df$type, levels=c("Native", "Immigrant"))
 
-p1<-ggplot(all.df[event %in% c("Speciation", "Extinction", "Local Extinction")])+
+p1<-ggplot(all.df[event %in% c("Speciation", "Extinction", "Extirpation")])+
   geom_boxplot(aes(x=continent, y=N, color=type))+
   facet_wrap(~event, nrow=1, scale="free")+
   labs(y="Number of events", color="Species type")+
   scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
   theme_bw()+
   theme(legend.position = "none",
-        axis.title.x = element_blank())
+        axis.title.x = element_blank(),
+        strip.background = element_blank())
 p1
 p2<-ggplot(all.df[event %in% c("Richness")])+
   geom_boxplot(aes(x=continent, y=N, color=type))+
@@ -334,8 +343,8 @@ p2<-ggplot(all.df[event %in% c("Richness")])+
   scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
   theme_bw()+
   theme(legend.position = "bottom",
-        axis.title.x = element_blank()
-        #axis.title.y = element_blank()
+        axis.title.x = element_blank(),
+        strip.background = element_blank()
   )
 p2
 all.df.all<-all.df
@@ -428,11 +437,17 @@ dispersal.all[seed_continent=="South America" & type=="Secondary Invader", disp.
 dispersal.all$NB<-factor(dispersal.all$NB, 
                          levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
                          labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+
+dispersal.all$type<-factor(dispersal.all$type, 
+                           levels=c("Primary Invader",
+                                    "Secondary Invader"),
+                           labels=c("Primary invader",
+                                    "Secondary invader"))
 p.disp<-ggplot(dispersal.all)+
   geom_boxplot(aes(x=disp.type, y=N, color=type))+
   facet_grid(DA~NB, scale="free")+
-  scale_color_manual(values=c("Primary Invader"=color_low, "Secondary Invader"=color_high))+
-  labs(y="Number of Species", color="Type of invader")+
+  scale_color_manual(values=c("Primary invader"=color_low, "Secondary invader"=color_high))+
+  labs(y="Number of species", color="Type of invader")+
   theme_bw()+
   theme(axis.title.x = element_blank(),
         legend.position = "bottom")
@@ -444,16 +459,20 @@ setorderv(dispersal.all.se, c("type", "disp.type", "NB", "DA"))
 to.doc(dispersal.all.se, "Number of dispersal events", 
        "../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.details.merge.isthmus.docx",
        digits=2)
-ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.details.merge.isthmus.pdf", width=10, height=5)
-ggsave(p.disp, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.details.merge.isthmus.png", width=10, height=5, bg="white")
+ggsave(p.disp, 
+       filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.details.merge.isthmus.pdf", 
+       width=10, height=5)
+ggsave(p.disp, 
+       filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.details.merge.isthmus.png", 
+       width=10, height=5, bg="white")
 
 #Dispersal by seeds
 
-p.disp.seed<-ggplot(dispersal.all[type=="Primary Invader"])+
+p.disp.seed<-ggplot(dispersal.all[type=="Primary invader"])+
   geom_boxplot(aes(x=disp.type, y=N_Seed, color=disp.type))+
   facet_grid(DA~NB)+
   scale_color_manual(values=custom_colors)+
-  labs(y="Number of Seeds")+
+  labs(y="Number of seeds")+
   theme_bw()+
   theme(axis.title.x = element_blank(),
         legend.position = "none")
@@ -464,8 +483,12 @@ setorderv(dispersal.all.se, c("type", "disp.type"))
 to.doc(dispersal.all.se, "Number of dispersal events by seed", 
        "../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.details.merge.isthmus.docx",
        digits=2)
-ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.details.merge.isthmus.pdf", width=6, height=3)
-ggsave(p.disp.seed, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.details.merge.isthmus.png", width=6, height=3, bg="white")
+ggsave(p.disp.seed, 
+       filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.details.merge.isthmus.pdf", 
+       width=6, height=3)
+ggsave(p.disp.seed, 
+       filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Dispersal.Seed.details.merge.isthmus.png", 
+       width=6, height=3, bg="white")
 
 
 
@@ -501,8 +524,10 @@ all.df$NB<-factor(all.df$NB,
                   labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
 all.df$continent<-ifelse(all.df$continent=="North America", "N", "S")
 unique(all.df$event)
-all.df$event<-factor(all.df$event, levels=c("Speciation", "Extinction", "Local Extinction", "Richness"))
-p1<-ggplot(all.df[event %in% c("Speciation", "Extinction", "Local Extinction")])+
+all.df$event<-factor(all.df$event, levels=c("Speciation", "Extinction", "Local Extinction", "Richness"),
+                     labels=c("Speciation", "Extinction", "Extirpation", "Richness"))
+
+p1<-ggplot(all.df[event %in% c("Speciation", "Extinction", "Extirpation")])+
   geom_boxplot(aes(x=continent, y=N, color=type))+
   facet_grid(event~NB+DA, scale="free")+
   labs(y="Number of events", color="Species type")+
@@ -555,7 +580,7 @@ p<-ggplot(rep.df.sd)+
                 position=pd, width=0.2)+
   theme_bw()
 p
-ggsave(p, filename="../Figures/event.type.pdf", width=12, height=6)
+ggsave(p, filename="../Figures/event.type.merge.isthmus.pdf", width=12, height=6)
 rep.df.sd<-rep.df[, .(N=mean(N), sd=sd(N)),
                   by=list(seed_continent, type, NB, DA)]
 
@@ -681,9 +706,8 @@ p3
 
 p<-p2/p3
 p
-ggsave(p2, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Richness.Per.pdf", 
+ggsave(p2, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Richness.Per.merge.isthmus.pdf", 
        width=4, height=3, bg="white")
 
-ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Richness.Per.ALL.pdf", 
+ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Richness.Per.ALL.merge.isthmus.pdf", 
        width=8, height=6, bg="white")
-
