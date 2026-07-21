@@ -174,13 +174,13 @@ cells$continent<-factor(cells$continent,
                         levels=c("North America", "South America", "bridge1", "bridge2"),
                         labels=c("North America", "South America", "Isthmus", "Caribbean"))
 p<-ggplot()+
-  geom_sf(data=cells, aes(fill=continent), color="grey90", alpha=0.5)+
+  geom_sf(data=cells, aes(fill=continent), color=NA, alpha=0.5)+
   geom_sf(data=all.seeds.shp[all.seeds.shp$type!="Background",], fill=color_high, color=NA)+
   geom_sf(data=all.seeds.shp[all.seeds.shp$type=="Outlier",], fill=color_high, color=NA)+
   theme_minimal()+
   scale_x_continuous(guide = guide_axis(check.overlap = TRUE))+
-  scale_fill_manual(values=c("South America"=color_high,
-                             "North America"=color_low,
+  scale_fill_manual(values=c("South America"=color_sa,
+                             "North America"=color_na,
                              "Isthmus"=color_2,
                              "Caribbean"=color_mid2))+
   labs(title="Seed cells")+
@@ -282,3 +282,4 @@ p_final<-(p+p_env+ plot_layout(widths = c(3, 1)))/p_env_curve+ plot_layout(heigh
 p_final
 ggsave(p_final, filename="../Figures/Figure.Overview/Overview.pdf", width=10, height=8)
 ggsave(p_final, filename="../Figures/Figure.Overview/Overview.png", width=10, height=8, bg="white")
+

@@ -7,7 +7,7 @@ setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 source("Figures/common.r")
 if (F){
-  df<-readRDS("../Data/Tables/Lat.N.1defree.without.bridges.rda")
+  df<-readRDS("../Data/Tables/Lat.N.1defree.without.bridges.NULL.rda")
   df<-df[year==0]
   df$seed_id<-as.numeric(df$seed_id)
   dim(df)
@@ -48,13 +48,13 @@ if (F){
   rep.df<-rbindlist(rep.list)
   rep.df.all<-rbindlist(rep.list.all)
   rep.df.full<-rbindlist(rep.list.full)
-  saveRDS(rep.df.full, "../Data/Tables/N.Sp.Lat.full.rep.rda")
-  saveRDS(rep.df, "../Data/Tables/N.Sp.Lat.rep.rda")
-  saveRDS(rep.df.all, "../Data/Tables/N.Sp.Lat.all.rep.rda")
+  saveRDS(rep.df.full, "../Data/Tables/N.Sp.Lat.full.rep.NULL.rda")
+  saveRDS(rep.df, "../Data/Tables/N.Sp.Lat.rep.NULL.rda")
+  saveRDS(rep.df.all, "../Data/Tables/N.Sp.Lat.all.rep.NULL.rda")
 }
 
-rep.df<-readRDS("../Data/Tables/N.Sp.Lat.rep.rda")
-rep.df.all<-readRDS("../Data/Tables/N.Sp.Lat.all.rep.rda")
+rep.df<-readRDS("../Data/Tables/N.Sp.Lat.rep.NULL.rda")
+rep.df.all<-readRDS("../Data/Tables/N.Sp.Lat.all.rep.NULL.rda")
 
 lat.all.N.Native<-rep.df.all[type=="Native"]
 lat.all.N.Immigrant<-rep.df.all[type=="Immigrant"]
@@ -97,16 +97,16 @@ p1 <- ggplot(lat.all.N.Per.SE, aes(y = lat_bin, x = Per_Immigrant, color=contine
   )
 
 p1  
-ggsave(p1, filename="../Figures/Lat.Gradient/Lat.Gradient.Immigrant.proportion.pdf", width=6, height=6)
-ggsave(p1, filename="../Figures/Lat.Gradient/Lat.Gradient.Immigrant.proportion.png", width=6, height=6, bg="white")
+ggsave(p1, filename="../Figures/Lat.Gradient/Lat.Gradient.Immigrant.proportion.NULL.pdf", width=6, height=6)
+ggsave(p1, filename="../Figures/Lat.Gradient/Lat.Gradient.Immigrant.proportion.NULL.png", width=6, height=6, bg="white")
 
 
 
 lat.all.N<-rep.df.all[,.(N_SP=mean(N_SP), sd=sd(N_SP)), 
                       by=list(seed_continent, continent, lat_bin, type)]
 lat.all.N$type<-factor(lat.all.N$type, 
-                     levels = c("Native", "Immigrant"), 
-                     labels = c("Native", "Immigrant"))
+                       levels = c("Native", "Immigrant"), 
+                       labels = c("Native", "Immigrant"))
 p1 <- ggplot(lat.all.N, aes(y = lat_bin, x = N_SP, color = type, fill = type)) +
   
   geom_ribbon(aes(xmin = pmax(0, N_SP - sd), xmax = N_SP + sd), 
@@ -135,19 +135,19 @@ p1 <- ggplot(lat.all.N, aes(y = lat_bin, x = N_SP, color = type, fill = type)) +
     legend.position = "bottom"
   )
 p1
-ggsave(p1, filename="../Figures/Lat.Gradient/Lat.Gradient.pdf", width=6, height=6)
-ggsave(p1, filename="../Figures/Lat.Gradient/Lat.Gradient.png", width=6, height=6, bg="white")
+ggsave(p1, filename="../Figures/Lat.Gradient/Lat.Gradient.NULL.pdf", width=6, height=6)
+ggsave(p1, filename="../Figures/Lat.Gradient/Lat.Gradient.NULL.png", width=6, height=6, bg="white")
 
 
 
 setorderv(lat.all.N, c("seed_continent", "continent", "lat_bin"))
-fwrite(lat.all.N, "../Figures/Lat.Gradient/Lat.Gradient.csv")
-to.doc(lat.all.N, "Latitudinal gradient", "../Figures/Lat.Gradient/Lat.Gradient.docx", digits=2)
+fwrite(lat.all.N, "../Figures/Lat.Gradient/Lat.Gradient.NULL.csv")
+to.doc(lat.all.N, "Latitudinal gradient", "../Figures/Lat.Gradient/Lat.Gradient.NULL.docx", digits=2)
 
 
 
 lat.all.N<-rep.df[,.(N_SP=mean(N_SP), sd=sd(N_SP)), 
-                      by=list(seed_continent, continent, lat_bin, type, nb, da)]
+                  by=list(seed_continent, continent, lat_bin, type, nb, da)]
 
 
 lat.all.N$nb<-factor(lat.all.N$nb, 
@@ -188,18 +188,8 @@ p <- ggplot(lat.all.N, aes(y = lat_bin, x = N_SP, color = type, fill = type)) +
   )
 p
 
-ggsave(p, filename="../Figures/Lat.Gradient/Lat.Gradient.NB.DA.pdf", width=10, height=6)
-ggsave(p, filename="../Figures/Lat.Gradient/Lat.Gradient.NB.DA.png", width=10, height=6, bg="white")
+ggsave(p, filename="../Figures/Lat.Gradient/Lat.Gradient.NB.DA.NULL.pdf", width=10, height=6)
+ggsave(p, filename="../Figures/Lat.Gradient/Lat.Gradient.NB.DA.NULL.png", width=10, height=6, bg="white")
 setorderv(lat.all.N, c("nb", "da", "seed_continent", "continent", "lat_bin"))
-fwrite(lat.all.N, "../Figures/Lat.Gradient/Lat.Gradient.NB.DA.csv")
-to.doc(lat.all.N, "Latitudinal gradient", "../Figures/Lat.Gradient/Lat.Gradient.NB.DA.docx", digits=2)
-
-dis<-readRDS("../Data/Tables/Final.Distribution.Unique.rda")
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
-dis.boot<-dis[seed_id %in% unique(seeds.all$seed_id)]
-ll<-readRDS("../Data/Tables/cells.with.dist.rda")
-seed.continent<-unique(data.table(seed_id=seeds.all$seed_id, seed_continent=seeds.all$continent))
-dis.boot.ll<-merge(dis.boot, ll, by.x="global_id", by.y="seqnum")
-dis.boot.ll.seed<-merge(dis.boot.ll, seed.continent, by="seed_id")
-dis.boot.ll.seed[,.(max_ll=max(lat), min_ll=min(lat)), 
-                 by=c("seed_continent")]
+fwrite(lat.all.N, "../Figures/Lat.Gradient/Lat.Gradient.NB.DA.NULL.csv")
+to.doc(lat.all.N, "Latitudinal gradient", "../Figures/Lat.Gradient/Lat.Gradient.NB.DA.NULL.docx", digits=2)

@@ -9,7 +9,7 @@ library(phytools)
 #library(ggtree)
 library(phangorn)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
-target<-"/media/huijieqiao/Butterfly/GABI/Results"
+target<-"/media/huijieqiao/Butterfly/GABI/Results_NULL"
 ll<-readRDS("../Data/Tables/cells.with.dist.rda")
 local2<-data.table(global_id=as.numeric(ll$seqnum), lon=ll$lon, lat=ll$lat)
 local2$lat_bin<-floor((local2$lat+0.5)/1)*1
@@ -85,7 +85,7 @@ for (i in c(1:length(folders))){
     }
     all_df<-rbindlist(all)
     
-    saveRDS(all_df, "../Data/Tables/Lat.N.1defree.without.bridges.rda")
+    saveRDS(all_df, "../Data/Tables/Lat.N.1defree.without.bridges.NULL.rda")
   }
   
 }

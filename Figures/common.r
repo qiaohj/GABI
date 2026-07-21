@@ -40,6 +40,7 @@ color_n2s<-"#000000"
 color_s2n<-"#000000"
 color_native<-color_high
 color_immigrant<-color_low
+color_2<-"#CCBB44"
 bg<-"#f6f6f6"
 
 

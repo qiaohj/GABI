@@ -179,19 +179,22 @@ rep.df.all.sp.mean<-rep.df.all.sp[,.(net_div_rate=mean(net_div_rate),
                                      N_SP=mean(N_SP)),
                                   by=list(year_window, seed_continent,
                                           type, continent, other_continent)]
+
 p1<-ggplot(rep.df.all.sp.mean[between(year_window, -1800, -50)])+
   geom_smooth(aes(x=year_window, y=net_div_rate, color=type, fill=type), 
               method = "loess", span = 0.3, se = T, linewidth = 1) + 
   geom_point(aes(x=year_window, y=net_div_rate, color=type)) + 
   scale_color_manual(values = c("Native" = color_native, "Immigrant" = color_immigrant)) +
   scale_fill_manual(values = c("Native" = color_native, "Immigrant" = color_immigrant)) +
-  
-  labs(x = "Year", y = "Net Diversification Rate", 
-       color = "Species Type") +
-  theme_classic() +
+  scale_x_continuous(
+    breaks = c(-1900, -1800, -1500, -1000, -500, 0), 
+    labels = c("3.8", "3.6", "3.0", "2.0", "1.0", "0.0")
+  )+
+  labs(x = "Million years ago (Mya)", y = "Net diversification rate", 
+       color = "Species type", fill="Species type") +
+  theme_bw() +
   theme(
-    legend.position = "bottom",
-    axis.title = element_text(face = "bold")
+    legend.position = "bottom"
   )+facet_wrap(~seed_continent, nrow=2)
 p1
 
@@ -201,26 +204,32 @@ p2<-ggplot(rep.df.all.sp.mean[between(year_window, -1800, -50)])+
               method = "loess", span = 0.3, se = T, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=net_div_rate, color=type)) + 
   scale_color_manual(values = c("Native" = color_native, "Immigrant" = color_immigrant)) +
-  labs(x = "Year", y = "Net Diversification Rate", 
-       color = "Species Type") +
-  theme_classic() +
+  scale_x_continuous(
+    breaks = c(-1900, -1800, -1500, -1000, -500, 0), 
+    labels = c("3.8", "3.6", "3.0", "2.0", "1.0", "0.0")
+  )+
+  labs(x = "Million years ago (Mya)", y = "Net diversification rate", 
+       color = "Species type") +
+  theme_bw() +
   theme(
-    legend.position = "bottom",
-    axis.title = element_text(face = "bold")
+    legend.position = "bottom"
   )+facet_wrap(~continent, nrow=2)
 p2
 
 p3<-ggplot(rep.df.all.sp[between(year_window, -1800, -50)])+
-  geom_smooth(aes(x=year_window, y=N_SP, color=type), 
+  geom_smooth(aes(x=year_window, y=N_SP, color=species.type), 
               method = "loess", span = 0.3, se = T, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N_SP, color=type)) + 
   scale_color_manual(values = c("Native" = color_native, "Immigrant" = color_immigrant)) +
-  labs(x = "Year", y = "Species Richness", 
-       color = "Species Type") +
-  theme_classic() +
+  scale_x_continuous(
+    breaks = c(-1900, -1800, -1500, -1000, -500, 0), 
+    labels = c("3.8", "3.6", "3.0", "2.0", "1.0", "0.0")
+  )+
+  labs(x = "Million years ago (Mya)", y = "Species Richness", 
+       color = "Species type") +
+  theme_bw() +
   theme(
-    legend.position = "bottom",
-    axis.title = element_text(face = "bold")
+    legend.position = "bottom"
   )+facet_wrap(~continent, nrow=2)
 p3
 
@@ -286,23 +295,26 @@ p1<-ggplot(rep.df.all.mean[between(year_window, -1800, -50) & type!="Local.Extin
                                 "Immigrant" = color_immigrant, 
                                 "Isthmus" = color_mid2,
                                 "Caribbean" = color_2)) +
-  labs(x = "Year", y = "Number of Extinction", 
-       color = "Species Type") +
+  scale_x_continuous(
+    breaks = c(-1900, -1800, -1500, -1000, -500, 0), 
+    labels = c("3.8", "3.6", "3.0", "2.0", "1.0", "0.0")
+  )+
+  labs(x = "Million years ago (Mya)", y = "Number of extinction", 
+       color = "Species type") +
   scale_y_sqrt()+
   theme_bw() +
   theme(
-    legend.position = "bottom",
-    axis.title = element_text(face = "bold")
+    legend.position = "bottom"
   )+facet_wrap(~seed_continent, nrow=2, scale="free")
 
 p1
 
 rep.df.all.extinction$type<-factor(rep.df.all.extinction$type, levels=c("Extinction", "Local.Extinction"),
-                        labels=c("Extinction", "Local Extinction"))
+                        labels=c("Extinction", "Extirpation"))
 
-rep.df.all.extinction.mean<-rep.df.all.extinction[
-  ,.(net_extinction=mean(net_extinction)),
+rep.df.all.extinction.mean<-rep.df.all.extinction[,.(net_extinction=mean(net_extinction)),
      by=list(year_window, species.type, continent, type)]
+
 p2<-ggplot(rep.df.all.extinction.mean[between(year_window, -1800, -50) & 
                                    continent %in% c("North America", "South America")])+
   geom_smooth(aes(x=year_window, y=net_extinction, color=species.type), 
@@ -312,13 +324,16 @@ p2<-ggplot(rep.df.all.extinction.mean[between(year_window, -1800, -50) &
                                 "Immigrant" = color_immigrant, 
                                 "Isthmus" = color_mid2,
                                 "Caribbean" = color_2)) +
-  labs(x = "Year", y = "Extinction / Species", 
-       color = "Species Type") +
+  scale_x_continuous(
+    breaks = c(-1900, -1800, -1500, -1000, -500, 0), 
+    labels = c("3.8", "3.6", "3.0", "2.0", "1.0", "0.0")
+  )+
+  labs(x = "Million years ago (Mya)", y = "Number of events / Number of species", 
+       color = "Species type") +
   scale_y_sqrt()+
   theme_bw() +
   theme(
-    legend.position = "bottom",
-    axis.title = element_text(face = "bold")
+    legend.position = "bottom"
   )+facet_grid(type~continent, scale="free")
 p2
 
@@ -379,13 +394,16 @@ p1<-ggplot(rep.df.all.mean[between(year_window, -1800, -50)])+
                                 "Immigrant" = color_immigrant, 
                                 "Isthmus" = color_mid2,
                                 "Caribbean" = color_2)) +
-  labs(x = "Year", y = "Number of Speciation", 
-       color = "Species Type") +
+  scale_x_continuous(
+    breaks = c(-1900, -1800, -1500, -1000, -500, 0), 
+    labels = c("3.8", "3.6", "3.0", "2.0", "1.0", "0.0")
+  )+
+  labs(x = "Million years ago (Mya)", y = "Number of Speciation", 
+       color = "Species type") +
   scale_y_sqrt()+
   theme_bw() +
   theme(
-    legend.position = "bottom",
-    axis.title = element_text(face = "bold")
+    legend.position = "bottom"
   )+facet_wrap(~seed_continent, nrow=2, scale="free")
 
 p1
@@ -397,13 +415,16 @@ p2<-ggplot(rep.df.all.mean[between(year_window, -1800, -50)])+
                                 "Immigrant" = color_immigrant, 
                                 "Isthmus" = color_mid2,
                                 "Caribbean" = color_2)) +
-  labs(x = "Year", y = "Speciation / Species", 
-       color = "Species Type") +
+  scale_x_continuous(
+    breaks = c(-1900, -1800, -1500, -1000, -500, 0), 
+    labels = c("3.8", "3.6", "3.0", "2.0", "1.0", "0.0")
+  )+
+  labs(x = "Million years ago (Mya)", y = "Number of events / Number of species", 
+       color = "Species type") +
   scale_y_sqrt()+
   theme_bw() +
   theme(
-    legend.position = "bottom",
-    axis.title = element_text(face = "bold")
+    legend.position = "bottom"
   )+facet_wrap(~continent, nrow=2, scale="free")
 p2
 
@@ -456,9 +477,12 @@ rep.df.all[,.(N=.N), by=list(seed_continent, type)]
 #rep.df.all[seed_continent=="South American Origin" & type=="Primary Invader", disp.type:="S to N"]
 #rep.df.all[seed_continent=="South American Origin" & type=="Secondary Invader", disp.type:="N to S"]
 table(rep.df.all$disp.type)
+rep.df.all$type<-factor(rep.df.all$type, 
+                        levels=c("Primary Invader", "Secondary Invader"),
+                        labels=c("Primary invader", "Secondary invader"))
 custom_colors <- c(
-  "Primary Invader" = color_n2s,
-  "Secondary Invader" = color_s2n
+  "Primary invader" = color_high,
+  "Secondary invader" = color_low
 )
 rep.df.all.dispersal<-rep.df.all
 
@@ -469,13 +493,16 @@ p1<-ggplot(rep.df.all.mean[between(year_window, -1800, -50)])+
               method = "loess", span = 0.3, se = T, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
   scale_color_manual(values=custom_colors) +
-  labs(x = "Year", y = "Number of Dispersal", 
-       color = "Species Type") +
+  scale_x_continuous(
+    breaks = c(-1900, -1800, -1500, -1000, -500, 0), 
+    labels = c("3.8", "3.6", "3.0", "2.0", "1.0", "0.0")
+  )+
+  labs(x = "Million years ago (Mya)", y = "Number of dispersal", 
+       color = "Species type") +
   scale_y_sqrt()+
   theme_bw() +
   theme(
-    legend.position = "bottom",
-    axis.title = element_text(face = "bold")
+    legend.position = "bottom"
   )+facet_wrap(~seed_continent, nrow=2, scale="free")
 
 p1
@@ -485,13 +512,16 @@ p2<-ggplot(rep.df.all.mean[between(year_window, -1800, -50)])+
               method = "loess", span = 0.3, se = T, linewidth = 1) + 
   #geom_point(aes(x=year_window, y=N, color=species.type)) + 
   scale_color_manual(values=custom_colors) +
-  labs(x = "Year", y = "Immigrant percentage", 
-       color = "Species Type") +
+  labs(x = "Million years ago (Mya)", y = "Immigrant percentage", 
+       color = "Species type") +
+  scale_x_continuous(
+    breaks = c(-1900, -1800, -1500, -1000, -500, 0), 
+    labels = c("3.8", "3.6", "3.0", "2.0", "1.0", "0.0")
+  )+
   scale_y_sqrt()+
   theme_bw() +
   theme(
-    legend.position = "bottom",
-    axis.title = element_text(face = "bold")
+    legend.position = "bottom"
   )+facet_wrap(~continent, nrow=2, scale="free")
 p2
 
@@ -590,7 +620,7 @@ ggplot(significant_factors, aes(x = estimate, y = term, color = estimate > 0)) +
                      labels = c("TRUE" = "Positive (+)", "FALSE" = "Negative (-)"),
                      name = "Effect Direction") +
   theme_bw(base_size = 14) +
-  labs(title = "Significant Drivers of Net Diversification Rate",
+  labs(title = "Significant Drivers of Net diversification rate",
        subtitle = "Coefficient estimates with 95% confidence intervals",
        x = "Coefficient Estimate",
        y = "") +

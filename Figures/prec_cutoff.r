@@ -20,7 +20,7 @@ if (F){
               "tasmax_low", "tasmax_high",
               "pr_low", "pr_high")
   simulations[, (new_cols) := tstrsplit(simulations$nb_v, split = "[,|]", type.convert = TRUE)]
-  simulations[,.(N=.N), by=list(NB)]
+  simulations[,.(N=.N), by=list(nb)]
   
   simulations<-merge(cell.dist, simulations, by.y="seed_id", by.x="seqnum")
   simulations$nb<-factor(simulations$nb, 
@@ -60,16 +60,18 @@ if (F){
                   by=list(NB, continent)]
   sum(x$N)
   p<-ggplot()+
-    geom_sf(data=cell.dist, fill=NA, color="lightgrey", alpha=0.3)+
+    geom_sf(data=cell.dist, fill=NA, color=bg, alpha=0.3)+
     geom_sf(data=cutoff_sim, aes(fill=abs(pr_low)), color=NA)+
     #geom_sf(data=simulated.seeds, fill=NA, color=color_low, alpha=0.5)+
     facet_wrap(~NB, nrow=1)+
     scale_x_continuous(guide = guide_axis(check.overlap = TRUE)) +
-    scale_fill_gradient(
-      low = "lightgrey",
+    scale_fill_gradient2(
+      low = color_low,
+      mid = color_mid2,
       high = color_high,
+      midpoint = 300,
       na.value = "transparent",
-      name = "Prec cutoff"
+      name = "PREC cutoff (mm/year)"
     ) + theme_bw() +
     theme(
       legend.position = "bottom",
