@@ -265,6 +265,11 @@ N.merge[is.na(N.Aborigines), N.Aborigines:=0]
 N.merge[is.na(N.Invader), N.Invader:=0]
 
 N.merge$Invader_per<-N.merge$N.Invader/(N.merge$N.Invader+N.merge$N.Aborigines)
+
+mean(N.merge[continent %in% c("North America", "South America")]$Invader_per)
+sd(N.merge[continent %in% c("North America", "South America")]$Invader_per)
+        
+
 N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.Aborigines),
                           N.Invader=mean(N.Invader), sd.N.Invader=sd(N.Invader),
                           Invader_per=mean(Invader_per), sd.Invader_per=sd(Invader_per)),
@@ -356,7 +361,7 @@ sf_data$plot_fill <- ifelse(
   "Bridge (100% Invader)", 
   sf_data$BIOME_NAME
 )
-
+sf_data_full<-sf_data
 sf_poly <- suppressWarnings(st_cast(sf_data, "POLYGON"))
 dt_poly <- as.data.table(sf_poly)
 dt_poly[, poly_area := as.numeric(st_area(geometry))]
@@ -366,6 +371,9 @@ dt_largest <- dt_poly[dt_largest_idx]
 
 sf_largest <- st_as_sf(dt_largest)
 coords <- st_coordinates(suppressMessages(st_point_on_surface(sf_largest)))
+coords.dt<-data.table(coords)
+coords.dt$continent<-dt_largest$continent
+coords.dt$BIOME_NAME<-dt_largest$BIOME_NAME
 dt_largest[, `:=`(X = coords[, 1], Y = coords[, 2])]
 
 dt_pies_base <- dt_largest[!(continent %in% c("bridge1", "bridge2"))]
@@ -540,10 +548,15 @@ dt<-data.table(sf_data[, c("BIOME_NAME","continent",
                            "Invader_per","sd.Invader_per")])
 dt$geometry<-NULL
 dt<-dt[continent %in% c("North America", "South America")]
-to.doc(dt, "Number of invaders per biome", 
+dt.output<-dt
+dt.output$Invader_per<-dt.output$Invader_per*100
+dt.output$sd.Invader_per<-dt.output$sd.Invader_per*100
+colnames(dt.output)<-c("Biome", "Continent", "Native", "SD(Native)", "Immigrant",
+                       "SD(Immigrant)", "Immigrant proportion", "SD(Immigrant proportion)")
+to.doc(dt.output, "Number of invaders per biome", 
        sprintf("../Figures/Figure.Biome/N.nvader.by.biome.pie.%s.docx", simulation.type),
-       digits=2, in_place=F)
-fwrite(dt, sprintf("../Figures/Figure.Biome/N.nvader.by.biome.pie.%s.csv", simulation.type))
+       digits=1, in_place=F)
+fwrite(dt.output, sprintf("../Figures/Figure.Biome/N.nvader.by.biome.pie.%s.csv", simulation.type))
 
 dt[continent=="South America"]
 #By NB and DA
@@ -608,16 +621,25 @@ for (i in c(1:nrow(combs))){
   
   sf_largest <- st_as_sf(dt_largest)
   coords <- st_coordinates(suppressMessages(st_point_on_surface(sf_largest)))
-  dt_largest[, `:=`(X = coords[, 1], Y = coords[, 2])]
+  dt_largest<-merge(dt_largest, coords.dt, by=c("continent", "BIOME_NAME"))
+  
   
   dt_pies_base <- dt_largest[!(continent %in% c("bridge1", "bridge2"))]
-  area_threshold <- median(dt_pies_base$poly_area)
-  
+  area_threshold <- 1e100
   
   dt_pies_base[, placement := ifelse(poly_area < area_threshold, "LEFT", "INSIDE")]
   dt_pies_base[BIOME_NAME == "Flooded Grasslands & Savannas" & continent == "North America", placement := "RIGHT"]
   dt_pies_base[BIOME_NAME == "Mangroves" & continent == "South America", placement := "RIGHT"]
   dt_pies_base[BIOME_NAME == "Montane Grasslands & Shrublands" & continent == "South America", placement := "LEFT"]
+  dt_pies_base[BIOME_NAME == "Tropical & Subtropical Dry Broadleaf Forests" & continent == "South America", placement := "RIGHT"]
+  dt_pies_base[BIOME_NAME == "Boreal Forests/Taiga" & continent == "North America", placement := "RIGHT"]
+  dt_pies_base[BIOME_NAME == "Temperate Broadleaf & Mixed Forests" & continent == "North America", placement := "RIGHT"]
+  dt_pies_base[BIOME_NAME == "Tropical & Subtropical Moist Broadleaf Forests" & continent == "South America", placement := "RIGHT"]
+  dt_pies_base[BIOME_NAME == "Temperate Grasslands, Savannas & Shrublands" & continent == "South America", placement := "RIGHT"]
+  dt_pies_base[BIOME_NAME == "Tropical & Subtropical Grasslands, Savannas & Shrublands" & continent == "South America", placement := "RIGHT"]
+  dt_pies_base[BIOME_NAME == "Temperate Grasslands, Savannas & Shrublands" & continent == "North America", placement := "RIGHT"]
+  dt_pies_base[BIOME_NAME == "Tundra" & continent == "North America", placement := "RIGHT"]
+  dt_pies_base[BIOME_NAME == "Tropical & Subtropical Grasslands, Savannas & Shrublands" & continent == "North America", placement := "RIGHT"]
   
   dt_pies_base[, `:=`(pie_X = X, pie_Y = Y)]
   bbox <- st_bbox(sf_data)
@@ -626,17 +648,23 @@ for (i in c(1:nrow(combs))){
   if (length(idx_left) > 0) {
     idx_left_sorted <- idx_left[order(dt_pies_base$Y[idx_left])]
     N_left <- length(idx_left_sorted)
-    dt_pies_base[idx_left_sorted, pie_Y := seq(bbox["ymin"] - 5, bbox["ymax"] + 5, length.out = N_left)]
+    dt_pies_base[idx_left_sorted, pie_Y := seq(bbox["ymin"] - 5, bbox["ymax"] - 30, length.out = N_left)]
     arc_curve <- sin(seq(0, pi, length.out = N_left)) 
     dt_pies_base[idx_left_sorted, pie_X := bbox["xmin"] + 50 - 25 * arc_curve]
   }
   
+  dt_pies_base[BIOME_NAME == "Temperate Conifer Forests" & continent == "North America", pie_X:=-140]
   idx_right <- dt_pies_base[placement == "RIGHT", which = TRUE]
   if (length(idx_right) > 0) {
-    dt_pies_base[idx_right, pie_Y := Y] 
-    dt_pies_base[idx_right, pie_X := bbox["xmax"] + 25] 
+    idx_right_sorted <- idx_right[order(dt_pies_base$Y[idx_right])]
+    N_right <- length(idx_right_sorted)
+    
+    dt_pies_base[idx_right_sorted, pie_Y := seq(bbox["ymin"] - 5, bbox["ymax"] + 5, length.out = N_right)]
+    
+    arc_curve <- sin(seq(0, pi, length.out = N_right)) 
+    
+    dt_pies_base[idx_right_sorted, pie_X := bbox["xmax"] + 0 + 25 * arc_curve] 
   }
-  
   dt_pies_base[, total_N := N.Aborigines + N.Invader]
   
   max_radius <- 6  
@@ -661,7 +689,7 @@ for (i in c(1:nrow(combs))){
     "#88CCEE", "#009E73", "#44AA99", "#0072B2", 
     "#332288", "#AA4499"
   )
-  color_palette <- setNames(sunny_days_colors, biome_names)
+  #color_palette <- setNames(sunny_days_colors, biome_names)
   
   color_palette["Native (Aborigines)"] <- "#E0E0E0"          
   color_palette["Bridge (100% Invader)"] <- "grey50"         
@@ -725,6 +753,11 @@ biome.df<-data.table(biome.df[, c("nb", "da",
                                   "N.Invader","sd.N.Invader",
                                   "Invader_per","sd.Invader_per"
                                   )])
+dt.output<-biome.df
+dt.output$Invader_per<-dt.output$Invader_per*100
+dt.output$sd.Invader_per<-dt.output$sd.Invader_per*100
+colnames(dt.output)<-c("NB", "DA", "Biome", "Continent", "Native", "SD(Native)", "Immigrant",
+                       "SD(Immigrant)", "Immigrant proportion", "SD(Immigrant proportion)")
 
 fwrite(biome.df, "../Figures/Figure.Biome/Biome.by.nb.da/biome.invader.per.all.csv")
 N.merge$nb<-factor(N.merge$nb, 
@@ -736,8 +769,8 @@ p<-ggplot(N.merge[continent %in% c("North America", "South America")])+
   facet_grid(continent~nb+da)+
   theme_bw()
 p
-ggsave(p, filename="../Figures/Figure.Biome/Figure.Biome.full.pdf", width=12, height=8)
-ggsave(p, filename="../Figures/Figure.Biome/Figure.Biome.full.png", width=15, height=8, bg="white")
+ggsave(p, filename="../Figures/Figure.Biome/Figure.Biome.full.pdf", width=18, height=8)
+ggsave(p, filename="../Figures/Figure.Biome/Figure.Biome.full.png", width=18, height=8, bg="white")
 
 
 

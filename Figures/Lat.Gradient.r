@@ -44,6 +44,8 @@ if (F){
     item$type<-"Native"
     item[seed_continent!=continent, type:="Immigrant"]
     rep.list.all[[rrrr]]<-item
+    
+
   }
   rep.df<-rbindlist(rep.list)
   rep.df.all<-rbindlist(rep.list.all)
