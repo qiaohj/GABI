@@ -24,12 +24,16 @@ if (F){
   species.dis.seed.continent$type<-
     ifelse(species.dis.seed.continent$continent==species.dis.seed.continent$seed_continent, 
            "Aborigines", "Invader")
+  species.dis.seed.continent$label<-sprintf("%d.%s.%s", 
+                                            species.dis.seed.continent$seed_id, 
+                                            species.dis.seed.continent$nb, 
+                                            species.dis.seed.continent$da)
   rep.list<-list()
   rep.list.all<-list()
   for (rrrr in c(1:100)){
     print(rrrr)
     seeds<-seeds.all[rep==rrrr]
-    item<-species.dis.seed.continent[seed_id %in% seeds$seed_id]
+    item<-species.dis.seed.continent[label %in% seeds$label]
     type.N<-item[, .(N.species=length(unique(sp_id))),
                  by=list(type, nb, da, global_id, continent)]
     

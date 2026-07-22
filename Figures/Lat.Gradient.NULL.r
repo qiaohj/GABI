@@ -14,6 +14,7 @@ if (F){
   table(df$lat_bin)
   
   seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+  seeds.all[seed_id==41164]
   cells<-readRDS("../Data/seeds.rda")
   df<-merge(df, cells, by.x="seed_id", by.y="global_id")
   colnames(df)[7]<-"seed_continent"

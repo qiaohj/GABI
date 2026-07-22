@@ -51,9 +51,11 @@ if (F){
                        labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
   
   cutoff_sim<-simulations.dt[which(simulations.dt$pr_low<0),]
-  
-  
+  cutoff_sim$label<-sprintf("%d.%s", cutoff_sim$seqnum, cutoff_sim$NB)
+  seeds$label3<-sprintf("%d.%s", seeds$seed_id, seeds$nb)
+  simulated.seeds<-cutoff_sim[which(cutoff_sim$label %in% seeds$label3),]
   simulated.seeds<-cutoff_sim[which(cutoff_sim$seqnum %in% seeds$seed_id),]
+  
   dim(simulated.seeds)
   simulated.seeds.t<-as.data.table(simulated.seeds)
   x<-simulated.seeds.t[,.(N=length(unique(seqnum))),

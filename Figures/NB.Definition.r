@@ -5,15 +5,34 @@ library(ggh4x)
 library(sf)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 source("Figures/common.r")
-
+iucn_map<-read_sf("/media/huijieqiao/Butterfly/GABI/Shape/IUCN/MAMMALS/MAMMALS_TERRESTRIAL_ONLY.shp")
+sp<-data.table(species=iucn_map$binomial,
+               class_=iucn_map$class,
+               order_=iucn_map$order_,
+               family_=iucn_map$family,
+               genus_=iucn_map$genus)
+sp<-unique(sp)
 iucn<-readRDS("../Data/Tables/nb_range_mammals_iucn.rda")
+
+iucn.full<-merge(iucn, sp, by="species")
+iucn.full[order_==toupper("Chiroptera")]
+iucn.full<-iucn.full[order_!=toupper("Chiroptera")]
+
 unique(iucn$species)
+
+
 pr_percentile<-quantile(iucn[var=="pr"]$range, 
                         c(0.2, 0.4, 0.6, 0.8))
-tasmean_percentile<-quantile(iucn[var=="tas"]$range, 
+tas_percentile<-quantile(iucn[var=="tas"]$range, 
                              c(0.2, 0.4, 0.6, 0.8))
 
-vline<-data.table(v=c(ceiling(pr_percentile), ceiling(tasmean_percentile)),
+pr_percentile_no_bat<-quantile(iucn.full[var=="pr"]$range, 
+                        c(0.2, 0.4, 0.6, 0.8))
+tas_percentile_no_bat<-quantile(iucn.full[var=="tas"]$range, 
+                             c(0.2, 0.4, 0.6, 0.8))
+
+vline<-data.table(v=c(ceiling(pr_percentile), ceiling(tas_percentile)),
+                  v_no_bat=c(ceiling(pr_percentile_no_bat), ceiling(tas_percentile_no_bat)),
                   var=c(rep("pr", 4), rep("tas", 4)),
                   NB=rep(c("TINY", "NARROW", "MODERATE", "BROAD"), 2))
 nb<-list(pr=ceiling(pr_percentile),

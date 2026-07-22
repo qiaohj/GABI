@@ -182,7 +182,7 @@ if (F){
 
 if (F){
   species.dis.geo<-readRDS("../Data/Tables/species.dis.biome.rda")
-  
+  species.dis.geo$label<-sprintf("%d.%s.%s", species.dis.geo$seed_id, species.dis.geo$nb, species.dis.geo$da)
   seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
   
   rep.list<-list()
@@ -190,7 +190,7 @@ if (F){
   for (rrrr in c(1:100)){
     print(rrrr)
     seeds<-seeds.all[rep==rrrr]
-    item<-species.dis.geo[seed_id %in% seeds$seed_id]
+    item<-species.dis.geo[label %in% seeds$label]
     type.N<-item[, .(N.species=length(unique(sp_id))),
                  by=list(type, nb, da, BIOME_NAME, continent)]
     
@@ -213,15 +213,15 @@ if (F){
 
 if (F){
   species.dis.geo<-readRDS("../Data/Tables/species.dis.biome.NULL.rda")
-  
+  species.dis.geo$label<-sprintf("%d.%s.%s", species.dis.geo$seed_id, species.dis.geo$nb, species.dis.geo$da)
   seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
-  
+  seeds.all[seed_id==41164 & nb=="NARROW" & da=="GOOD"]
   rep.list<-list()
   rep.list.all<-list()
   for (rrrr in c(1:100)){
     print(rrrr)
     seeds<-seeds.all[rep==rrrr]
-    item<-species.dis.geo[seed_id %in% seeds$seed_id]
+    item<-species.dis.geo[label %in% seeds$label]
     type.N<-item[, .(N.species=length(unique(sp_id))),
                  by=list(type, nb, da, BIOME_NAME, continent)]
     
@@ -232,6 +232,30 @@ if (F){
     type.N.sum<-type.N[, .(N.species=sum(N.species)),
                        by=list(type, BIOME_NAME, continent, rep)]
     
+    if (F){
+      type.N.sum[BIOME_NAME=="Temperate Grasslands, Savannas & Shrublands" & continent=="South America"]
+      
+      cells<-read_sf("../Shape/isea3h8/N_S_America.shp")
+      item_ll<-merge(item, cells, by.x="global_id", by.y="seqnum")
+      item_ll[continent.x!=continent.y]
+      biome_Cells<-item_ll[BIOME_NAME=="Temperate Grasslands, Savannas & Shrublands" & continent.x=="South America"]
+      biome_Cells$lat_bin<-floor((biome_Cells$lat+0.5)/1)*1
+      biome_Cells$sp_label<-sprintf("%s.%s.%s", biome_Cells$sp_id, biome_Cells$nb, biome_Cells$da)
+      xxx<-biome_Cells[, .(N_SP=length(unique(sp_label))),
+                  by=list(type, lat_bin)]
+      
+      xxx.native<-xxx[type=="Aborigines"]
+      colnames(xxx.native)[3]<-"N_SP_Native"
+      
+      xxx.invader<-xxx[type=="Invader"]
+      colnames(xxx.invader)[3]<-"N_SP_Immigrant"
+      
+      xxx.merge<-merge(xxx.invader, xxx.native, by=c("lat_bin"), all=T)
+      xxx.merge[is.na(N_SP_Immigrant), N_SP_Immigrant :=0]
+      xxx.merge<-xxx.merge[, c("lat_bin", "N_SP_Native", "N_SP_Immigrant")]
+      xxx.merge$Immigrant_Per<-xxx.merge$N_SP_Immigrant/(xxx.merge$N_SP_Immigrant+xxx.merge$N_SP_Native)
+      xxx.merge
+    }
     rep.list.all[[rrrr]]<-type.N.sum
     
   }
@@ -243,7 +267,7 @@ if (F){
 }
 
 simulation.type<-"NULL"
-simulation.type<-"Sim"
+#simulation.type<-"Sim"
 if (simulation.type=="NULL"){
   rep.list.all<-readRDS(sprintf("../Data/Tables/biome.N.species.%s.rda", simulation.type))
 }else{
