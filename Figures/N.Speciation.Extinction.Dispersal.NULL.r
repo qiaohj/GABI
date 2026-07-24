@@ -162,7 +162,7 @@ table(df$NB)
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$type)
 remove.outliers<-F
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.99.rda")
 if (remove.outliers==T){
   seeds.all<-seeds.all[!label %in% outliers]
 }

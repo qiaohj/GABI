@@ -50,6 +50,7 @@ if (F){
     join = st_intersects, 
     left = F
   )
+  saveRDS(cells.biome, "../Data/Tables/cells.biome.rda")
   
   cells.biome.dt<-data.table(seqnum=cells.biome$global_id, BIOME_NAME=cells.biome$BIOME_NAME)
   hexagon_biome<-merge(hexagon, cells.biome.dt, by="seqnum", all.x=T)
@@ -102,14 +103,15 @@ if (F){
             aes(fill=BIOME_NAME))
   
   write_sf(hexagon_biome, "../Shape/hexagon_biome/hexagon_biome.shp")
-  
+}
+if (F){
   species.dis<-readRDS("../Data/Tables/Final.Distribution.Unique.rda")
-  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
-  species.dis.sub<-species.dis[seed_id %in% unique(seeds.all$seed_id)]
-  
+  species.dis.sub<-species.dis
+  cells.biome<-readRDS("../Data/Tables/cells.biome.rda")
   species.dis.geo<-merge(species.dis.sub, cells.biome, by="global_id")
   
   species.dis.geo$geometry<-NULL
+  hexagon<-readRDS("../Data/Tables/cells.with.dist.rda")
   
   seeds<-data.table(seed_id=as.numeric(hexagon$seqnum), seed_continent=hexagon$continent)
   species.dis.geo<-merge(species.dis.geo, seeds, by="seed_id")
@@ -121,53 +123,18 @@ if (F){
   saveRDS(species.dis.geo, "../Data/Tables/species.dis.biome.rda")
   
   
-  species.dis<-readRDS("../Data/Tables/Final.Distribution.NULL.Unique.rda")
-  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
-  species.dis.sub<-species.dis[seed_id %in% unique(seeds.all$seed_id)]
-  
-  species.dis.geo<-merge(species.dis.sub, cells.biome, by="global_id")
-  
-  species.dis.geo$geometry<-NULL
-  
-  seeds<-data.table(seed_id=as.numeric(hexagon$seqnum), seed_continent=hexagon$continent)
-  species.dis.geo<-merge(species.dis.geo, seeds, by="seed_id")
-  
-  
-  species.dis.geo$type<-ifelse(species.dis.geo$continent==species.dis.geo$seed_continent, 
-                               "Aborigines", "Invader")
-  
-  saveRDS(species.dis.geo, "../Data/Tables/species.dis.biome.NULL.rda")
-  
   
 }
 
 
 if (F){
+  cells.biome<-readRDS("../Data/Tables/cells.biome.rda")
   
-  
-  hexagon<-readRDS("../Data/Tables/cells.with.dist.rda")
-  cells<-data.table(global_id=as.numeric(hexagon$seqnum), continent=hexagon$continent,
-                    lon=hexagon$lon, lat=hexagon$lat)
-  biome<-read_sf("../Shape/Ecoregions2017/biome.simplify.shp")
-  
-  cells <- st_as_sf(
-    cells, 
-    coords = c("lon", "lat"), 
-    crs = 4326 
-  )
-  
-  cells.biome <- st_join(
-    cells, 
-    biome, 
-    join = st_intersects, 
-    left = F
-  )
-  
-  
-  species.dis<-readRDS("../Data/Tables/Final.Distribution.NULL.rda")
+  species.dis<-readRDS("../Data/Tables/Final.Distribution.NULL.Unique.rda")
   species.dis.geo<-merge(species.dis, cells.biome, by="global_id")
   
   species.dis.geo$geometry<-NULL
+  hexagon<-readRDS("../Data/Tables/cells.with.dist.rda")
   
   seeds<-data.table(seed_id=as.numeric(hexagon$seqnum), seed_continent=hexagon$continent)
   species.dis.geo<-merge(species.dis.geo, seeds, by="seed_id")
@@ -183,15 +150,15 @@ if (F){
 if (F){
   species.dis.geo<-readRDS("../Data/Tables/species.dis.biome.rda")
   species.dis.geo$label<-sprintf("%d.%s.%s", species.dis.geo$seed_id, species.dis.geo$nb, species.dis.geo$da)
-  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
-  
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.995.rda")
+  seeds.all[!(label %in% species.dis.geo$label)]
   rep.list<-list()
   rep.list.all<-list()
   for (rrrr in c(1:100)){
     print(rrrr)
     seeds<-seeds.all[rep==rrrr]
     item<-species.dis.geo[label %in% seeds$label]
-    type.N<-item[, .(N.species=length(unique(sp_id))),
+    type.N<-item[, .(N.species=length(unique(sp_label))),
                  by=list(type, nb, da, BIOME_NAME, continent)]
     
     type.N<-type.N[!is.na(BIOME_NAME)]
@@ -206,15 +173,15 @@ if (F){
   }
   rep.df<-rbindlist(rep.list)
   rep.df.all<-rbindlist(rep.list.all)
-  saveRDS(rep.df, "../Data/Tables/biome.N.species.by.nb.rda")
-  saveRDS(rep.df.all, "../Data/Tables/biome.N.species.rda")
+  saveRDS(rep.df, "../Data/Tables/biome.N.species.by.nb.995.rda")
+  saveRDS(rep.df.all, "../Data/Tables/biome.N.species.995.rda")
   
 }
 
 if (F){
   species.dis.geo<-readRDS("../Data/Tables/species.dis.biome.NULL.rda")
   species.dis.geo$label<-sprintf("%d.%s.%s", species.dis.geo$seed_id, species.dis.geo$nb, species.dis.geo$da)
-  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.99.rda")
   seeds.all[seed_id==41164 & nb=="NARROW" & da=="GOOD"]
   rep.list<-list()
   rep.list.all<-list()
@@ -222,7 +189,7 @@ if (F){
     print(rrrr)
     seeds<-seeds.all[rep==rrrr]
     item<-species.dis.geo[label %in% seeds$label]
-    type.N<-item[, .(N.species=length(unique(sp_id))),
+    type.N<-item[, .(N.species=length(unique(sp_label))),
                  by=list(type, nb, da, BIOME_NAME, continent)]
     
     type.N<-type.N[!is.na(BIOME_NAME)]
@@ -261,8 +228,8 @@ if (F){
   }
   rep.df<-rbindlist(rep.list)
   rep.df.all<-rbindlist(rep.list.all)
-  saveRDS(rep.df, "../Data/Tables/biome.N.species.by.nb.NULL.rda")
-  saveRDS(rep.df.all, "../Data/Tables/biome.N.species.NULL.rda")
+  saveRDS(rep.df, "../Data/Tables/biome.N.species.by.nb.NULL.99.rda")
+  saveRDS(rep.df.all, "../Data/Tables/biome.N.species.NULL.99.rda")
   
 }
 
@@ -271,6 +238,7 @@ simulation.type<-"NULL"
 if (simulation.type=="NULL"){
   rep.list.all<-readRDS(sprintf("../Data/Tables/biome.N.species.%s.rda", simulation.type))
 }else{
+  file.info("../Data/Tables/biome.N.species.rda")
   rep.list.all<-readRDS("../Data/Tables/biome.N.species.rda")
 }
 
@@ -299,6 +267,13 @@ N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.
                           Invader_per=mean(Invader_per), sd.Invader_per=sd(Invader_per)),
                       by=list(BIOME_NAME, continent)]
 N.merge.mean[,c("BIOME_NAME", "Invader_per", "sd.Invader_per")]
+
+ggplot(N.merge[continent %in% c("North America", "South America")])+
+  geom_boxplot(aes(x=BIOME_NAME, y=Invader_per))+
+  geom_hline(yintercept = 0.5, linetype=2)+
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  facet_wrap(~continent)
 
 p<-ggplot(N.merge.mean[continent %in% c("North America", "South America")])+
   geom_point(aes(x=BIOME_NAME, y=Invader_per))+
@@ -790,6 +765,7 @@ N.merge$nb<-factor(N.merge$nb,
 
 p<-ggplot(N.merge[continent %in% c("North America", "South America")])+
   geom_boxplot(aes(y=BIOME_NAME, x=Invader_per))+
+  geom_vline(xintercept = 0.5, linetype=2)+
   facet_grid(continent~nb+da)+
   theme_bw()
 p

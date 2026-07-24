@@ -56,7 +56,8 @@ table(df$NB)
 df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
 table(df$seed_continent)
 table(df$label)
-seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+#seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+seeds.all<-readRDS("../Data/Tables/random.seeds.99.rda")
 
 
 if (F){
@@ -161,3 +162,4 @@ if (F){
          "Number of species stay in the original continent and dispersal to the other continent", 
          "../Table.Doc/species.2.other.continent.detail.docx")
 }
+

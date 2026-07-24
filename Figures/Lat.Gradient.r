@@ -13,7 +13,7 @@ if (F){
   dim(df)
   table(df$lat_bin)
   
-  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+  
   cells<-readRDS("../Data/seeds.rda")
   df<-merge(df, cells, by.x="seed_id", by.y="global_id")
   colnames(df)[7]<-"seed_continent"
@@ -21,6 +21,8 @@ if (F){
   df$continent<-ifelse(df$lat_bin>threshold, "North America", "South America")
   df[continent!=seed_continent]
   df$label<-sprintf("%d.%s.%s", df$seed_id, df$nb, df$da)
+  
+  seeds.all<-readRDS("../Data/Tables/random.seeds.99.rda")
   rep.list<-list()
   rep.list.all<-list()
   rep.list.full<-list()
@@ -50,13 +52,13 @@ if (F){
   rep.df<-rbindlist(rep.list)
   rep.df.all<-rbindlist(rep.list.all)
   rep.df.full<-rbindlist(rep.list.full)
-  saveRDS(rep.df.full, "../Data/Tables/N.Sp.Lat.full.rep.rda")
-  saveRDS(rep.df, "../Data/Tables/N.Sp.Lat.rep.rda")
-  saveRDS(rep.df.all, "../Data/Tables/N.Sp.Lat.all.rep.rda")
+  saveRDS(rep.df.full, "../Data/Tables/N.Sp.Lat.full.rep.random.seeds.99.rda")
+  saveRDS(rep.df, "../Data/Tables/N.Sp.Lat.rep.random.seeds.99.rda")
+  saveRDS(rep.df.all, "../Data/Tables/N.Sp.Lat.all.rep.random.seeds.99.rda")
 }
 
-rep.df<-readRDS("../Data/Tables/N.Sp.Lat.rep.rda")
-rep.df.all<-readRDS("../Data/Tables/N.Sp.Lat.all.rep.rda")
+rep.df<-readRDS("../Data/Tables/N.Sp.Lat.rep.random.seeds.99.rda")
+rep.df.all<-readRDS("../Data/Tables/N.Sp.Lat.all.rep.random.seeds.99.rda")
 
 lat.all.N.Native<-rep.df.all[type=="Native"]
 lat.all.N.Immigrant<-rep.df.all[type=="Immigrant"]
