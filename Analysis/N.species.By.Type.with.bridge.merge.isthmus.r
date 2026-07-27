@@ -18,6 +18,17 @@ if (F){
   head(sp)
   
   species.type.N<-readRDS("../Data/Tables/species.type.N.merge.isthmus.rda")
+  if (F){
+    species.type.N[, seed_id := sub("-.*", "", sp_id)]
+    ddd<-species.type.N[seed_id=="11871" & NB=="MODERATE" & DA=="GOOD"]
+    ddd
+    length(unique(ddd$sp_id))
+    
+    ddd.row<-readRDS("../Data/temp.N.sp/33100.BIG.GOOD.rda")
+    length(unique(ddd.row$sp_id))
+    nrow(ddd.row[type=="Speciation"])
+    
+  }
   species.type.N$sp_id<-as.character(species.type.N$sp_id)
   species.type.N$Parent<-as.character(species.type.N$Parent)
   species.type.N[sp_id==Parent, Parent:=""]

@@ -15,6 +15,9 @@ sp_N<-sp[,.(N=.N), by=list(seed_id, nb, da)]
 sp$Parent<-sub("-[^-]*$", "", sp$sp_id)
 
 if (F){
+  ddd<-sp[seed_id=="11871" & nb=="MODERATE" & da=="GOOD"]
+  
+  
   ff<-gsub("/media/huijieqiao/Butterfly/GABI/Results/", "", folders)
   
   ff[!ff %in% labels]
@@ -183,6 +186,8 @@ if (F){
   }
   all_N<-rbindlist(all_N, fill=T)
   all_N[continent=="", continent:=all_N[continent==""]$origin_continent]
+  all_N[startsWith(sp_id, "11871") & NB=="MODERATE" & DA=="GOOD"]
+  all_N[is.na(sp_id)]
   all_N<-all_N[!is.na(sp_id)]
   saveRDS(all_N, "../Data/Tables/species.type.N.rda")
   table(all_N$NB)

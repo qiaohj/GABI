@@ -11,6 +11,8 @@ setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 if (F){
   sp.with.bridge<-readRDS("../Data/Tables/sp_full_continents.rda")
   seeds<-sp.with.bridge[,.(N=.N), by=list(NB, DA, seed_id)]
+  #11871.MODERATE.GOOD
+  #seeds[seed_id == 11871 & NB=="MODERATE" & DA=="GOOD"], .I]
   final<-list()
   for (i in c(1:nrow(seeds))){
     print(paste(i, nrow(seeds)))

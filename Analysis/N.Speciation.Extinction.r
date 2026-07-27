@@ -46,7 +46,6 @@ i=1
 all_df<-all_df[which(all_df$species_evo_level==0),]
 table(all_df$species_evo_type)
 table(all_df$species_evo_level)
-
 #all_df<-all_df[label=="6529.MODERATE.POOR"]
 for (i in c(1:nrow(all_df))){
   
@@ -54,6 +53,7 @@ for (i in c(1:nrow(all_df))){
   item<-all_df[i,]
   
   sp<-sprintf(template, item$global_id, item$nb, item$da)
+  
   print(paste(i, nrow(all_df), sp))
   
   

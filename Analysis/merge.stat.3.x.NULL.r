@@ -9,6 +9,11 @@ target<-"/media/huijieqiao/Butterfly/GABI/Results_NULL"
 conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.null.sqlite")
 simulations<-data.table(dbReadTable(conn, "simulations"))
 dbDisconnect(conn)
+table(simulations$is_run)
+conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
+simulations.raw<-data.table(dbReadTable(conn, "simulations"))
+dbDisconnect(conn)
+
 if (F){
   conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
   ssss<-data.table(dbReadTable(conn, "simulations"))
@@ -35,7 +40,9 @@ div_df_nb<-NULL
 div_df_da<-NULL
 div_df_nb_da<-NULL
 i=1
-simulations_sub[global_id==33105 & is_run==1]
+simulations_sub[global_id==11871]
+
+
 for (i in c(1:nrow(simulations_sub))){
   print(paste(i, nrow(simulations_sub)))
   item<-simulations_sub[i]

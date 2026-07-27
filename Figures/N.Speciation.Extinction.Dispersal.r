@@ -131,7 +131,10 @@ if (T){
   df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
   table(df$type)
   
-  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.955.rda")
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.995.rda")
+  seeds.all<-seeds.all[!label %in% c("9078.BROAD.GOOD", "11119.BIG.GOOD", "10794.BIG.GOOD", "12104.BROAD.GOOD")]
+  
+  
   #seeds.all<-readRDS("../Data/Tables/random.seeds.95.rda")
   
   rep.list<-list()
@@ -355,7 +358,7 @@ if (T){
   #p
   p<-p1+p2+plot_layout(guides = "collect", widths = c(3.5, 1)) & 
     theme(legend.position = "bottom")
-}
+
 p
 all.df.se<-all.df[,.(mean=mean(N), sd=sd(N)),
                   by=list(event, continent, type)]
@@ -551,10 +554,34 @@ p2<-ggplot(all.df[event %in% c("Richness")])+
         strip.text.x = element_blank(),
         strip.background.x = element_blank())
 p2
+
 p <- (p1 / p2) + 
   plot_layout(heights = c(3, 1), guides = "collect") & 
   theme(legend.position = "bottom")
+}
 p
+
+pxxx<-ggplot(all.df[event %in% c("Richness") & NB %in% c("BROAD", "MODERATE") & DA =="GOOD"], 
+             aes(x=continent, y=N, color=type))+
+  geom_boxplot()+
+  stat_summary(
+    fun = median, 
+    geom = "text", 
+    aes(label = round(after_stat(y), 1)),
+    position = position_dodge(width = 0.75),
+    vjust = -0.5,
+    size = 3.5,
+    show.legend = FALSE
+  ) +
+  facet_grid(event~NB+DA, scale="free")+
+  labs(y="Number of species", color="Species type")+
+  scale_color_manual(values=c("Native"=color_native, "Immigrant"=color_immigrant))+
+  theme_bw()+
+  theme(legend.position = "bottom",
+        axis.title.x = element_blank(),
+        strip.text.x = element_blank(),
+        strip.background.x = element_blank())
+pxxx
 all.df.nb.da<-all.df
 all.df.se<-all.df[,.(mean=mean(N), sd=sd(N)),
                   by=list(event, continent, type, NB, DA)]

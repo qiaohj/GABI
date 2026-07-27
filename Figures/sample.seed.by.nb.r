@@ -7,9 +7,9 @@ library(dplyr)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 source("Figures/common.r")
 if (T){
-  threshold<-955
+  threshold<-99
   seeds<-readRDS("../Data/Tables/seeds.rda")
-  seeds[global_id==9745]
+  seeds[global_id==11625]
   #conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
   #simulations<-data.table(dbReadTable(conn, "simulations"))
   #dbDisconnect(conn)
@@ -20,7 +20,8 @@ if (T){
   seed.dist<-readRDS("../Data/Tables/cells.with.dist.rda")
   seed.dist[which(seed.dist$seqnum==9745),]
   df<-readRDS("../Data/Tables/N.Speciation.Extinction.All.NB.rda")
-  df[seed_id==9745]
+  #11871.MODERATE.GOOD
+  df[seed_id==11625]
   
   table(df$nb)
   df[,(N=length(unique(seed_id))), by="continent"]
@@ -41,6 +42,7 @@ if (T){
   
   df_N_checked$label<-sprintf("%d.%s", df_N_checked$seed_id, df_N_checked$nb)
   df.detail$label<-sprintf("%d.%s", df.detail$seed_id, df.detail$nb)
+  df_filtered_seeds[seed_id==11625]
   df_filtered_seeds<-df.detail[label %in% df_N_checked[N==2]$label]
   table(df_N_checked$N)
   
@@ -88,6 +90,13 @@ if (T){
   quantiles<-quantile(N_species$N_SPECIES, 
                       c(0, 1, 0.99, 0.98, 0.95, 0.90, 0.999, 0.995,
                         0.96, 0.97, 0.955))
+  
+  full.quantile<-quantile(N_species$N_SPECIES, 
+                          seq(0.95, 1, by=0.005))
+  
+  saveRDS(N_species, "../Data/Tables/N_species.quantile.rda")
+  
+  saveRDS(full.quantile, "../Data/Tables/full.quantile.rda")
   if (threshold==99){
     quantile_index<-3
   }
@@ -112,8 +121,8 @@ if (T){
   names(quantiles)<-NULL
   p<-ggplot(N_species.all)+
     geom_histogram(aes(x=N_SPECIES), binwidth=1)+
-    geom_vline(aes(xintercept=quantiles[threshold]), linetype=2)+
-    scale_x_sqrt(breaks=c(100, 1000, ceiling(quantiles[7]), 2500, 5000, 7500, 10000))+
+    geom_vline(aes(xintercept=quantiles[quantile_index]), linetype=2)+
+    scale_x_sqrt(breaks=c(100, 1000, ceiling(quantiles[quantile_index]), 2500, 5000, 7500, 10000))+
     scale_y_sqrt()+
     theme_minimal() +
     labs(
@@ -257,6 +266,8 @@ if (T){
                                        N=min.N)
   }
   bins<-rbindlist(bins)
+  bins[min.dist==63]
+  seed_pool[seed_id==11625]
   table(bins$N)
   all_ramdom_seeds<-list()
   set.seed(1024)

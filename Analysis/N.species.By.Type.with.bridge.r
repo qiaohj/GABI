@@ -21,14 +21,13 @@ if (F){
   head(sp)
   
   species.type.N<-readRDS("../Data/Tables/species.type.N.rda")
-  species.type.N$sp_id<-as.character(species.type.N$sp_id)
-  species.type.N$Parent<-as.character(species.type.N$Parent)
-  species.type.N[sp_id==Parent, Parent:=""]
+  
   if (F){
     species.type.N[, seed_id := sub("-.*", "", sp_id)]
-    ddd<-sp[seed_id=="33100" & NB=="BIG" & DA=="GOOD"]
+    ddd<-species.type.N[seed_id=="9974" & NB=="NARROW" & DA=="GOOD"]
     ddd
     length(unique(ddd$sp_id))
+    length(unique(ddd[to==0]$sp_id))
     
     ddd.row<-readRDS("../Data/temp.N.sp/33100.BIG.GOOD.rda")
     length(unique(ddd.row$sp_id))
@@ -150,8 +149,6 @@ if (F){
   sp_full_continents[parent_continent=="Unknown" & year-from==1, parent_continent:=""]
   #sp_full_continents[type=="Speciation" & is.na(parent_continent)]
   
-  #sp_full_continents[previous_continent=="North America" & current_continent=="North America" & parent_continent=="Unknown"]
-  sp_full_continents[species.label=="10046-2-1.MODERATE-MODERATE.POOR"]
   
   sp_full_continents$type<-""
   sp_full_continents$gain.continent<-""
@@ -227,7 +224,13 @@ if (F){
   ]$V1
   
   sp_full_continents[na.omit(idx), gain.continent := ""]
-  
+  if (F){
+    xxx<-sp_full_continents[seed_id==11871 & NB=="MODERATE" & DA=="GOOD"]
+    length(unique(xxx$sp_id))
+    length(unique(xxx[year==0]$sp_id))
+    
+    
+  }
   saveRDS(sp_full_continents, "../Data/Tables/sp_full_continents.rda")
   
 }
@@ -238,18 +241,23 @@ if (F){
   sp$year<-as.numeric(sp$year)
   sp[sp_id==Parent, Parent:=""]
   head(sp)
-  
+  length(unique(sp$label))
   species.type.N<-readRDS("../Data/Tables/species.type.N.NULL.rda")
   species.type.N$sp_id<-as.character(species.type.N$sp_id)
   species.type.N$Parent<-as.character(species.type.N$Parent)
   species.type.N[sp_id==Parent, Parent:=""]
   if (F){
     species.type.N[, seed_id := sub("-.*", "", sp_id)]
-    ddd<-sp[seed_id=="33100" & NB=="BIG" & DA=="GOOD"]
+    length(unique(sprintf("%s.%s.%s", species.type.N$seed_id, species.type.N$NB, species.type.N$DA)))
+    length(unique(species.type.N$seed_id))
+    length(unique(species.type.N$s))
+    sp[seed_id=="11871" & nb=="BIG" & da=="GOOD"]
+    
+    ddd<-species.type.N[seed_id=="11871" & NB=="BIG" & DA=="GOOD"]
     ddd
     length(unique(ddd$sp_id))
     
-    ddd.row<-readRDS("../Data/temp.N.sp/33100.BIG.GOOD.rda")
+    ddd.row<-readRDS("../Data/temp.N.sp/11871.BIG.GOOD.rda")
     length(unique(ddd.row$sp_id))
     nrow(ddd.row[type=="Speciation"])
     
