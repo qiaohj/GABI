@@ -29,6 +29,8 @@ guide_legend_top<-guides(fill = guide_legend(
   byrow = TRUE
 ))
 
+"#D55E00"
+"#0072B2"
 
 color_high<-"#EE6677"
 color_low<-"#4477AA"

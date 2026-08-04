@@ -233,6 +233,14 @@ p3<-ggplot(rep.df.all.sp[between(year_window, -1800, -50)])+
   )+facet_wrap(~continent, nrow=2)
 p3
 
+ddd<-rep.df.all.sp.mean[!is.na(net_div_rate) & !is.infinite(net_div_rate)]
+ddd[,.(mean=mean(net_div_rate)), .(type, seed_continent)]
+
+ddd2<-rep.df.all.sp.mean[year_window>=-1700 & !is.na(net_div_rate) & !is.infinite(net_div_rate)]
+ddd2[,.(mean=mean(net_div_rate)), .(type, seed_continent)]
+
+
+fwrite(rep.df.all.sp.mean, "../Figures/NET/Simulations/Net.Diversification.Rate.continent.csv")
 #ggsave(p1, filename="../Figures/NET/Simulations/Net.Diversification.Rate.origin.pdf", width=8, height=5)
 #ggsave(p1, filename="../Figures/NET/Simulations/Net.Diversification.Rate.origin.png", width=8, height=5, bg="white")
 
@@ -336,6 +344,7 @@ p2<-ggplot(rep.df.all.extinction.mean[between(year_window, -1800, -50) &
     legend.position = "bottom"
   )+facet_grid(type~continent, scale="free")
 p2
+fwrite(rep.df.all.extinction.mean, "../Figures/NET/Simulations/Net.Extinction.continent.csv")
 
 #ggsave(p1, filename="../Figures/NET/Simulations/Extinction.origin.pdf", width=8, height=5)
 #ggsave(p1, filename="../Figures/NET/Simulations/Extinction.origin.png", width=8, height=5, bg="white")
@@ -427,6 +436,7 @@ p2<-ggplot(rep.df.all.mean[between(year_window, -1800, -50)])+
     legend.position = "bottom"
   )+facet_wrap(~continent, nrow=2, scale="free")
 p2
+fwrite(rep.df.all.mean, "../Figures/NET/Simulations/Net.Speciation.continent.csv")
 
 
 #ggsave(p1, filename="../Figures/NET/Simulations/Speciation.origin.pdf", width=8, height=5)
@@ -525,6 +535,7 @@ p2<-ggplot(rep.df.all.mean[between(year_window, -1800, -50)])+
   )+facet_wrap(~continent, nrow=2, scale="free")
 p2
 
+fwrite(rep.df.all.mean, "../Figures/NET/Simulations/Net.Dispersal.continent.csv")
 
 #ggsave(p1, filename="../Figures/NET/Simulations/Dispersal.origin.pdf", width=8, height=5)
 #ggsave(p1, filename="../Figures/NET/Simulations/Dispersal.origin.png", width=8, height=5, bg="white")
@@ -556,11 +567,11 @@ df1<-merge(df_extinction, rep.df.all.speciation,
            all=T)
 df1$type.x<-NULL
 df1$type.y<-NULL
-colnames(df1)[c(9, 11)]<-c("N_Extinction", "N_Speciation")
+colnames(df1)[c(9, 15)]<-c("N_Extinction", "N_Speciation")
 
-rep.df.all.dispersal.primary<-rep.df.all.dispersal[type=="Primary Invader"]
+rep.df.all.dispersal.primary<-rep.df.all.dispersal[type=="Primary invader"]
 colnames(rep.df.all.dispersal.primary)[c(7, 11)]<-c("N_Primary_Invader", "net_primary_invader")
-rep.df.all.dispersal.secondary<-rep.df.all.dispersal[type=="Secondary Invader"]
+rep.df.all.dispersal.secondary<-rep.df.all.dispersal[type=="Secondary invader"]
 colnames(rep.df.all.dispersal.secondary)[c(7, 11)]<-c("N_Secondary_Invader", "net_secondary_invader")
 df_dispersal<-merge(rep.df.all.dispersal.secondary, rep.df.all.dispersal.primary, 
                     by=c("year_window", "seed_continent", "species.type", "rep", "continent", "other_continent", "N_SP", "net_div_rate"),
@@ -580,6 +591,8 @@ df_final_se<-df_final[between(year_window, -1500, -50),
                           net_secondary_invader=mean(net_secondary_invader),
                           net_primary_invader=mean(net_primary_invader)),
                       by=list(year_window,seed_continent, species.type, continent)]
+
+df_final_se
 model<-glm(data=df_final_se, net_div_rate~net_extinction+net_local_extinction+net_speciation+net_secondary_invader+net_primary_invader)
 summary(model)
 

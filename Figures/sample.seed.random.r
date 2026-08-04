@@ -31,7 +31,7 @@ df.detail[,.(N=length(unique(seed_id))), by=list(continent)]
 #df<-df[between(lat, -35, 45)]
 range(df.detail$lat)
 
-burn_in<-3200/2
+burn_in<-1801
 unique(df.detail$nb)
 
 df_N_checked<-df.detail[year==burn_in & N_SPECIES>0, 
@@ -85,6 +85,8 @@ quantiles_NA<-quantile(N_species[continent=="North America"]$N_SPECIES, c(0, 1, 
 quantiles_SA<-quantile(N_species[continent=="South America"]$N_SPECIES, c(0, 1, 0.99, 0.98, 0.95, 0.90, 0.999, 0.995))
 quantiles<-quantile(N_species$N_SPECIES, c(0, 1, 0.99, 0.98, 0.95, 0.90, 0.999, 0.995))
 
+N_species[between(N_SPECIES, 1740, 1745)]
+
 names(quantiles)<-NULL
 p<-ggplot(N_species.all)+
   geom_histogram(aes(x=N_SPECIES), binwidth=1)+
@@ -100,8 +102,6 @@ p<-ggplot(N_species.all)+
     panel.grid = element_blank()
   )       
 p
-ggsave(p, filename="../Figures/Outliers/Outlier.distribution.pdf", width=6, height=3)
-ggsave(p, filename="../Figures/Outliers/Outlier.distribution.png", width=6, height=3, bg="white")
 
 N_species$seed_label<-sprintf("%d.%s.%s", N_species$seed_id, N_species$nb, N_species$da)
 outliers_99<-unique(N_species[(N_SPECIES>quantiles[3])])
@@ -111,12 +111,11 @@ new_included<-outliers_99[!seed_label %in% outliers_995$seed_label]
 
 new_included[,.(N_SPECIES=sum(N_SPECIES),
                 N_Simulation=.N), by=list(continent)]
-outliers<-unique(N_species[(N_SPECIES>quantiles[5])])
+outliers<-unique(N_species[(N_SPECIES>quantiles[3])])
 #outliers<-unique(N_species[(N_SPECIES>1e10)])
 
 setorderv(outliers, "N_SPECIES")
-View(outliers)
-ittem<-outliers[2]
+#View(outliers)
 
 #99 for 2000
 #995 for 2100
@@ -132,9 +131,6 @@ setorderv(dt.outliers, c("nb", "da", "continent"))
 
 dt.outliers
 
-to.doc(dt.outliers, "Number of outliers per combination", "../Figures/Outliers/outliers.docx",
-       digits = 0)
-range(N_species$N_SPECIES)
 
 outliers$nb<-factor(outliers$nb, 
                     levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
@@ -142,9 +138,6 @@ outliers$nb<-factor(outliers$nb,
 p<-ggplot(outliers)+geom_histogram(aes(x=N_SPECIES), bins=100)+
   facet_grid(nb+da~continent)
 p
-ggsave(p, filename="../Figures/Outliers/Outlier.details.pdf", width=6, height=6)
-ggsave(p, filename="../Figures/Outliers/Outlier.details.png", width=6, height=6, 
-       bg="white")
 
 
 table(outliers$continent)
@@ -175,7 +168,6 @@ ggplot(df_filtered_N_filter)+
                 label=paste(continent, N_SEED, sep=": ")),
             hjust = 0)
 
-outliers[seed_id==11871]
 
 outliers_ID<-unique(outliers$seed_label)
 outliers_ID[outliers_ID=="11871.MODERATE.GOOD"]
@@ -190,24 +182,9 @@ seed_pool<-no.outliers[, .(N_SPECIES=sum(N_SPECIES)),
 seed_pool[,.(N=.N, N_SPECIES=sum(N_SPECIES)), by=list(nb, da, continent)]
 seed_pool$weight<-1
 
-if (F){
-  seed_pool.map<-merge(seed.dist, seed_pool, by.y="seed_id", by.x="seqnum")
-  seed_pool[, .(N=.N), by=list(nb, continent)]
-  ggplot(seed.dist)+
-    geom_sf(fill="lightgrey", color=NA)+
-    geom_sf(data=seed_pool.map, aes(fill=continent.x))+
-    facet_wrap(~nb)+
-    map_theme
-  
-  ggplot(seed.dist)+
-    geom_sf(fill="lightgrey", color=NA)+
-    geom_sf(data=seed_pool.map)+
-    facet_grid(da~nb)+
-    map_theme
-}
 df_filtered_seeds[, .(N=length(unique(seed_label))), by=list(nb, da, continent)]
 
-
+asdf
 
 seed_pool<-merge(seed_pool, seed.dist[, c("seqnum", "min.dist")], 
                  by.x="seed_id", by.y="seqnum")
@@ -234,7 +211,7 @@ set.seed(1024)
 for (rep in c(1:100)){
   print(rep)
   seed_pool.rand<-list()
-  ramdom_seeds<-seed_pool[,.SD[sample(.N, 100, prob=weight)],by = "continent"]
+  ramdom_seeds<-seed_pool[,.SD[sample(.N, 40, prob=weight)],by = c("continent", "nb", "da")]
   
   ramdom_seeds$geometry<-NULL
   Ncheck<-ramdom_seeds[,.(N=length(unique(seed_id))), by=list(continent, nb, da)]
@@ -251,4 +228,4 @@ unique(all_ramdom_seeds_df[, .(N=.N), by=list(continent, rep, nb, da)]$N)
 ggplot(all_ramdom_seeds_df)+geom_point(aes(x=min.dist, y=N_SPECIES, color=continent))+
   facet_grid(da~nb)
 
-saveRDS(all_ramdom_seeds_df, "../Data/Tables/random.seeds.95.rda")
+saveRDS(all_ramdom_seeds_df, "../Data/Tables/random.seeds.99.rda")

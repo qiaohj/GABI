@@ -9,6 +9,7 @@ library(DBI)
 library(patchwork)
 setDTthreads(30)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
+source("Figures/common.r")
 if (F){
   distribution<-readRDS("../Data/Tables/Final.Distribution.rda")
   distribution$label<-sprintf("%d.%s.%s", distribution$seed_id, distribution$nb, distribution$da)
@@ -50,6 +51,27 @@ if (F){
   
   
   saveRDS(richness, "../Data/Tables/Final.Richness.rda")
+  #For Burn in
+  final.dis.df<-readRDS("../Data/Tables/Burn.in.Distribution.rda")
+  final.dis.df$label<-sprintf("%d.%s.%s", final.dis.df$seed_id, final.dis.df$nb, final.dis.df$da)
+  final.dis.df$sp_label<-sprintf("%s.%s.%s", final.dis.df$sp_id, final.dis.df$nb, final.dis.df$da)
+  
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+  
+  range(final.dis.df$year)
+  i=1
+  richness.list<-list()
+  for (i in c(1:max(seeds.all$rep))){
+    print(i)
+    item<-seeds.all[rep==i]
+    dis.item<-final.dis.df[label %in% item$label]
+    richness.item<-dis.item[,.(N.sp=length(unique(sp_label))), by=list(global_id)]
+    richness.item$rep<-i
+    richness.list[[i]]<-richness.item
+  }
+  richness<-rbindlist(richness.list)
+  richness<-richness[, .(N.sp=mean(N.sp), sd=sd(N.sp)), by=list(global_id)]
+  saveRDS(richness, "../Data/Tables/Final.Richness.Burn-in.rda")
   
   #For NULL models
   distribution<-readRDS("../Data/Tables/Final.Distribution.NULL.Unique.rda")
@@ -114,9 +136,9 @@ if (F){
     geom_sf(data=continents, fill=NA, color="lightgray")+
     geom_sf(data=continents,  aes(fill=N.sp),
             color=NA, linewidth=0.1) +
-    scale_fill_gradient2(low="#2166AC",
+    scale_fill_gradient2(low=color_low,
                          mid="#F7F7F7",
-                         high="#B2182B",
+                         high=color_high,
                          midpoint = median(continents$N.sp))+
     theme(
       axis.line = element_blank(),
@@ -145,10 +167,15 @@ colnames(richness.null)<-c("seqnum", "N.sp.null", "sd.null")
 continents.sim.null<-merge(continents.sim, richness.null, by="seqnum", all=T)
 continents.sim.null[is.na(continents.sim.null$N.sp.null),]$N.sp.null<-0
 
+richness.burnin<-readRDS("../Data/Tables/Final.Richness.Burn-in.rda")
+colnames(richness.burnin)<-c("seqnum", "N.sp.burnin", "sd.burnin")
+continents.sim.burnin<-merge(continents.sim.null, richness.burnin, by="seqnum", all=T)
+continents.sim.burnin[is.na(richness.burnin$N.sp.burnin),]$N.sp.burnin<-0
+
 iucn<-readRDS("../Data/Tables/IUCN.dis.rda")
 iucn<-data.table(seqnum=iucn$seqnum, N.iucn=iucn$N.sp)
 
-continents.full<-merge(continents.sim.null, iucn, by="seqnum", all=T)
+continents.full<-merge(continents.sim.burnin, iucn, by="seqnum", all=T)
 #continents.full[is.na(continents.full$N.iucn),]$N.iucn<-0
 
 
@@ -156,9 +183,9 @@ p1<-ggplot()+
   geom_sf(data=continents.full, fill=NA, color="lightgray")+
   geom_sf(data=continents.full,  aes(fill=N.sp.sim),
           color=NA, linewidth=0.1) +
-  scale_fill_gradient2(low="#2166AC",
-                       mid="#FEE090",
-                       high="#B2182B",
+  scale_fill_gradient2(low=color_low,
+                       mid=color_2,
+                       high=color_high,
                        #midpoint = mean(continents.full$N.sp.sim),
                        midpoint = 15000,
                          #breaks = c(0, 50, 100, 200),
@@ -213,6 +240,7 @@ p2<-ggplot()+
   )+
   labs(tag = "(b) Null")+
   theme(
+    
     axis.line = element_blank(),
     axis.text = element_blank(), 
     axis.title = element_blank(),
@@ -224,24 +252,24 @@ p2<-ggplot()+
     plot.background = element_rect(fill = "white", color = NA),
     panel.background = element_rect(fill = "white", color = NA),
     legend.background = element_rect(fill = "white", color = NA),
-    
-    legend.position = "bottom",
+    legend.position = c(0.05, 0.05),
+    legend.justification = c(0, 0),
+    legend.direction = "horizontal",
+    #legend.position = "bottom",
     legend.title = element_text(size = 10),
     legend.text = element_text(size = 9),
     
     plot.tag.position = c(0.01, 0.99), 
-    plot.tag = element_text(hjust = 0, size = 12, face = "bold"),
-    
-    plot.margin = margin(t = 10, r = 10, b = 10, l = 10)
+    plot.tag = element_text(hjust = 0, size = 12, face = "bold")
   )
 
 p3<-ggplot()+ 
   geom_sf(data=continents.full, fill=NA, color="lightgray")+
   geom_sf(data=continents.full,  aes(fill=N.iucn),
           color=NA, linewidth=0.1) +
-  scale_fill_gradient2(low="#2166AC",
-                       mid="#FEE090",
-                       high="#B2182B",
+  scale_fill_gradient2(low=color_low,
+                       mid=color_2,
+                       high=color_high,
                        midpoint = 120,
                        #breaks = c(0, 50, 100, 200),
                        guide = guide_colorbar(
@@ -250,7 +278,7 @@ p3<-ggplot()+
                          barwidth = unit(4, "cm"),
                          barheight = unit(0.4, "cm")
                        ))+
-  labs(tag = "(b) IUCN", fill="Number of species")+
+  labs(tag = "(d) IUCN", fill="Number of species")+
   theme(
     axis.line = element_blank(),
     axis.text = element_blank(), 
@@ -274,6 +302,46 @@ p3<-ggplot()+
     plot.tag = element_text(hjust = 0, size = 12, face = "bold")
   )
 
+p4<-ggplot()+ 
+  geom_sf(data=continents.full, fill=NA, color="lightgray")+
+  geom_sf(data=continents.full,  aes(fill=N.sp.burnin),
+          color=NA, linewidth=0.1) +
+  scale_fill_gradient2(low=color_low,
+                       mid=color_2,
+                       high=color_high,
+                       midpoint = 120,
+                       #breaks = c(0, 50, 100, 200),
+                       guide = guide_colorbar(
+                         title.position = "top", 
+                         title.hjust = 0.5,
+                         barwidth = unit(4, "cm"),
+                         barheight = unit(0.4, "cm")
+                       ))+
+  labs(tag = "(c) Burn in", fill="Number of species")+
+  theme(
+    axis.line = element_blank(),
+    axis.text = element_blank(), 
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    
+    panel.grid.major = element_line(linetype = "solid", linewidth = 0.2, color = "#e8e8e8"), 
+    panel.grid.minor = element_blank(),
+    
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    legend.background = element_rect(fill = "white", color = NA),
+    legend.position = c(0.05, 0.05),
+    legend.justification = c(0, 0),
+    legend.direction = "horizontal",
+    #legend.position = "bottom",
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 9),
+    
+    plot.tag.position = c(0.01, 0.99), 
+    plot.tag = element_text(hjust = 0, size = 12, face = "bold")
+  )
+
+
 lat<-readRDS("../Data/Tables/N.Sp.Lat.full.rep.rda")
 lat<-lat[,.(N_SP=mean(N_SP), sd=sd(N_SP)), by=lat_bin]
 iucn.lat<-readRDS("../Data/Tables/IUCN.lat.rda")
@@ -284,8 +352,8 @@ max_iucn <- max(lat$N_SP_IUCN, na.rm = TRUE)
 max_sim <- max(lat$N_SP + lat$sd, na.rm = TRUE)
 ratio <- max_sim / max_iucn 
 
-color_iucn <- "#2166AC"
-color_sim <- "#B2182B"
+color_iucn <- color_low
+color_sim <- color_high
 
 p_ldg <- ggplot(lat, aes(y = lat_bin)) +
   
@@ -356,7 +424,7 @@ ggplot(lat, aes(y = lat_bin, x = N_SP)) +
 cor(continents.full$N.sp.null, continents.full$N.sp.sim)
 cor(continents.full$N.iucn, continents.full$N.sp.sim)
 cor(continents.full$N.iucn, continents.full$N.sp.null)
-p<-p1+p2+p3+p_ldg
+p<-p1+p2+p4+p3
 p
-ggsave(p, filename="../Figures/Figure.Richness/Figure.Richness.pdf", width=12, height=5)
-ggsave(p, filename="../Figures/Figure.Richness/Figure.Richness.png", width=12, height=5)
+ggsave(p, filename="../Figures/Figure.Richness/Figure.Richness.pdf", width=12, height=8)
+ggsave(p, filename="../Figures/Figure.Richness/Figure.Richness.png", width=12, height=8)

@@ -36,7 +36,7 @@ df[!seed_id %in% df.detail$seed_id]
 #df<-df[between(lat, -35, 45)]
 range(df.detail$lat)
 
-burn_in<-3200/2
+burn_in<-1801
 unique(df.detail$nb)
 
 df_N_checked<-df.detail[year==burn_in & N_SPECIES>0, 
@@ -175,15 +175,15 @@ cells$continent<-factor(cells$continent,
                         labels=c("North America", "South America", "Isthmus", "Caribbean"))
 p<-ggplot()+
   geom_sf(data=cells, aes(fill=continent), color=NA, alpha=0.5)+
-  geom_sf(data=all.seeds.shp[all.seeds.shp$type!="Background",], fill=color_high, color=NA)+
-  geom_sf(data=all.seeds.shp[all.seeds.shp$type=="Outlier",], fill=color_high, color=NA)+
+  geom_sf(data=all.seeds.shp[all.seeds.shp$type!="Background",], fill="black", color=NA)+
+  geom_sf(data=all.seeds.shp[all.seeds.shp$type=="Outlier",], fill="black", color=NA)+
   theme_minimal()+
   scale_x_continuous(guide = guide_axis(check.overlap = TRUE))+
   scale_fill_manual(values=c("South America"=color_sa,
                              "North America"=color_na,
                              "Isthmus"=color_2,
                              "Caribbean"=color_mid2))+
-  labs(title="Seed cells")+
+  #labs(title="Seed cells")+
   theme(legend.position = c(0.05, 0.05), 
         legend.justification = c(0, 0),
         legend.title = element_blank())
@@ -280,6 +280,7 @@ p_env_curve<-readRDS("../Figures/Climate_curve/Climate_curve.rda")
 p_final<-(p+p_env+ plot_layout(widths = c(3, 1)))/p_env_curve+ plot_layout(heights = c(2, 1))
 
 p_final
+
 ggsave(p_final, filename="../Figures/Figure.Overview/Overview.pdf", width=10, height=8)
 ggsave(p_final, filename="../Figures/Figure.Overview/Overview.png", width=10, height=8, bg="white")
 

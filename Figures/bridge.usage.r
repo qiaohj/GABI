@@ -39,72 +39,40 @@ if (F){
       is.two.continents<-T
     }
     item<-item[current_continent %in% c("North America", 
-                                        "South America", 
-                                        "bridge1", 
-                                        "bridge2")]
+                                        "South America")]
     continents<-unique(item$current_continent)
     if (is.two.continents==T){
-      continents<-unique(c(continents, 
-                           "North America", 
-                           "South America"))
+      continents<-c("North America",  "South America")
     }
-    #print(continents)
-    if (length(continents)>=2 | length(coutinents[coutinents %in% c("bridge1", "bridge2")])>0){
-      item.info<-item[1]
-      if (length(continents)==1){
-        dt.item<-data.table(seed_id=item.info$seed_id,
-                            sp_id=item.info$sp_id,
-                            NB=item.info$NB,
-                            DA=item.info$DA,
-                            species.label=item.info$species.label,
-                            seed_continent=item.info$seed_continent,
-                            bridge_continent=continents[continents %in% c("bridge1", "bridge2")],
-                            across_bridge=F)
-      }
-      if (length(continents)==2){
-        dt.item<-data.table(seed_id=item.info$seed_id,
-                            sp_id=item.info$sp_id,
-                            NB=item.info$NB,
-                            DA=item.info$DA,
-                            species.label=item.info$species.label,
-                            seed_continent=item.info$seed_continent,
-                            bridge_continent=continents[continents %in% c("bridge1", "bridge2")],
-                            across_bridge=F)
-      }
-      if (length(continents)==3 & length(continents[continents %in% c("bridge1", "bridge2")])==2){
-        dt.item<-data.table(seed_id=item.info$seed_id,
-                            sp_id=item.info$sp_id,
-                            NB=item.info$NB,
-                            DA=item.info$DA,
-                            species.label=item.info$species.label,
-                            seed_continent=item.info$seed_continent,
-                            bridge_continent=continents[continents %in% c("bridge1", "bridge2")],
-                            across_bridge=F)
-      }
-      if (length(continents)==3 & length(continents[continents %in% c("bridge1", "bridge2")])==1){
-        dt.item<-data.table(seed_id=item.info$seed_id,
-                            sp_id=item.info$sp_id,
-                            NB=item.info$NB,
-                            DA=item.info$DA,
-                            species.label=item.info$species.label,
-                            seed_continent=item.info$seed_continent,
-                            bridge_continent=continents[continents %in% c("bridge1", "bridge2")],
-                            across_bridge=T)
-      }
-      if (length(continents)==4){
-        
-        dt.item<-data.table(seed_id=item.info$seed_id,
-                            sp_id=item.info$sp_id,
-                            NB=item.info$NB,
-                            DA=item.info$DA,
-                            species.label=item.info$species.label,
-                            seed_continent=item.info$seed_continent,
-                            bridge_continent=continents[continents %in% c("bridge1", "bridge2")],
-                            across_bridge=T)
-      }
-      final.list[[length(final.list)+1]]<-dt.item
+    
+    bridges<-unique(item[bridge!=""]$bridge)
+    
+    if ("Two bridges" %in% bridges){
+      bridges<-c("bridge1", "bridge2")
     }
+    is_indeterminate<-F
+    if (length(continents)==2 & length(bridges)==2){
+      is_indeterminate<-T
+    }
+    if (length(continents)==1){
+      is_across_bridge<-F
+    }else{
+      is_across_bridge<-T
+    }
+    item.info<-item[1]
+    dt.item<-data.table(seed_id=item.info$seed_id,
+                        sp_id=item.info$sp_id,
+                        NB=item.info$NB,
+                        DA=item.info$DA,
+                        species.label=item.info$species.label,
+                        seed_continent=item.info$seed_continent,
+                        bridge_continent=bridges,
+                        across_bridge=is_across_bridge,
+                        indeterminate=is_indeterminate)
+    
+    final.list[[length(final.list)+1]]<-dt.item
   }
+  
   final.df<-rbindlist(final.list)
   saveRDS(final.df, "../Data/Tables/bridge.usage.details.rda")
   
@@ -171,6 +139,35 @@ p<-ggplot(rep.df.all.se[across_bridge_label=="Crossed over successfully"],
 p
 ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.pdf", width=5, height=4)
 ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.png", width=5, height=4, bg="white")
+
+rep.df.all$bridge_continent<-factor(rep.df.all$bridge_continent,
+                                       levels=c("bridge1", "bridge2"),
+                                       labels=c("Isthmus", "Caribbean"))
+
+p<-ggplot(rep.df.all[across_bridge==T],
+          aes(x = bridge_continent, y = N_SP, color = seed_continent)) +
+  
+  geom_boxplot() +
+  labs(
+    x = "Bridge",
+    y = "Number of species",
+    color = "Original continent"
+  ) +
+  scale_color_manual(values=c("North America"=color_na, "South America"=color_sa))+
+  #facet_wrap(~across_bridge_label, scale="free")+
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),
+    legend.position = "bottom"
+  )
+p
+
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.boxplot.pdf", width=5, height=4)
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.boxplot.png", width=5, height=4, bg="white")
+
+fwrite(rep.df.all, "../Figures/Bridge.Usage/Bridge.Usage.boxplot.csv")
+
+
 fwrite(rep.df.all.se, "../Figures/Bridge.Usage/Bridge.Usage.csv")
 
 to.doc(rep.df.all.se, "Bridge usage", "../Figures/Bridge.Usage/Bridge.Usage.docx",
@@ -190,6 +187,35 @@ rep.df.se$bridge_continent<-factor(rep.df.se$bridge_continent,
 rep.df.se$NB<-factor(rep.df.se$NB, 
                      levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
                      labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+
+rep.df.sum$NB<-factor(rep.df.sum$NB, 
+                     levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                     labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
+rep.df.sum$bridge_continent<-factor(rep.df.sum$bridge_continent,
+                                   levels=c("bridge1", "bridge2"),
+                                   labels=c("Isthmus", "Caribbean"))
+p<-ggplot(rep.df.sum[across_bridge==T], 
+          aes(x = bridge_continent, y = N_SP, color = seed_continent)) +
+  geom_boxplot() +
+  labs(
+    x = "Bridge",
+    y = "Number of species",
+    color = "Original continent"
+  ) +
+  scale_color_manual(values=c("North America"=color_na, "South America"=color_sa))+
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    axis.title.x = element_blank()
+  )+
+  #facet_grid(across_bridge~NB+DA, scale="free")
+  facet_grid(DA~NB, scale="free")
+p
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.Boxplot.NB.DA.pdf", width=6, height=4)
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.Boxplot.NB.DA.png", width=6, height=4, bg="white")
+
+fwrite(rep.df.sum, "../Figures/Bridge.Usage/Bridge.Usage.Boxplot.NB.DA.csv")
+
 p<-ggplot(rep.df.se[across_bridge==T], 
           aes(x = bridge_continent, y = N_SP, color = seed_continent)) +
   
@@ -220,3 +246,26 @@ fwrite(rep.df.se, "../Figures/Bridge.Usage/Bridge.Usage.NB.DA.csv")
 
 
 rep.df.se[bridge_continent=="Caribbean" & across_bridge==T]
+p<-ggplot(rep.df.all.se,
+          aes(x = bridge_continent, y = N_SP, color = seed_continent)) +
+  
+  geom_errorbar(aes(ymin = N_SP - sd, ymax = N_SP + sd), 
+                width = 0.2, 
+                position = pd, 
+                linewidth = 0.8) +
+  geom_point(position = pd, size = 3) +
+  labs(
+    x = "Bridge",
+    y = "Number of species",
+    color = "Original continent"
+  ) +
+  scale_color_manual(values=c("North America"=color_na, "South America"=color_sa))+
+  facet_wrap(~across_bridge_label, scale="free")+
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),
+    legend.position = "bottom"
+  )
+p
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.full.pdf", width=5, height=4)
+ggsave(p, filename="../Figures/Bridge.Usage/Bridge.Usage.full.png", width=5, height=4, bg="white")

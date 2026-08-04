@@ -257,16 +257,20 @@ N.merge[is.na(N.Aborigines), N.Aborigines:=0]
 N.merge[is.na(N.Invader), N.Invader:=0]
 
 N.merge$Invader_per<-N.merge$N.Invader/(N.merge$N.Invader+N.merge$N.Aborigines)
-
-mean(N.merge[continent %in% c("North America", "South America")]$Invader_per)
-sd(N.merge[continent %in% c("North America", "South America")]$Invader_per)
-        
+       
 
 N.merge.mean<-N.merge[, .(N.Aborigines=mean(N.Aborigines), sd.N.Aborigines=sd(N.Aborigines),
                           N.Invader=mean(N.Invader), sd.N.Invader=sd(N.Invader),
                           Invader_per=mean(Invader_per), sd.Invader_per=sd(Invader_per)),
                       by=list(BIOME_NAME, continent)]
 N.merge.mean[,c("BIOME_NAME", "Invader_per", "sd.Invader_per")]
+
+
+max(N.merge.mean[continent %in% c("North America", "South America") & Invader_per<0.5]$Invader_per)
+
+mean(N.merge[continent %in% c("North America", "South America") & Invader_per<0.5]$Invader_per)
+sd(N.merge[continent %in% c("North America", "South America") & Invader_per<0.5]$Invader_per)
+
 
 ggplot(N.merge[continent %in% c("North America", "South America")])+
   geom_boxplot(aes(x=BIOME_NAME, y=Invader_per))+
@@ -547,6 +551,8 @@ dt<-data.table(sf_data[, c("BIOME_NAME","continent",
                            "Invader_per","sd.Invader_per")])
 dt$geometry<-NULL
 dt<-dt[continent %in% c("North America", "South America")]
+#setorderv(dt, "Invader_per", -1)
+dt
 dt.output<-dt
 dt.output$Invader_per<-dt.output$Invader_per*100
 dt.output$sd.Invader_per<-dt.output$sd.Invader_per*100
@@ -556,6 +562,25 @@ to.doc(dt.output, "Number of invaders per biome",
        sprintf("../Figures/Figure.Biome/N.nvader.by.biome.pie.%s.docx", simulation.type),
        digits=1, in_place=F)
 fwrite(dt.output, sprintf("../Figures/Figure.Biome/N.nvader.by.biome.pie.%s.csv", simulation.type))
+
+dt.output.doc<-dt.output
+dt.output.doc$Immigrant<- format(round(dt.output.doc$Immigrant, 1), big.mark = ",")
+dt.output.doc$Native<- format(round(dt.output.doc$Native, 1), big.mark = ",")
+dt.output.doc$`SD(Immigrant)`<- format(round(dt.output.doc$`SD(Immigrant)`, 1), big.mark = ",")
+dt.output.doc$`SD(Native)`<- format(round(dt.output.doc$`SD(Native)`, 1), big.mark = ",")
+dt.output.doc$`Immigrant proportion`<- format(round(dt.output.doc$`Immigrant proportion`, 1), big.mark = ",")
+dt.output.doc$`SD(Immigrant proportion)`<- format(round(dt.output.doc$`SD(Immigrant proportion)`, 1), big.mark = ",")
+
+dt.output.doc$Immigrant<-sprintf("%s ± %s", dt.output.doc$Immigrant, dt.output.doc$`SD(Immigrant)`)
+dt.output.doc$Native<-sprintf("%s ± %s", dt.output.doc$Native, dt.output.doc$`SD(Native)`)
+dt.output.doc$`Immigrant proportion`<-sprintf("%s ± %s", dt.output.doc$`Immigrant proportion`, dt.output.doc$`SD(Immigrant proportion)`)
+
+dt.output.doc$`SD(Native)`<-NULL
+dt.output.doc$`SD(Immigrant)`<-NULL
+dt.output.doc$`SD(Immigrant proportion)`<-NULL
+to.doc(dt.output.doc, "Number of invaders per biome", 
+       sprintf("../Figures/Figure.Biome/N.nvader.by.biome.pie.%s.formated.docx", simulation.type),
+       digits=1, in_place=F)
 
 dt[continent=="South America"]
 #By NB and DA

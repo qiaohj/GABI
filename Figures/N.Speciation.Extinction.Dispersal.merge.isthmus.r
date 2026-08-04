@@ -711,3 +711,4 @@ ggsave(p2, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.rem
 
 ggsave(p, filename="../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers.merge.isthmus/N.Richness.Per.ALL.merge.isthmus.pdf", 
        width=8, height=6, bg="white")
+

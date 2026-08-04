@@ -31,14 +31,20 @@ pr_percentile_no_bat<-quantile(iucn.full[var=="pr"]$range,
 tas_percentile_no_bat<-quantile(iucn.full[var=="tas"]$range, 
                              c(0.2, 0.4, 0.6, 0.8))
 
+persentiles_pr<-round(ecdf(iucn.full[var=="pr"]$range)(c(pr_percentile)),2)
+persentiles_tas<-round(ecdf(iucn.full[var=="tas"]$range)(c(tas_percentile)),2)
+
+
 vline<-data.table(v=c(ceiling(pr_percentile), ceiling(tas_percentile)),
                   v_no_bat=c(ceiling(pr_percentile_no_bat), ceiling(tas_percentile_no_bat)),
                   var=c(rep("pr", 4), rep("tas", 4)),
-                  NB=rep(c("TINY", "NARROW", "MODERATE", "BROAD"), 2))
+                  NB=rep(c("TINY", "NARROW", "MODERATE", "BROAD"), 2),
+                  persentile=c(persentiles_pr, persentiles_tas))
+fwrite(vline, "../Data/Tables/no.bat.nb.csv")
 nb<-list(pr=ceiling(pr_percentile),
-         t=ceiling(tasmean_percentile))
+         t=ceiling(tas_percentile))
 
-iucn<-iucn[(range<4000 & var=="pr") | var=="tas"]
+#iucn<-iucn[(range<4000 & var=="pr") | var=="tas"]
 iucn$var<-factor(iucn$var, levels=c("tas", "pr"), labels=c("Temperature", "Precipitation"))
 vline$var<-factor(vline$var, levels=c("tas", "pr"), labels=c("Temperature", "Precipitation"))
 
@@ -58,6 +64,7 @@ p<-ggplot(iucn)+geom_histogram(aes(x=range, fill=var), bins = 50)+
     panel.grid = element_blank(),
     axis.title = element_blank()
   )         
+
 ggsave(p, filename="../Figures/NB/NB.pdf", width=8, height=4)
 ggsave(p, filename="../Figures/NB/NB.png", width=8, height=3, bg="white")
 to.doc(vline, "Niche Breadth", "../Figures/NB/NB.docx", digits = 0)

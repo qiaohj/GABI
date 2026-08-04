@@ -30,7 +30,7 @@ df[!seed_id %in% df.detail$seed_id]
 #df<-df[between(lat, -35, 45)]
 range(df.detail$lat)
 
-burn_in<-3200/2
+burn_in<-1801
 unique(df.detail$nb)
 
 df_N_checked<-df.detail[year==burn_in & N_SPECIES>0, 

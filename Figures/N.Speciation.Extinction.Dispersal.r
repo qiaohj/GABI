@@ -131,8 +131,9 @@ if (T){
   df$label<-sprintf("%d.%s.%s", df$seed_id, df$NB, df$DA)
   table(df$type)
   
-  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.995.rda")
-  seeds.all<-seeds.all[!label %in% c("9078.BROAD.GOOD", "11119.BIG.GOOD", "10794.BIG.GOOD", "12104.BROAD.GOOD")]
+  seeds.all<-readRDS("../Data/Tables/random.seeds.threshold.by.nb.distance.rda")
+  length(unique(seeds.all$seed_label))
+  #seeds.all<-seeds.all[!label %in% c("9078.BROAD.GOOD", "11119.BIG.GOOD", "10794.BIG.GOOD", "12104.BROAD.GOOD")]
   
   
   #seeds.all<-readRDS("../Data/Tables/random.seeds.95.rda")
@@ -650,8 +651,8 @@ richness_se<-richness_merge[,.(N_Native=mean(Native),
                                N_Per_Immigrant=mean(Per_Immigrant), 
                                sd_Per_Immigrant=sd(Per_Immigrant)), 
                             by=list(continent)]
-richness_se
 
+to.doc(richness_se, "richness_se", "../Figures/N.Speciation.Extinction.Dispersal/Simulation.remove.outliers/N.Richness.docx", digits = 5)
 richness_merge_Native<-richness_merge
 richness_merge_Native<-data.table(rep=richness_merge_Native$rep,
                               continent=richness_merge_Native$continent,
