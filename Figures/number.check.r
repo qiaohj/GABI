@@ -17,7 +17,7 @@ nrow(cells)
 
 #Of the initial 8,000 simulations, only 5,610 survived the burn-in period (Table SXX)
 df<-readRDS("../Data/Tables/N.Speciation.Extinction.All.NB.rda")
-df_last<-df[year==1600]
+df_last<-df[year==1801]
 df_last$nb.label<-sprintf("%d.%s", df_last$seed_id, df_last$nb)
 dim(df_last)
 

@@ -18,12 +18,9 @@ dist<-data.table(dbReadTable(conn, "distances"))
 dbDisconnect(conn)
 
 seeds<-readRDS("../Data/Tables/seeds.rda")
-seeds[global_id==9745]
 
 seed.dist<-readRDS("../Data/Tables/cells.with.dist.rda")
-seed.dist[which(seed.dist$seqnum==9745),]
 df<-readRDS("../Data/Tables/N.Speciation.Extinction.All.NB.rda")
-df[seed_id==9745]
 
 table(df$nb)
 df[,(N=length(unique(seed_id))), by="continent"]

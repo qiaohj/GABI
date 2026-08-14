@@ -6,7 +6,7 @@ library(sf)
 setwd("/media/huijieqiao/Butterfly/GABI/GABI")
 source("Figures/common.r")
 seeds<-readRDS("../Data/Tables/seeds.rda")
-seeds[global_id==9745]
+
 #conn<-dbConnect(RSQLite::SQLite(), "../Configuration/conf.sqlite")
 #simulations<-data.table(dbReadTable(conn, "simulations"))
 #dbDisconnect(conn)
@@ -15,9 +15,9 @@ seeds[global_id==9745]
 #ggplot(seeds)+geom_sf(data=seed.dist)+geom_point(aes(x=lon, y=lat, color=continent))
 
 seed.dist<-readRDS("../Data/Tables/cells.with.dist.rda")
-seed.dist[which(seed.dist$seqnum==9745),]
+
 df<-readRDS("../Data/Tables/N.Speciation.Extinction.All.NB.rda")
-df[seed_id==9745]
+
 
 table(df$nb)
 df[,(N=length(unique(seed_id))), by="continent"]

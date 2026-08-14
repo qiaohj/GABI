@@ -584,8 +584,14 @@ to.doc(dt.output.doc, "Number of invaders per biome",
 
 dt[continent=="South America"]
 #By NB and DA
-
-rep.df<-readRDS("../Data/Tables/biome.N.species.by.nb.rda")
+if (simulation.type=="NULL"){
+  rep.df<-readRDS(sprintf("../Data/Tables/biome.N.species.by.nb.%s.rda", simulation.type))
+}else{
+  rep.df<-readRDS("../Data/Tables/biome.N.species.by.nb.rda")
+}
+rep.df$nb<-factor(rep.df$nb, 
+                        levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
+                        labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
 combs<-unique(rep.df[, c("nb", "da")])
 
 biome<-read_sf("../Shape/hexagon_biome/hexagon_biome.shp")
@@ -740,7 +746,7 @@ for (i in c(1:nrow(combs))){
     scale_fill_manual(values = color_palette, breaks = legend_breaks) +
     theme_minimal() +
     labs(
-      title = sprintf("Proportion of Invaders across Biomes (%s & %s)", comb$nb, comb$da),
+      title = sprintf("Proportion of Invaders across Biomes (%s & %s) %s", comb$nb, comb$da, simulation.type),
       #subtitle = "Pie area proportional to Total Population",
       fill = "Biome"
     ) +
@@ -751,11 +757,11 @@ for (i in c(1:nrow(combs))){
     )
   ppp
   ggsave(ppp, 
-         filename=sprintf("../Figures/Figure.Biome/Biome.by.nb.da/N.nvader.by.biome.pie.%s.%s.pdf", 
-                          comb$nb, comb$da), width=12, height=7)
+         filename=sprintf("../Figures/Figure.Biome/Biome.by.nb.da/N.nvader.by.biome.pie.%s.%s.%s.pdf", 
+                          comb$nb, comb$da, simulation.type), width=12, height=7)
   ggsave(ppp, 
-         filename=sprintf("../Figures/Figure.Biome/Biome.by.nb.da/N.nvader.by.biome.pie.%s.%s.png", 
-                          comb$nb, comb$da), width=12, height=7, bg="white")
+         filename=sprintf("../Figures/Figure.Biome/Biome.by.nb.da/N.nvader.by.biome.pie.%s.%s.%s.png", 
+                          comb$nb, comb$da, simulation.type), width=12, height=7, bg="white")
   
   dt<-data.table(sf_data[, c("BIOME_NAME","continent",
                              "N.Aborigines","sd.N.Aborigines",
@@ -764,9 +770,9 @@ for (i in c(1:nrow(combs))){
                              "nb", "da")])
   dt$geometry<-NULL
   dt<-dt[continent %in% c("North America", "South America")]
-  to.doc(dt, sprintf("Number of invaders per biome (%s & %s)", comb$nb, comb$da), 
-         sprintf("../Figures/Figure.Biome/Biome.by.nb.da/N.nvader.by.biome.pie.%s.%s.docx", 
-         comb$nb, comb$da),
+  to.doc(dt, sprintf("Number of invaders per biome (%s & %s) %s", comb$nb, comb$da, simulation.type), 
+         sprintf("../Figures/Figure.Biome/Biome.by.nb.da/N.nvader.by.biome.pie.%s.%s.%s.docx", 
+         comb$nb, comb$da, simulation.type),
          digits=2, in_place=F)
 }
 biome.df<-rbindlist(biome.list)
@@ -784,6 +790,30 @@ colnames(dt.output)<-c("NB", "DA", "Biome", "Continent", "Native", "SD(Native)",
                        "SD(Immigrant)", "Immigrant proportion", "SD(Immigrant proportion)")
 
 fwrite(biome.df, "../Figures/Figure.Biome/Biome.by.nb.da/biome.invader.per.all.csv")
+
+
+dt.output.doc<-dt.output
+dt.output.doc$Immigrant<- format(round(dt.output.doc$Immigrant, 1), big.mark = ",")
+dt.output.doc$Native<- format(round(dt.output.doc$Native, 1), big.mark = ",")
+dt.output.doc$`SD(Immigrant)`<- format(round(dt.output.doc$`SD(Immigrant)`, 1), big.mark = ",")
+dt.output.doc$`SD(Native)`<- format(round(dt.output.doc$`SD(Native)`, 1), big.mark = ",")
+dt.output.doc$`Immigrant proportion`<- format(round(dt.output.doc$`Immigrant proportion`, 1), big.mark = ",")
+dt.output.doc$`SD(Immigrant proportion)`<- format(round(dt.output.doc$`SD(Immigrant proportion)`, 1), big.mark = ",")
+
+dt.output.doc$Immigrant<-sprintf("%s ± %s", dt.output.doc$Immigrant, dt.output.doc$`SD(Immigrant)`)
+dt.output.doc$Native<-sprintf("%s ± %s", dt.output.doc$Native, dt.output.doc$`SD(Native)`)
+dt.output.doc$`Immigrant proportion`<-sprintf("%s ± %s", dt.output.doc$`Immigrant proportion`, dt.output.doc$`SD(Immigrant proportion)`)
+
+dt.output.doc$`SD(Native)`<-NULL
+dt.output.doc$`SD(Immigrant)`<-NULL
+dt.output.doc$`SD(Immigrant proportion)`<-NULL
+dt.output.doc<-dt.output.doc[Continent %in% c("North America", "South America")]
+to.doc(dt.output.doc, "Number of invaders per biome by nb da", 
+       sprintf("../Figures/Figure.Biome/N.nvader.by.biome.pie.%s.formated.nb.da.docx", simulation.type),
+       digits=1, in_place=F)
+
+fwrite(dt.output.doc, sprintf("../Figures/Figure.Biome/N.nvader.by.biome.pie.%s.formated.nb.da.csv", simulation.type))
+
 N.merge$nb<-factor(N.merge$nb, 
                      levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
                      labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
@@ -794,8 +824,8 @@ p<-ggplot(N.merge[continent %in% c("North America", "South America")])+
   facet_grid(continent~nb+da)+
   theme_bw()
 p
-ggsave(p, filename="../Figures/Figure.Biome/Figure.Biome.full.pdf", width=18, height=8)
-ggsave(p, filename="../Figures/Figure.Biome/Figure.Biome.full.png", width=18, height=8, bg="white")
+ggsave(p, filename=sprintf("../Figures/Figure.Biome/Figure.Biome.full.%s.pdf", simulation.type), width=18, height=8)
+ggsave(p, filename=sprintf("../Figures/Figure.Biome/Figure.Biome.full.%s.png", simulation.type), width=18, height=8, bg="white")
 
 
 

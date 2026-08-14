@@ -8,6 +8,7 @@ target<-"/media/huijieqiao/Butterfly/GABI/Results"
 folders<-list.dirs(target, full.names=T)
 length(folders)
 ns<-read_sf("../Shape/isea3h8/N_S_America.shp")
+table(ns$continent)
 ns<-data.table(ns)
 ns$geometry<-NULL
 folders<-folders[sample(length(folders), length(folders))]

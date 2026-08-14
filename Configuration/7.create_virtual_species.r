@@ -38,8 +38,6 @@ hexagon<-read_sf(shpfname)
 table(hexagon$continent)
 ggplot(hexagon)+geom_sf(aes(fill=continent))
 
-mask_seeds[which(mask_seeds$seqnum==9745),]
-
 good_da<-"0.376596738,0.724239343,0.976679685,0.9995805560000001,1.0"
 poor_da<-"0.710669364,0.999605965,0.9999990249999999,0.999999999299,1.0"
 

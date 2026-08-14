@@ -17,7 +17,7 @@ df$NB_factor<-factor(df$NB,
                      levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
                      labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
 df$DA_factor<-as.factor(df$DA)
-df<-df[seed_id!="9745"]
+
 
 
 

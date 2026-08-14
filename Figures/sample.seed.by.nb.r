@@ -21,7 +21,6 @@ if (T){
     #ggplot(seeds)+geom_sf(data=seed.dist)+geom_point(aes(x=lon, y=lat, color=continent))
     
     seed.dist<-readRDS("../Data/Tables/cells.with.dist.rda")
-    seed.dist[which(seed.dist$seqnum==9745),]
     df<-readRDS("../Data/Tables/N.Speciation.Extinction.All.NB.rda")
     #11871.MODERATE.GOOD
 
@@ -150,13 +149,14 @@ if (T){
     outliers$nb<-factor(outliers$nb, 
                         levels = c("BROAD", "BIG", "MODERATE", "NARROW"), 
                         labels = c("BROAD", "MODERATE", "NARROW", "TINY"))
-    p<-ggplot(outliers)+geom_histogram(aes(x=N_SPECIES), bins=100)+
-      facet_grid(nb+da~continent)
-    p
-    ggsave(p, filename=sprintf("../Figures/Outliers/Outlier.details.%d.pdf", threshold), width=6, height=6)
-    ggsave(p, filename=sprintf("../Figures/Outliers/Outlier.details.%d.png", threshold), width=6, height=6, 
-           bg="white")
-    
+    if (nrow(outliers)>0){
+      p<-ggplot(outliers)+geom_histogram(aes(x=N_SPECIES), bins=100)+
+        facet_grid(nb+da~continent)
+      p
+      ggsave(p, filename=sprintf("../Figures/Outliers/Outlier.details.%d.pdf", threshold), width=6, height=6)
+      ggsave(p, filename=sprintf("../Figures/Outliers/Outlier.details.%d.png", threshold), width=6, height=6, 
+             bg="white")
+    }
     
     table(outliers$continent)
     df_filtered_seeds$seed_label<-sprintf("%d.%s.%s", 
@@ -232,12 +232,15 @@ if (T){
     coms<-unique(n[, c("nb", "da", "min.dist")])
     bins<-list()
     max_seeds<-5
+    skipped_simulations<-list()
     for (i in c(1:nrow(coms))){
       com<-coms[i]
       item<-n[nb==com$nb & da==com$da & min.dist==com$min.dist]
       if (nrow(item)!=2){
         print(item)
         print("skip")
+        xxx<-seed_pool[nb==com$nb & da==com$da & min.dist==com$min.dist]
+        skipped_simulations[[length(skipped_simulations)+1]]<-xxx
         next()
       }
       min.N<-min(item$N, max_seeds)
@@ -245,6 +248,13 @@ if (T){
                                          nb=com$nb,
                                          da=com$da,
                                          N=min.N)
+    }
+    skipped_simulations<-rbindlist(skipped_simulations)
+    if (F){
+      View(skipped_simulations[,.(N_SPECIES=sum(N_SPECIES)), by=.(continent, nb, da, min.dist)])
+      ggplot(skipped_simulations)+geom_point(aes(x=min.dist, y=N_SPECIES, color=continent))+
+        ylim(0, 2500)+
+        facet_grid(da~nb)
     }
     bins<-rbindlist(bins)
     bins[min.dist==63]
