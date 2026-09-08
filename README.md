@@ -1,17 +1,3 @@
----
-title: "GABI Simulation Project - Codebase Documentation"
-author: "Huijie Qiao"
-date: "`r Sys.Date()`"
-output:
-  github_document:
-    toc: true
-    toc_depth: 2
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval = FALSE)
-```
-
 # 项目概述与文件索引
 
 本项目包含了大美洲生物大迁徙（GABI）宏生态与宏演化模拟的完整代码文档。文件划分为 **Configuration**（环境构建与配置管理）、**Analysis**（模拟输出日志处理与演化统
