@@ -1,12 +1,14 @@
 [English](README.md) | [简体中文](README_zh.md)
 
-# Project Name
-大美洲生物大迁徙（GABI）宏生态与宏演化模拟
+# 项目名称
+大美洲生物大迁徙（GABI）宏观生态与宏观演化模拟
 
 # 项目概述与文件索引
 
-本项目包含了大美洲生物大迁徙（GABI）宏生态与宏演化模拟的完整代码文档。文件划分为 **Configuration**（环境构建与配置管理）、**Analysis**（模拟输出日志处理与演化统
-计）以及 **Figures**（论文图表绘制与假设检验）三大模块。
+本项目包含了大美洲生物大迁徙（GABI）宏观生态与宏观演化模拟的完整代码文档。代码分为 
+**Configuration**（环境构建与配置管理）、
+**Analysis**（模拟输出日志处理）以及 
+**Figures**（论文图表绘制与假设检验）三个模块。
 
 ### 1. Configuration 模块
 - [[1] 1.raw_env_info.r](#config-01)
@@ -92,15 +94,15 @@
 
 ---
 
-# 模块一：Configuration 脚本库
+# 模块一：Configuration 模块，用于生成模拟所需的环境、虚拟物种属性等配置文件，并监控模拟状态。
 
 <a id="config-01"></a>
 ## [1] 1.raw_env_info.r
 
 ```r
 #' @file 1.raw_env_info.r
-#' @title 提取古气候 NetCDF 全局及变量元数据
-#' @description 扫描古气候 NetCDF 序列，提取全局属性、变量属性（维度、单位）和年代信息，导出为统一元数据字典。
+#' @title 从NetCDF中提取古气候的元数据
+#' @description 从NetCDF文件中提取元数据，导出为统一元数据字典。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -120,8 +122,8 @@
 
 ```r
 #' @file 2.env_mean_sd.r
-#' @title 计算古气候变量的时序均值与离散度统计
-#' @description 遍历古气候 NetCDF 序列各变量，逐层计算全域均值、标准差与极值，建立长时间尺度气候统计集。
+#' @title 提取古气候变量
+#' @description 遍历古气候 NetCDF 各变量，建立模拟用的气候数据。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -141,8 +143,8 @@
 
 ```r
 #' @file 3.fig.env_mean_sd.r
-#' @title 绘制长时间序列气候变量均值演变曲线
-#' @description 计算关键气候因子在各年代的全域均值与时间步跨度，绘制多变量时序折线图。
+#' @title 绘制古气候变量均值曲线
+#' @description 计算气候因子在各时间节点的全球均值，绘制多变量时序折线图。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -184,7 +186,7 @@
 ```r
 #' @file 5.env_2_hexagon.r
 #' @title 离散六边形网格系统构建与气候数据入库
-#' @description 生成全球 ISEA3H8 六边形网格，标记美洲大陆与陆桥，建立拓扑邻接表并将 1° 古气候栅格采样入库。
+#' @description 生成全球 ISEA3H8 六边形网格，标记美洲大陆与陆桥，建立拓扑邻接表，将 1° 古气候栅格重采样，并生成模拟所用的数据库。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -200,8 +202,8 @@
 #'     \item{输出数据}{\code{N_S_America.shp}, \code{configuration.sqlite}}
 #'   }
 
-#' @title 检索相邻触碰的六边形网格
-#' @description 并行检索每个六边形单元拓扑相接的邻居单元编号。
+#' @title 检索相邻的六边形网格，生成邻接矩阵，用于模拟中的扩散网格计算。
+#' @description 检索每个六边形单元拓扑相接的邻居单元编号。
 #' @param hexagons sf。六边形网格图层。
 #' @return tibble。包含网格索引与对应邻居 ID 向量。
 #' @noRd
@@ -213,8 +215,8 @@ find_connected_hexagon <- function(hexagons) {}
 
 ```r
 #' @file 6.iucn_niche_breadth.r
-#' @title 基于 IUCN 评估美洲哺乳动物现实生态位跨度
-#' @description 提取 IUCN 陆生哺乳动物分布区并与网格现代气候求交，计算温度与降水占据跨度，为虚拟物种参数提供分位数经验参考。
+#' @title 基于 IUCN 评估美洲哺乳动物生态位幅度
+#' @description 提取 IUCN 陆生哺乳动物分布区并与当前气候求交，计算温度与降水占据幅度，为虚拟物种的生态位宽度参数提供经验参考。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -235,8 +237,8 @@ find_connected_hexagon <- function(hexagons) {}
 
 ```r
 #' @file 7.create_virtual_species.r
-#' @title 生成虚拟物种参数与模拟方案配置文件
-#' @description 基于 IUCN 生态位分位数划定 4 级 NB 与 2 级 DA，抽样初始种源并输出模拟引擎所需的配置数据库。
+#' @title 生成虚拟物种参数与模拟所需的配置文件
+#' @description 基于 IUCN 生态位分位数划定 4 级 NB 与 2 级 DA，抽样初始种子并输出模拟引擎所需的配置数据库。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -257,7 +259,7 @@ find_connected_hexagon <- function(hexagons) {}
 
 ```r
 #' @file 8.example.r
-#' @title 单物种模拟动态交互式调试与可视化
+#' @title 模拟动态交互式调试与可视化，用于仿真结果可视化检视和debug。
 #' @description 提供交互式终端控制，逐步展示指定参数组合下物种在六边形网格中的时空扩散动态。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -280,7 +282,7 @@ find_connected_hexagon <- function(hexagons) {}
 ```r
 #' @file 9.remove.unfinished.r
 #' @title 批量清理未正常完成的模拟结果目录
-#' @description 巡检模拟输出目录，安全删除文件缺失（<4）且无完成标记的异常结果目录。
+#' @description 巡检模拟输出目录，安全删除未完成的模拟。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -299,8 +301,8 @@ find_connected_hexagon <- function(hexagons) {}
 
 ```r
 #' @file 10.create.null.env.r
-#' @title 构建空模型静态环境 SQLite 数据库
-#' @description 复制 3.6 Ma（year = 1800）基准年的环境图层填满所有时步，生成无气候波动的空模型对照数据库与运行配置。
+#' @title 构建空模型静态环境数据库，用于空模型的模拟
+#' @description 复制 3.6 Ma基准年的环境图层填满所有时步，生成无气候波动的空模型对照数据库与运行配置。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -315,14 +317,14 @@ find_connected_hexagon <- function(hexagons) {}
 #'   }
 ```
 
-# 模块二：Analysis 脚本库
+# 模块二：Analysis 模块，用于分析模拟产生的日志，产生中间结果，用于后续的结果分析和可视化
 
 <a id="analysis-01"></a>
 ## [1] compare.3vs4.r
 
 ```r
 #' @file compare.3vs4.r
-#' @title 模拟结果对比分析（版本 3.x vs 4.0）
+#' @title 模拟结果对比分析（版本 3.x vs 4.0）。v4.0的模拟程序目前处于开发阶段，当前分析结果均为v3.9完成。
 #' @description 对比 GABI 模拟模型在 3.x（日志格式）与 4.0（RDS 格式）下最终步（year = 0）的物种分布预测，
 #'   计算网格重叠率、Jaccard 相似度指数及丰富度相关系数。
 #' @author Huijie Qiao & Erin Saupe
@@ -414,8 +416,8 @@ build_tree_string <- function(current_id, data) {}
 
 ```r
 #' @file get.distribution.n.isthmus.r
-#' @title 统计最终物种丰富度（地峡独立 vs 合并入北美）
-#' @description 读取末期分布记录并与大洲网格匹配，对比巴拿马地峡独立划分与合并入北美洲两种规则下的丰富度格局。
+#' @title 统计最终物种丰富度（考虑地峡 vs 将地峡合并入北美）
+#' @description 读取分布记录并与大洲网格匹配，对比地峡独立划分与合并入北美洲两种规则下的丰富度格局。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -435,7 +437,7 @@ build_tree_string <- function(current_id, data) {}
 
 ```r
 #' @file get_nb.r
-#' @title 提取物种已实现生态位动态演变（温度与降水跨度）
+#' @title 提取物种已生态位动态演变（温度与降水幅度）
 #' @description 结合历史气候数据库与分布日志，动态计算各物种在模拟各时段占据网格的环境极值与幅度。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -458,7 +460,7 @@ build_tree_string <- function(current_id, data) {}
 ```r
 #' @file get_range.r
 #' @title 提取物种最终地理分布区与边界范围
-#' @description 提取末期（year = 0）存活物种的适生网格分布，计算占据单元数及经纬度边界框（Bounding Box）。
+#' @description 提取末期存活物种的适生网格分布，计算占据单元数及经纬度边界框（Bounding Box）。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -499,7 +501,7 @@ build_tree_string <- function(current_id, data) {}
 ```r
 #' @file get_stat.3.x.r
 #' @title 统计 3.x 版本网格占用与物种多样性格局
-#' @description 解析 3.x 版本模拟日志，生成逐年分大洲的网格占用量及逐网格的物种丰富度时空数据。
+#' @description 解析 3.x 版本模拟日志，生成逐年分大洲的分布及逐网格的物种丰富度时空数据。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -519,8 +521,8 @@ build_tree_string <- function(current_id, data) {}
 
 ```r
 #' @file get_stat.4.0.r
-#' @title 统计 4.0 版本网格占用与物种丰富度
-#' @description 针对 4.0 版本列表格式分布数据，统计物种在各大洲的网格占用规模及各单元的物种丰富度。
+#' @title 统计 4.0 版本网格占用与物种多样性格局
+#' @description 针对 4.0 版本列表格式分布数据，统计物种在各大洲的分布及各单元的物种丰富度。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -562,7 +564,7 @@ build_tree_string <- function(current_id, data) {}
 ```r
 #' @file lat.low.high.NULL.r
 #' @title 空模型下高低纬度本土与迁入物种多样性对比
-#' @description 在静态气候下按 40°、54° 纬度阈值划分高低纬度，通过 100 次抽样对比本土种与迁入种的丰富度与占比。
+#' @description 将美洲六边形网格划分为 1 纬度带，剔除陆桥后统计各纬度带物种丰富度在演化历程中的动态（空模型）。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -644,7 +646,7 @@ build_tree_string <- function(current_id, data) {}
 ```r
 #' @file N.Speciation.Extinction.r
 #' @title 解析发育树拓扑并统计逐年物种形成与灭绝动态
-#' @description 重建系统发育树对象，区分内部节点（成种）与叶节点（绝灭或存活），统计从起始年代至现今每年的演化事件数。
+#' @description 重建系统发育树对象，区分内部节点（成种）与叶节点（绝灭或存活），统计从起始年代至现今每个时间片段的演化事件数。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -665,8 +667,8 @@ build_tree_string <- function(current_id, data) {}
 
 ```r
 #' @file N.species.By.Type.with.bridge.merge.isthmus.r
-#' @title 追踪物种时空拓殖类型（巴拿马地峡并入北美）
-#' @description 将巴拿马地峡网格合并入北美洲，基于状态转移矩阵判断物种的成种、迁入、局域灭绝与全局灭绝事件。
+#' @title 追踪物种时空拓殖类型（将地峡并入北美）
+#' @description 将地峡网格合并入北美洲，基于状态转移矩阵判断物种的成种、迁入、局域灭绝与全局灭绝事件。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -686,7 +688,7 @@ build_tree_string <- function(current_id, data) {}
 ```r
 #' @file N.species.By.Type.with.bridge.r
 #' @title 细分陆桥通道的物种生物地理状态转移追踪
-#' @description 独立保留巴拿马地峡与加勒比陆桥通道，追踪物种全生命周期在各大洲与陆桥间的扩散、驻留与灭绝演变。
+#' @description 独立保留地峡与加勒比陆桥通道，追踪物种全生命周期在各大洲与陆桥间的扩散、驻留与灭绝演变。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -706,8 +708,8 @@ build_tree_string <- function(current_id, data) {}
 
 ```r
 #' @file NB.Prec.r
-#' @title 模拟任务状态监控与种子参数空间特征核验
-#' @description 解析模拟数据库中的环境阈值参数，监控各任务目录完成状态，绘制种子空间分布与边界多边形。
+#' @title 解析模拟数据库中的生态位
+#' @description 解析模拟数据库中的生态位参数，监控各任务目录完成状态，绘制种子空间分布与边界多边形。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -729,7 +731,7 @@ build_tree_string <- function(current_id, data) {}
 ```r
 #' @file netcdf.info.r
 #' @title NetCDF 古气候文件结构探查
-#' @description 交互式读取单份 3600 Ma 古气候模拟 NetCDF 文件，快速查看其变量定义、时间/空间维度与全局属性。
+#' @description 交互式读取单份 3.6 Ma 古气候模拟 NetCDF 文件，快速查看其变量定义、时间/空间维度与全局属性。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -748,7 +750,7 @@ build_tree_string <- function(current_id, data) {}
 
 ```r
 #' @file packages.used.r
-#' @title 收集并输出项目依赖 R 包版本与文献引用
+#' @title 收集并输出项目依赖 R 包版本与文献引用，用于自动生成文章的引文。
 #' @description 遍历项目引用的核心 R 包，自动检测其安装版本并提取标准学术引用文本，导出为规范的 CSV 汇总清单。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -775,8 +777,8 @@ get_pkg_info <- function(pkg) {}
 
 ```r
 #' @file richness.r
-#' @title 生成周期性物种丰富度时间切片数据集
-#' @description 提取每间隔 100 个模拟时步（100 kyr）的网格物种丰富度，融合地理坐标后导出为按年份划分的独立切片。
+#' @title 生成物种丰富度时间切片数据集
+#' @description 提取每间隔 100 个模拟时步的网格物种丰富度，融合地理坐标后导出为按年份划分的独立切片。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -828,7 +830,7 @@ assign_named_row <- function(dt, row, vals) {}
 ```r
 #' @file species.type.with.bridge.NULL.r
 #' @title 构建谱系树并统计物种分化与灭绝（独立陆桥，空模型）
-#' @description 针对未合并陆桥的空模型，构建系统发育树并递归检索各节点后代（Descendants），判定其演化存活状态。
+#' @description 针对未合并陆桥的空模型，构建系统发育树并递归检索各节点后代，判定其演化存活状态。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -884,15 +886,15 @@ assign_named_row <- function(dt, row, vals) {}
 
 ---
 
-# 模块三：Figures 脚本库
+# 模块三：Figures 模块，用于结果分析和可视化。
 
 <a id="fig-01"></a>
 ## [1] bootstrapping.analysis.r
 
 ```r
 #' @file bootstrapping.analysis.r
-#' @title 评估种子抽样截断阈值（95% 至 99.5%）的鲁棒性
-#' @description 对比 95%、96%、99% 和 99.5% 四种截断阈值下的物种丰富度与迁入比例，评估爆发性分化对宏观格局的影响。
+#' @title 评估按模拟最终的物种丰富度为标准的抽样阈值（90% 至 99.5%）的鲁棒性（敏感性测试）
+#' @description 对比 90% 到 99.5% 几种阈值下的物种丰富度与迁入比例，评估爆发性分化对宏观格局的影响。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -912,7 +914,7 @@ assign_named_row <- function(dt, row, vals) {}
 
 ```r
 #' @file bridge.usage.r
-#' @title 陆桥利用偏好分析（巴拿马地峡 vs 加勒比通道）
+#' @title 陆桥利用偏好分析（地峡 vs 加勒比路桥）
 #' @description 统计南北美洲物种利用不同陆桥通道成功扩散及停滞的比例，绘制带误差棒均值图并导出 Word/CSV 报表。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -934,7 +936,7 @@ assign_named_row <- function(dt, row, vals) {}
 
 ```r
 #' @file climate.curve.r
-#' @title 绘制 3.8 Ma 以来美洲宏观古气候演化曲线
+#' @title 绘制 3.8 Ma (Burn-in + 3.6Ma) 以来美洲宏观古气候演化曲线
 #' @description 统计美洲各大洲与陆桥网格历史降水和高低温序列的均值与离散度，利用双 Y 轴及纵向分面呈现古气候轨迹。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -956,7 +958,7 @@ assign_named_row <- function(dt, row, vals) {}
 
 ```r
 #' @file common.r
-#' @title 通用绘图主题、色板定义与 Word 报表导出工具
+#' @title 通用绘图主题、色板定义与 Word 报表导出通用函数，以保证通篇的标签和颜色的统一。
 #' @description 定义制图投影（LAEA / Robinson）、色弱安全配色方案，提供将 data.table 输出为规范学术三线表 Word 文档的工具函数。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -1064,7 +1066,7 @@ format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {}
 ```r
 #' @file Lat.Gradient.r
 #' @title 动态气候下纬度多样性梯度与迁入比例曲线
-#' @description 统计真实气候下 1 纬度区间内的物种丰富度与迁入比例，结合南美洲坐标轴翻转，直观展示热带到温带的渗透不对称性。
+#' @description 统计真实气候下 1 纬度区间内的物种丰富度与迁入比例，结合南美洲坐标轴翻转，直观展示热带到温带的扩散的不对称性。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -1125,7 +1127,7 @@ format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {}
 
 ```r
 #' @file N.Seed.Dispersal.r
-#' @title 种源水平跨大陆扩散成功率分析与空间制图
+#' @title 种子水平跨大陆扩散成功率分析与空间制图
 #' @description 追踪每个初始种子在历史时段内是否成功跨越大洲建立种群，绘制全美洲种子扩散能力空间地图。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -1148,7 +1150,7 @@ format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {}
 ```r
 #' @file N.Speciation.Extinction.Dispersal.distance.5.r
 #' @title 近陆桥种子子集（距离阈值 = 5）演化与扩散分析
-#' @description 选取距陆桥 5 个步长以内的种源子集重算宏演化指标，检验排除距离衰减后扩散不对称性是否稳健。
+#' @description 选取距陆桥 5 个步长以内的种子子集重算宏观演化指标，检验排除距离衰减后扩散不对称性是否稳健。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -1158,7 +1160,7 @@ format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {}
 #'   }
 #' @section Input & Output:
 #'   \describe{
-#'     \item{输入数据}{\code{random.seeds.by.nb.distance.5.rda}, 宏演化事件表, 丰富度表}
+#'     \item{输入数据}{\code{random.seeds.by.nb.distance.5.rda}, 宏观演化事件表, 丰富度表}
 #'     \item{输出数据}{演化事件箱线图版}
 #'   }
 ```
@@ -1168,7 +1170,7 @@ format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {}
 
 ```r
 #' @file N.Speciation.Extinction.Dispersal.merge.isthmus.r
-#' @title 宏演化与扩散事件统计分析（巴拿马地峡并入北美）
+#' @title 宏观演化与扩散事件统计分析（地峡并入北美）
 #' @description 地峡并入北美规则下执行 100 次抽样，统计本土成种、异地成种、灭绝、局域绝灭及初/次级入侵事件。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -1190,8 +1192,8 @@ format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {}
 
 ```r
 #' @file N.Speciation.Extinction.Dispersal.no.outliers.r
-#' @title 剔除极端爆发离群值后的宏演化与扩散分析
-#' @description 剔除单次爆发产生超万种的极少数异常模拟，重新评估成种、绝灭和入侵动态的不对称性。
+#' @title 剔除极端爆发离群值后的宏观演化与扩散分析
+#' @description 剔除单个仿真种化时间过多的异常模拟，重新评估成种、绝灭和入侵动态的不对称性。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -1212,8 +1214,8 @@ format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {}
 
 ```r
 #' @file N.Speciation.Extinction.Dispersal.NULL.r
-#' @title 空模型下宏演化与扩散事件统计分析
-#' @description 针对静态气候空模型统计成种、绝灭、扩散事件及最终丰富度，检验仅凭地理拓扑是否能够诱发不对称性。
+#' @title 空模型下宏观演化与扩散事件统计分析
+#' @description 针对静态气候空模型统计成种、绝灭、扩散事件及最终丰富度，检验仅凭地理拓扑是否能够诱发不对称性。采样方式与[16]相同。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -1234,8 +1236,8 @@ format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {}
 
 ```r
 #' @file N.Speciation.Extinction.Dispersal.r
-#' @title 动态气候下宏演化与扩散事件核心分析
-#' @description 提取全量真实气候模拟中的成种、全局绝灭、局域绝灭及入侵事件，执行 100 次抽样，生成论文核心主图与附表。
+#' @title 动态气候下宏观演化与扩散事件核心分析
+#' @description 提取全量真实气候模拟中的成种、全局绝灭、局域绝灭及入侵事件，执行 100 次基于距离的抽样，生成论文核心主图与附表。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -1256,8 +1258,8 @@ format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {}
 
 ```r
 #' @file N.Speciation.Extinction.Dispersal.random.seeds.r
-#' @title 随机种子敏感性检验（剔除前 5% 繁盛谱系）
-#' @description 排除分化规模前 5% 的极度繁盛物种群，评估极端支系对生物大迁徙整体结论的潜在影响。
+#' @title 随机种子敏感性检验（剔除前 5% 高物种丰富度的模拟结果）
+#' @description 提取全量真实气候模拟中的成种、全局绝灭、局域绝灭及入侵事件，执行 100 次纯随机抽样。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -1300,8 +1302,8 @@ format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {}
 
 ```r
 #' @file N.Species.Dispersal.by.seed.end.NULL.r
-#' @title 空模型下末期种源扩散与留存物种数统计
-#' @description 针对静态气候空模型，分析每个初始种子在最终时间步（year = 0）留在原产大陆（in_source_continent）
+#' @title 空模型下末期种子扩散与留存物种数统计
+#' @description 针对静态气候空模型，分析每个初始种子在最终时间步留在原产大陆（in_source_continent）
 #'   与扩散至目标大陆（to_target_continent）的物种数量，执行 100 次重采样并导出汇总文档。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -1323,7 +1325,7 @@ format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {}
 
 ```r
 #' @file N.Species.Dispersal.by.seed.end.r
-#' @title 动态气候下末期种源扩散与留存物种数统计
+#' @title 动态气候下末期种子扩散与留存物种数统计
 #' @description 基于动态古气候模拟结果，统计每个种子演化谱系在末期留在起源大陆与成功扩散至对侧大陆的物种多样性，
 #'   执行 100 轮重采样，评估气候波动驱动下的物种不对称交换量。
 #' @author Huijie Qiao & Erin Saupe
@@ -1346,16 +1348,16 @@ format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {}
 
 ```r
 #' @file NB.Definition.r
-#' @title 经验生态位宽度等级定义（排除翼手目）
+#' @title 经验生态位宽度等级定义（比较是否排除翼手目）
 #' @description 基于 IUCN 陆生哺乳动物分布区数据，在排除高扩散力的翼手目（Chiroptera）后，
-#'   计算温度与降水现实生态位跨度的分位数（20%、40%、60%、80%），定义 TINY、NARROW、MODERATE 与 BROAD 四档生态位宽度等级。
+#'   计算温度与降水生态位幅度的分位数（20%、40%、60%、80%），定义 TINY、NARROW、MODERATE 与 BROAD 四档生态位宽度等级。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
 #'   \itemize{
 #'     \item \code{data.table}: 分位数计算与物种分类信息匹配
 #'     \item \code{sf}: IUCN 空间多边形属性读取
-#'     \item \code{ggplot2}: 生态位跨度直方图与截断线绘制
+#'     \item \code{ggplot2}: 生态位幅度直方图与截断线绘制
 #'     \item \code{flextable}, \code{officer}: 导出定义阈值表
 #'   }
 #' @section Input & Output:
@@ -1461,9 +1463,9 @@ format_sigfigs_dt <- function(dt, digits = 3, in_place = TRUE) {}
 
 ```r
 #' @file outlier.contribution.r
-#' @title 极端高物种形成离群种源逐步剔除敏感性测试
+#' @title 极端高物种形成异常种子逐步剔除敏感性测试
 #' @description 按最终产出物种数对南美洲种子降序排序，依次逐步剔除前 1 至 10 个极端离群种子（Outliers），
-#'   在每个剔除梯度下重复 100 次抽样并统计宏演化事件，检验大迁徙不对称性是否受少数极端超级繁盛谱系主导。
+#'   在每个剔除梯度下重复 100 次抽样并统计宏观演化事件，检验大迁徙不对称性是否受少数极端繁盛谱系主导。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -1513,7 +1515,7 @@ extract_packages <- function(file_path) {}
 #' @file prec_cutoff.r
 #' @title 降水生态位下限截断效应评估与空间制图
 #' @description 识别模拟参数中因降水下限计算为负值而被模型截断为 0（`pr_low < 0`）的模拟种子，
-#'   统计受截断影响的种源频次与大陆分布，并在地图上呈现降水截断深度的空间分布格局。
+#'   统计受截断影响的种子频次与大陆分布，并在地图上呈现降水截断深度的空间分布格局。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -1586,7 +1588,7 @@ create_lat_line <- function(lat) {}
 
 ```r
 #' @file Richness.Stat.r
-#' @title 最终物种丰富度网格统计量计算（独立模块）
+#' @title 最终物种丰富度网格统计量计算
 #' @description 独立提取模拟最终步在各个网格上的物种去重记录，跨 100 次重采样计算各网格单元的物种丰富度均值与标准差。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -1606,8 +1608,8 @@ create_lat_line <- function(lat) {}
 
 ```r
 #' @file sample.seed.by.nb.5.degree.r
-#' @title 5 步长距离分段分层种子抽样
-#' @description 将种源到对侧大陆的最短拓扑距离划分为步长为 5 的距离段，在每个距离段内对南北美洲的种子执行对称配对随机抽样（每段最多 10 个），
+#' @title 5 步长距离分段分层种子抽样 （敏感性测试）
+#' @description 将种子到对侧大陆的最短拓扑距离划分为步长为 5 的距离段，在每个距离段内对南北美洲的种子执行对称配对随机抽样（每段最多 10 个），
 #'   生成空间距离代表性均衡的 100 组 Bootstrap 抽样种子集。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -1629,7 +1631,7 @@ create_lat_line <- function(lat) {}
 ```r
 #' @file sample.seed.by.nb.no.outliers.r
 #' @title 剔除离群值后的严格距离配对种子分层抽样
-#' @description 在排除极端爆发分化种子的基础上，针对南北美洲在相同拓扑距离、生态位宽度和扩散能力下的种源执行对称配对抽样（每格最多 5 个），
+#' @description 在排除极端爆发分化种子的基础上，针对南北美洲在相同拓扑距离、生态位宽度和扩散能力下的种子执行对称配对抽样（每格最多 5 个），
 #'   构建稳健性检验专用的 100 组重采样种子库。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -1650,7 +1652,7 @@ create_lat_line <- function(lat) {}
 
 ```r
 #' @file sample.seed.by.nb.r
-#' @title 多分位数阈值（90% 至 100%）下种子分层抽样主流程
+#' @title 多分位数阈值（90% 至 100%）下种子分层抽样主流程 （用于敏感性测试）
 #' @description 遍历 90% 到 100%（步长 1%）的分化规模分位数截断阈值，对未超限的种子按距离、NB 和 DA 进行对称配对抽样，
 #'   生成用于敏感性评估的系列种子表，并输出离群值分布图与统计表。
 #' @author Huijie Qiao & Erin Saupe
@@ -1674,7 +1676,7 @@ create_lat_line <- function(lat) {}
 ```r
 #' @file sample.seed.by.nb.test.r
 #' @title 种子逐个剥离抽样检验与事件敏感性评估
-#' @description 针对分化规模排名前列的离群种源，依次剔除 1 至 48 个种子，在每个削减水平下重新执行分层重采样并重算宏演化事件指标，
+#' @description 针对分化规模排名前列的离群种子，依次剔除 1 至 50 个种子（90%），在每个削减水平下重新执行分层重采样并重算宏观演化事件指标，
 #'   以曲线图展示迁入物种占比随离群种子剔除数量增加的响应趋势。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -1695,9 +1697,8 @@ create_lat_line <- function(lat) {}
 
 ```r
 #' @file sample.seed.random.r
-#' @title 随机种子抽样（剔除 BIG 类群前 5 繁盛支系）
-#' @description 针对成种能力极强的 "BIG" 生态位宽度组，剔除物种形成数最高的前 5 个超级繁盛种子，
-#'   在每个 continent/NB/DA 组合中完全随机抽取 40 个种子，生成 100 组无距离平衡限制的随机对照种子集。
+#' @title 随机种子抽样 （测试用）
+#' @description 随机种子抽样 （测试用）。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -1739,9 +1740,9 @@ create_lat_line <- function(lat) {}
 
 ```r
 #' @file Seed.Overview.r
-#' @title 模拟种源全局状态与起始古气候综合图版
-#' @description 制作论文主图全局概览图版：整合种源最终演化状态（未存活、纳入候选池、离群值、背景网格），
-#'   叠加起始年代（3.6 Ma，year = 1800）的年均降水、最高温、最低温空间分布以及长时间气候波动轨迹。
+#' @title 模拟种子全局状态与起始古气候综合图版
+#' @description 制作论文主图全局概览图版：整合种子最终演化状态（未存活、纳入候选池、离群值、背景网格），
+#'   叠加起始年代（3.6 Ma）的年均降水、最高温、最低温空间分布以及长时间气候波动轨迹。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
 #' @section Dependencies:
@@ -1762,8 +1763,8 @@ create_lat_line <- function(lat) {}
 
 ```r
 #' @file Seed.Status.r
-#' @title 种源预热期生存状态核验与耐受参数评估
-#' @description 提取种子参数中定义的降水和温度生理耐受阈值（`nb_v`），比对预热期起始（year = 1800）的实际环境，
+#' @title 种子预热期生存状态核验与耐受参数评估
+#' @description 提取种子参数中定义的降水和温度生理耐受阈值（`nb_v`），比对预热期（Burn-in）的实际环境，
 #'   系统分类并统计未能存活通过预热期的种子数量及原因，保存种子池基准数据表。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -1787,7 +1788,7 @@ create_lat_line <- function(lat) {}
 ```r
 #' @file Simulation.Mask.r
 #' @title 研究区空间掩膜与大洲/陆桥网格划分图
-#' @description 绘制模拟系统的地理范围多边形，区分并填色标注北美洲、南美洲、巴拿马地峡（bridge1）与加勒比通道（bridge2），
+#' @description 绘制模拟系统的地理范围多边形，区分并填色标注北美洲、南美洲、地峡（bridge1）与加勒比路桥（bridge2），
 #'   统计各区域包含的有效六边形网格数并导出 Word 报表。
 #' @author Huijie Qiao & Erin Saupe
 #' @date 2026-09-08
@@ -1809,7 +1810,7 @@ create_lat_line <- function(lat) {}
 
 ```r
 #' @file why.seeds.dispersed.r
-#' @title 种源成功跨大陆扩散的二项式 GLM 驱动力分析
+#' @title 种子成功跨大陆扩散的二项式 GLM 驱动力分析
 #' @description 建立二项分布广义线性模型（Logistic Regression, `glm(family = binomial)`），
 #'   以是否成功跨越大陆建立稳定种群为因变量，以距陆桥最短拓扑距离（`min.dist`）、生态位宽度（`NB`）和扩散能力（`DA`）为自变量，
 #'   使用 `ggeffects` 计算边际预测概率并绘制效应曲线。
